@@ -49,7 +49,7 @@ export function generateRSSFeed(): string {
   const items = sortedArticles
     .map(article => {
       const pubDate = parseArticleDate(article.date).toUTCString();
-      const description = stripHtml(article.content).replace(/]]>/g, ']]]]><![CDATA[>');
+      const description = stripHtml(article.content).replace(/]]>/g, ']]&gt;');
       
       return `
     <item>
