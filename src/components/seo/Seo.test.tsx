@@ -169,33 +169,37 @@ describe("Seo component", () => {
   it("should set Twitter Card meta tags", async () => {
     renderWithHelmet(<Seo title="Test" description="Test description" />);
 
-    const twitterCard = document.querySelector('meta[name="twitter:card"]');
-    const twitterSite = document.querySelector('meta[name="twitter:site"]');
-    const twitterCreator = document.querySelector('meta[name="twitter:creator"]');
-    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     await waitFor(() => {
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      const twitterSite = document.querySelector('meta[name="twitter:site"]');
+      const twitterCreator = document.querySelector('meta[name="twitter:creator"]');
+      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+      const twitterDescription = document.querySelector('meta[name="twitter:description"]');
       const twitterImage = document.querySelector('meta[name="twitter:image"]');
 
-    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterSite?.getAttribute("content")).toBe("@shahidster_");
+      expect(twitterCreator?.getAttribute("content")).toBe("@shahidster_");
+      expect(twitterTitle?.getAttribute("content")).toBe("Test | Shahid Moosa");
+      expect(twitterDescription?.getAttribute("content")).toBe("Test description");
+      expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
     });
-    expect(twitterSite?.getAttribute("content")).toBe("@shahidster_");
-    expect(twitterCreator?.getAttribute("content")).toBe("@shahidster_");
-    expect(twitterTitle?.getAttribute("content")).toBe("Test | Shahid Moosa");
-    expect(twitterDescription?.getAttribute("content")).toBe("Test description");
-    expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
   });
 
   it("should use custom image when provided", async () => {
     renderWithHelmet(<Seo image="/custom-image.png" />);
 
-    const ogImage = document.querySelector('meta[property="og:image"]');
     await waitFor(() => {
+      const ogImage = document.querySelector('meta[property="og:image"]');
       const twitterImage = document.querySelector('meta[name="twitter:image"]');
 
-    expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
+      expect(ogImage?.getAttribute("content")).toBe(
+        "https://shahidster.tech/custom-image.png"
+      );
+      expect(twitterImage?.getAttribute("content")).toBe(
+        "https://shahidster.tech/custom-image.png"
+      );
     });
-    expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
   });
 
   it("should handle absolute image URLs", async () => {
