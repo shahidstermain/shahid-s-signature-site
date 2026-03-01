@@ -38,7 +38,7 @@ export const parseArticleDate = (dateStr: string): Date => {
   const yearNumber = Number.parseInt(year ?? "", 10);
 
   if (Number.isNaN(yearNumber)) {
-    return new Date();
+    return new Date(Date.UTC(2000, 0, 1));
   }
 
   return new Date(Date.UTC(yearNumber, monthIndex, 1));
