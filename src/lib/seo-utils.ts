@@ -41,7 +41,7 @@ export const parseArticleDate = (dateStr: string): Date => {
     return new Date();
   }
 
-  return new Date(yearNumber, monthIndex, 1);
+  return new Date(Date.UTC(yearNumber, monthIndex, 1));
 };
 
 export const formatArticleDateIso = (dateStr: string): string =>
