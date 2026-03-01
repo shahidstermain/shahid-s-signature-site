@@ -37,7 +37,7 @@ export const buildArticleJsonLd = (
     options?.total && options?.currentIndex
       ? {
           "@type": "CreativeWorkSeries",
-          name: "Distributed Systems Series",
+          name: article.category,
           position: options.currentIndex,
           numberOfItems: options.total,
         }
