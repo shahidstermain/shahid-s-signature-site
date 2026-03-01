@@ -44,6 +44,8 @@ export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
   
   const items = articles
+    .slice()
+    .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
     .map(article => {
       const pubDate = parseArticleDate(article.date).toUTCString();
       const description = stripHtml(article.content);
@@ -89,15 +91,18 @@ export function generateRSSFeed(): string {
  * @returns A pretty-printed JSON string (2-space indentation) conforming to JSON Feed 1.1 containing feed metadata and an item for each article. Each item includes id, url, title, summary, plain-text content, ISO 8601 publish date, and tags.
  */
 export function generateJSONFeed(): string {
-  const items = articles.map(article => ({
-    id: `${siteConfig.siteUrl}/blog/${article.slug}`,
-    url: `${siteConfig.siteUrl}/blog/${article.slug}`,
-    title: article.title,
-    summary: article.description,
-    content_text: stripHtml(article.content) + "...",
-    date_published: parseArticleDate(article.date).toISOString(),
-    tags: [article.category, ...(article.seoKeywords || [])]
-  }));
+  const items = articles
+    .slice()
+    .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
+    .map(article => ({
+      id: `${siteConfig.siteUrl}/blog/${article.slug}`,
+      url: `${siteConfig.siteUrl}/blog/${article.slug}`,
+      title: article.title,
+      summary: article.description,
+      content_text: stripHtml(article.content) + "...",
+      date_published: parseArticleDate(article.date).toISOString(),
+      tags: [article.category, ...(article.seoKeywords || [])]
+    }));
 
   return JSON.stringify({
     version: "https://jsonfeed.org/version/1.1",

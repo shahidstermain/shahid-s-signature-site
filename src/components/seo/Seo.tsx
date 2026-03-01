@@ -82,14 +82,21 @@ export const Seo = ({
         <meta property="article:author" content={siteConfig.author.name} />
       ) : null}
 
-      {jsonLdItems.map((item, index) => (
-        <script
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-          key={`jsonld-${index}`}
-          type="application/ld+json"
-        />
-      ))}
+      {jsonLdItems.map((item, index) => {
+        const typeKey =
+          typeof (item as { [key: string]: unknown })["@type"] === "string"
+            ? ((item as { [key: string]: unknown })["@type"] as string)
+            : "unknown";
+
+        return (
+          <script
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+            key={`jsonld-${typeKey}-${index}`}
+            type="application/ld+json"
+          />
+        );
+      })}
     </Helmet>
   );
 };
