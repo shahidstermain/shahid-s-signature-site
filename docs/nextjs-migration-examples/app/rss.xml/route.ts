@@ -43,6 +43,14 @@ function escapeXml(text: string): string {
  * @param dateStr - Three-letter English month abbreviation followed by the four-digit year.
  * @returns A Date for the 15th day of the specified month and year; uses January if the month abbreviation is unrecognized.
  */
+function parseDate(dateStr: string): Date {
+  const months: Record<string, number> = {
+    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+  };
+  const [month, year] = dateStr.split(' ');
+  return new Date(parseInt(year), months[month] || 0, 15);
+}
 
 /**
  * Produces a plain-text excerpt from Markdown or HTML suitable for summaries.
