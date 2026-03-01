@@ -6,10 +6,15 @@ import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 
+interface ParsedYaml {
+  name?: string;
+  branches?: string[];
+}
+
 // Helper to parse YAML (simple key-value extraction for testing)
-function parseYaml(content: string): any {
+function parseYaml(content: string): ParsedYaml {
   const lines = content.split("\n");
-  const result: any = {};
+  const result: ParsedYaml = {};
   let currentKey = "";
 
   for (const line of lines) {
@@ -21,7 +26,7 @@ function parseYaml(content: string): any {
       currentKey = "branches";
       result.branches = [];
     } else if (currentKey === "branches" && trimmed.startsWith("- ")) {
-      result.branches.push(trimmed.substring(2).trim());
+      result.branches!.push(trimmed.substring(2).trim());
     }
   }
 

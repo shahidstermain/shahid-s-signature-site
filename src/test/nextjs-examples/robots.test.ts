@@ -224,7 +224,7 @@ describe('Robots.txt Generation', () => {
         const socialBots = ['Twitterbot', 'facebookexternalhit', 'Slackbot', 'Discordbot'];
 
         socialBots.forEach((botName) => {
-          const botRule = robots.rules.find((r: any) => r.userAgent === botName);
+          const botRule = robots.rules.find((r) => r.userAgent === botName);
           expect(botRule?.allow).toBe('/');
           expect(botRule?.disallow).toBeUndefined();
         });

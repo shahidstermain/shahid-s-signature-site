@@ -2,9 +2,42 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
 
+interface FirebaseHeader {
+  source: string;
+  headers: Array<{ key: string; value: string }>;
+}
+
+interface FirebaseRedirect {
+  source: string;
+  destination: string;
+  type: number;
+}
+
+interface FirebaseConfig {
+  hosting: {
+    public: string;
+    cleanUrls: boolean;
+    trailingSlash: boolean;
+    headers: FirebaseHeader[];
+    redirects: FirebaseRedirect[];
+    rewrites?: Array<{ source: string; destination: string }>;
+    ignore?: string[];
+  };
+}
+
+interface LighthouseConfig {
+  ci: {
+    collect: Record<string, unknown>;
+    assert: {
+      assertions: Record<string, [string, Record<string, number>]>;
+    };
+    upload: Record<string, unknown>;
+  };
+}
+
 describe('Configuration Files Validation', () => {
   describe('firebase.json', () => {
-    let firebaseConfig: any;
+    let firebaseConfig!: FirebaseConfig;
 
     beforeAll(() => {
       const configPath = path.resolve(process.cwd(), 'firebase.json');
@@ -37,11 +70,11 @@ describe('Configuration Files Validation', () => {
 
     it('should have security headers for HTML files', () => {
       const htmlHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '**/*.html'
+        (h) => h.source === '**/*.html'
       );
 
       expect(htmlHeaders).toBeDefined();
-      const headerKeys = htmlHeaders.headers.map((h: any) => h.key);
+      const headerKeys = htmlHeaders.headers.map((h) => h.key);
 
       expect(headerKeys).toContain('X-Content-Type-Options');
       expect(headerKeys).toContain('X-Frame-Options');
@@ -52,12 +85,12 @@ describe('Configuration Files Validation', () => {
     it('should have cache headers for static assets', () => {
       // Look for headers with glob pattern like @(jpg|jpeg|png...) or containing image extensions
       const imageHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source && (h.source.includes('@(jpg') || h.source.includes('jpg|jpeg'))
+        (h) => h.source && (h.source.includes('@(jpg') || h.source.includes('jpg|jpeg'))
       );
 
       expect(imageHeaders).toBeDefined();
       if (imageHeaders) {
-        const cacheHeader = imageHeaders.headers.find((h: any) => h.key === 'Cache-Control');
+        const cacheHeader = imageHeaders.headers.find((h) => h.key === 'Cache-Control');
         expect(cacheHeader).toBeDefined();
         expect(cacheHeader.value).toContain('max-age');
         expect(cacheHeader.value).toContain('immutable');
@@ -71,7 +104,7 @@ describe('Configuration Files Validation', () => {
 
     it('should have 301 permanent redirects', () => {
       const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
+      redirects.forEach((redirect) => {
         expect(redirect.type).toBe(301);
         expect(redirect.source).toBeDefined();
         expect(redirect.destination).toBeDefined();
@@ -81,34 +114,34 @@ describe('Configuration Files Validation', () => {
     it('should redirect legacy URLs to proper format', () => {
       const redirects = firebaseConfig.hosting.redirects;
       const legacyRedirects = redirects.filter(
-        (r: any) => r.source.includes('articles') || r.source.includes('posts')
+        (r) => r.source.includes('articles') || r.source.includes('posts')
       );
       expect(legacyRedirects.length).toBeGreaterThan(0);
     });
 
     it('should have sitemap cache headers', () => {
       const sitemapHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/sitemap.xml'
+        (h) => h.source === '/sitemap.xml'
       );
 
       expect(sitemapHeaders).toBeDefined();
-      const contentType = sitemapHeaders.headers.find((h: any) => h.key === 'Content-Type');
+      const contentType = sitemapHeaders.headers.find((h) => h.key === 'Content-Type');
       expect(contentType?.value).toContain('xml');
     });
 
     it('should have RSS feed cache headers', () => {
       const rssHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/rss.xml'
+        (h) => h.source === '/rss.xml'
       );
 
       expect(rssHeaders).toBeDefined();
-      const contentType = rssHeaders.headers.find((h: any) => h.key === 'Content-Type');
+      const contentType = rssHeaders.headers.find((h) => h.key === 'Content-Type');
       expect(contentType?.value).toContain('xml');
     });
 
     it('should have robots.txt cache headers', () => {
       const robotsHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/robots.txt'
+        (h) => h.source === '/robots.txt'
       );
 
       expect(robotsHeaders).toBeDefined();
@@ -116,7 +149,7 @@ describe('Configuration Files Validation', () => {
   });
 
   describe('lighthouserc.json', () => {
-    let lighthouseConfig: any;
+    let lighthouseConfig!: LighthouseConfig;
 
     beforeAll(() => {
       const configPath = path.resolve(process.cwd(), 'lighthouserc.json');
@@ -243,7 +276,7 @@ describe('Configuration Files Validation', () => {
   });
 
   describe('SEO Best Practices', () => {
-    let firebaseConfig: any;
+    let firebaseConfig!: FirebaseConfig;
     let indexHtml: string;
 
     beforeAll(() => {
@@ -258,7 +291,7 @@ describe('Configuration Files Validation', () => {
       expect(firebaseConfig.hosting.trailingSlash).toBe(false);
 
       const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
+      redirects.forEach((redirect) => {
         if (redirect.destination !== '/' && redirect.destination !== '/#writing') {
           expect(redirect.destination).not.toMatch(/\/$/);
         }
@@ -280,11 +313,11 @@ describe('Configuration Files Validation', () => {
     it('should have security headers configured', () => {
       const securityHeaders = ['X-Frame-Options', 'X-Content-Type-Options', 'X-XSS-Protection'];
       const htmlHeaderConfig = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '**/*.html'
+        (h) => h.source === '**/*.html'
       );
 
       securityHeaders.forEach((headerName) => {
-        const hasHeader = htmlHeaderConfig.headers.some((h: any) => h.key === headerName);
+        const hasHeader = htmlHeaderConfig.headers.some((h) => h.key === headerName);
         expect(hasHeader).toBe(true);
       });
     });
@@ -293,18 +326,18 @@ describe('Configuration Files Validation', () => {
       const headers = firebaseConfig.hosting.headers;
 
       // Static assets should be cached long-term
-      const staticHeaders = headers.find((h: any) =>
+      const staticHeaders = headers.find((h) =>
         h.source && (h.source.includes('@(jpg|jpeg|gif|png') || h.source.includes('.js') || h.source.includes('.css'))
       );
       if (staticHeaders) {
-        const staticCache = staticHeaders.headers.find((h: any) => h.key === 'Cache-Control');
+        const staticCache = staticHeaders.headers.find((h) => h.key === 'Cache-Control');
         expect(staticCache?.value).toContain('max-age');
       }
 
       // HTML should not be cached
-      const htmlHeaders = headers.find((h: any) => h.source === '**/*.html');
+      const htmlHeaders = headers.find((h) => h.source === '**/*.html');
       if (htmlHeaders) {
-        const htmlCache = htmlHeaders.headers.find((h: any) => h.key === 'Cache-Control');
+        const htmlCache = htmlHeaders.headers.find((h) => h.key === 'Cache-Control');
         expect(htmlCache?.value).toContain('must-revalidate');
       }
     });
@@ -314,7 +347,7 @@ describe('Configuration Files Validation', () => {
       const legacyPatterns = ['/home', '/index.html', '/articles', '/posts'];
 
       legacyPatterns.forEach((pattern) => {
-        const hasRedirect = redirects.some((r: any) => r.source.includes(pattern));
+        const hasRedirect = redirects.some((r) => r.source.includes(pattern));
         expect(hasRedirect).toBe(true);
       });
     });
@@ -339,7 +372,7 @@ describe('Configuration Files Validation', () => {
   });
 
   describe('Performance Optimization', () => {
-    let firebaseConfig: any;
+    let firebaseConfig!: FirebaseConfig;
     let indexHtml: string;
 
     beforeAll(() => {
@@ -363,7 +396,7 @@ describe('Configuration Files Validation', () => {
     it('should have immutable cache for static assets', () => {
       // Look for headers that match static asset patterns
       const staticAssetHeaders = firebaseConfig.hosting.headers.filter(
-        (h: any) =>
+        (h) =>
           h.source && (
             h.source.includes('@(jpg|jpeg|gif|png') ||
             h.source.includes('@(js|css)') ||
@@ -374,8 +407,8 @@ describe('Configuration Files Validation', () => {
       // Should have at least some static asset caching rules
       expect(staticAssetHeaders.length).toBeGreaterThan(0);
 
-      staticAssetHeaders.forEach((headerConfig: any) => {
-        const cacheHeader = headerConfig.headers.find((h: any) => h.key === 'Cache-Control');
+      staticAssetHeaders.forEach((headerConfig) => {
+        const cacheHeader = headerConfig.headers.find((h) => h.key === 'Cache-Control');
         if (cacheHeader) {
           expect(cacheHeader.value).toContain('max-age');
           // Check for either immutable or long max-age
@@ -388,7 +421,7 @@ describe('Configuration Files Validation', () => {
   });
 
   describe('Redirect Configuration', () => {
-    let firebaseConfig: any;
+    let firebaseConfig!: FirebaseConfig;
 
     beforeAll(() => {
       const configPath = path.resolve(process.cwd(), 'firebase.json');
@@ -399,7 +432,7 @@ describe('Configuration Files Validation', () => {
       const redirects = firebaseConfig.hosting.redirects;
       const redirectMap = new Map();
 
-      redirects.forEach((redirect: any) => {
+      redirects.forEach((redirect) => {
         redirectMap.set(redirect.source, redirect.destination);
       });
 
@@ -413,14 +446,14 @@ describe('Configuration Files Validation', () => {
 
     it('should use 301 for all SEO redirects', () => {
       const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
+      redirects.forEach((redirect) => {
         expect(redirect.type).toBe(301);
       });
     });
 
     it('should not redirect to external domains', () => {
       const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
+      redirects.forEach((redirect) => {
         expect(redirect.destination).not.toMatch(/^https?:\/\//);
       });
     });
