@@ -49,4 +49,4 @@ Disallow: /private/
 Sitemap: https://shahidster.tech/sitemap.xml
 
 # Preferred domain
-Host: https://shahidster.tech
+Host: shahidster.tech
