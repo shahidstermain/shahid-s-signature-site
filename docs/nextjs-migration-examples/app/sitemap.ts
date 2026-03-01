@@ -17,10 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Converts a date string in the format "Mon YYYY" (e.g., "Nov 2025") to a Date set to the 15th of that month.
+ * Parse a date string like "Nov 2025" and return a Date for the 15th of that month and year.
  *
- * @param dateStr - Month abbreviation and year separated by a space (e.g., "Nov 2025")
- * @returns A Date for the parsed month and year with day set to 15; returns the current date if parsing fails
+ * @param dateStr - A string in the format "Mon YYYY" where `Mon` is a three-letter month abbreviation (e.g., "Jan", "Feb").
+ * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If the input does not match "Mon YYYY", returns the current date.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -37,12 +37,9 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Build the sitemap entries for the site including the homepage and blog posts.
+ * Generate the sitemap entries for the site, including the homepage and all blog posts.
  *
- * Blog post entries use each article's parsed date as `lastModified`, set `changeFrequency` to "monthly",
- * assign `priority` to 0.9 for featured posts or 0.8 otherwise, and are sorted newest-first.
- *
- * @returns An array of sitemap entries with the homepage first followed by blog posts sorted by `lastModified` (newest first)
+ * @returns The sitemap entries array: the homepage entry first (weekly changeFrequency, priority 1.0), followed by blog post entries at `/blog/{slug}` whose `lastModified` is derived from each article's `date`, `changeFrequency` set to `monthly`, and priority `0.9` for featured posts or `0.8` otherwise; blog posts are sorted by `lastModified` in descending order (newest first).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   // Current date for homepage
