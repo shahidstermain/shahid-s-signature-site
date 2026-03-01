@@ -17,7 +17,7 @@ import { formatArticleDateIso } from "@/lib/seo-utils";
  * @returns An object containing:
  *  - `prev`: the previous article in series or `null` if none or the slug is not found,
  *  - `next`: the next article in series or `null` if none or the slug is not found,
- *  - `currentIndex`: the 1-based position of the current article in the series (0 if the slug is not found),
+ *  - `currentIndex`: the 1-based position of the current article in the series; `0` indicates that the slug was not found,
  *  - `total`: the total number of articles in the series.
  */
 function getSeriesNavigation(currentSlug: string): { prev: Article | null; next: Article | null; currentIndex: number; total: number } {
