@@ -63,7 +63,7 @@ export function generateRSSFeed(): string {
       <content:encoded><![CDATA[${description}...]]></content:encoded>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
-      ${article.seoKeywords?.map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ') || ''}
+      ${(article.seoKeywords ?? []).map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ')}
     </item>`;
     })
     .join('');
