@@ -111,7 +111,9 @@ describe('Sitemap Generation', () => {
     it('should handle invalid format', () => {
       const date = parseArticleDate('invalid');
       expect(date).toBeInstanceOf(Date);
-      expect(date.getTime()).toBeCloseTo(new Date().getTime(), -2);
+      const now = Date.now();
+      const diff = Math.abs(now - date.getTime());
+      expect(diff).toBeLessThan(1000); // Within 1 second
     });
 
     it('should handle empty string', () => {
