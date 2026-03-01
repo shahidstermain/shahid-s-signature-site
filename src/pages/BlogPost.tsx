@@ -101,7 +101,6 @@ export default function BlogPost() {
         description={article.description}
         jsonLd={jsonLd}
         keywords={keywords}
-        modifiedTime={publishedTime}
         path={articlePath}
         publishedTime={publishedTime}
         title={article.title}
