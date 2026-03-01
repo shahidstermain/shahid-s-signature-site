@@ -17,10 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Converts a date string in the format "Mon YYYY" (e.g., "Nov 2025") to a Date set to the 15th of that month.
+ * Convert a short month/year string (e.g., "Nov 2025") to a Date representing the 15th of that month and year.
  *
- * @param dateStr - Month abbreviation and year separated by a space (e.g., "Nov 2025")
- * @returns A Date for the parsed month and year with day set to 15; returns the current date if parsing fails
+ * @param dateStr - A string in the form "Mon YYYY" where `Mon` is a three-letter English month abbreviation (e.g., "Jan", "Feb")
+ * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If `dateStr` does not match "Mon YYYY", returns the current date.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -37,12 +37,12 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Build the sitemap entries for the site including the homepage and blog posts.
+ * Generates sitemap entries for the site including the homepage and all blog posts.
  *
- * Blog post entries use each article's parsed date as `lastModified`, set `changeFrequency` to "monthly",
- * assign `priority` to 0.9 for featured posts or 0.8 otherwise, and are sorted newest-first.
+ * The homepage entry uses the current date, `changeFrequency` of `weekly`, and priority `1.0`.
+ * Blog entries are created at `/blog/{slug}` with `lastModified` parsed from the article's `date`, `changeFrequency` of `monthly`, and priority `0.9` for featured posts or `0.8` otherwise. Blog posts are sorted by `lastModified` in descending order (newest first).
  *
- * @returns An array of sitemap entries with the homepage first followed by blog posts sorted by `lastModified` (newest first)
+ * @returns An array of sitemap entries with the homepage entry first followed by blog post entries sorted by most-recent `lastModified`.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   // Current date for homepage

@@ -27,9 +27,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Renders the site's 404 (Page Not Found) UI.
+ * Render the site's 404 Not Found page with a prominent numeric display, primary navigation actions, and suggested article links.
  *
- * @returns A JSX element containing the full-page 404 interface, including header, footer, a prominent "404" display, primary navigation actions, and helpful links to popular pages.
+ * @returns The root JSX element for the 404 page
  */
 export default function NotFound() {
   return (

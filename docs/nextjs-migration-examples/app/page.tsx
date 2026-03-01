@@ -34,9 +34,9 @@ export const metadata: Metadata = {
 
 // Enable ISR with 1-day revalidation (optional)
 /**
- * Render the site's homepage with background, header, sequenced content sections, and footer.
+ * Compose the site's homepage layout from a decorative background, header, main content sections, and footer.
  *
- * @returns A JSX element representing the composed homepage layout including the background glow, header, main content sections, and footer.
+ * @returns A JSX element representing the site's homepage layout. 
  */
 
 export default function HomePage() {
