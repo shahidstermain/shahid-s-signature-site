@@ -23,10 +23,10 @@ const AUTHOR_NAME = 'Shahid Moosa';
 const AUTHOR_EMAIL = 'hello@shahidster.tech';
 
 /**
- * Escape characters that are significant in XML to their corresponding entities.
+ * Escapes characters significant in XML so the text can be safely embedded in XML.
  *
  * @param text - The string to escape for safe inclusion in XML
- * @returns The input string with `&`, `<`, `>`, `"` and `'` replaced by their XML entities
+ * @returns The input string with `&`, `<`, `>`, `"` and `'` replaced by their corresponding XML entities
  */
 function escapeXml(text: string): string {
   return text
@@ -38,24 +38,17 @@ function escapeXml(text: string): string {
 }
 
 /**
- * Convert a "Mon YYYY" article date (e.g., "Nov 2025") into a JavaScript Date set to the 15th of that month.
+ * Converts a "Mon YYYY" date string (e.g., "Nov 2025") to a Date set to the 15th of that month.
  *
- * @param dateStr - A date string using a three-letter English month abbreviation followed by the four-digit year.
- * @returns A `Date` representing the 15th day of the specified month and year. If the month abbreviation is unrecognized, January is used.
-function parseDate(dateStr: string): Date {
-  const months: Record<string, number> = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
-  };
-  const [month, year] = dateStr.split(' ');
-  return new Date(parseInt(year), months[month] || 0, 15);
-}
+ * @param dateStr - Three-letter English month abbreviation followed by the four-digit year.
+ * @returns A Date for the 15th day of the specified month and year; uses January if the month abbreviation is unrecognized.
+ */
 
 /**
- * Produces a plain-text excerpt from markdown/HTML content suitable for summaries.
+ * Produces a plain-text excerpt from Markdown or HTML suitable for summaries.
  *
- * @param content - The markdown or HTML string to convert into a plain-text summary
- * @returns A plain-text excerpt with code blocks, inline code, formatting, and links removed or converted; trimmed and truncated to 500 characters
+ * @param content - The Markdown or HTML string to convert into a plain-text summary.
+ * @returns Plain text with code blocks, inline code, basic formatting, and links removed or converted; trimmed and truncated to 500 characters.
  */
 function stripMarkdown(content: string): string {
   return content

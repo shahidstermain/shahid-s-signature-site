@@ -135,13 +135,13 @@ export async function generateMetadata(
 }
 
 /**
- * Compute previous/next article links and position within the article series.
+ * Compute neighboring articles and the current position within the article series.
  *
- * @param currentSlug - The slug of the current article
- * @returns An object containing:
- *  - `prev`: the previous article object or `null` if at the start,
- *  - `next`: the next article object or `null` if at the end,
- *  - `currentIndex`: the 1-based index of the current article in the series,
+ * @param currentSlug - Slug of the current article in the series
+ * @returns An object with:
+ *  - `prev`: the previous article object, or `null` if the current article is the first
+ *  - `next`: the next article object, or `null` if the current article is the last
+ *  - `currentIndex`: the 1-based index of the current article within the series
  *  - `total`: the total number of articles in the series
  */
 function getSeriesNavigation(currentSlug: string) {

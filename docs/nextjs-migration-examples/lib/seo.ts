@@ -34,9 +34,9 @@ export const SITE_CONFIG = {
 } as const;
 
 /**
- * Produce a canonical absolute URL by joining the site base URL with a normalized path.
+ * Produces a canonical absolute URL by joining the site base URL with a normalized path.
  *
- * Normalization: a single root path `'/'` becomes the site base, and any trailing slash is removed from the provided path.
+ * Normalization: a single root path `'/'` becomes the site base, and a trailing slash is removed from the provided path.
  *
  * @param path - The path to append to the site URL (e.g., `/blog/post` or `blog/post`). Defaults to empty which yields the site base.
  * @returns The canonical absolute URL for the given path
@@ -158,10 +158,9 @@ export function generateArticleMetadata(article: {
 }
 
 /**
- * Create a JSON-LD Person schema for the site author.
+ * Creates a JSON-LD Person schema for the site author using site configuration.
  *
- * @returns A JSON-LD object for `schema.org` Person populated from `SITE_CONFIG`,
- *          including name, jobTitle, email, url, worksFor, sameAs, and knowsAbout.
+ * @returns A `schema.org` Person JSON-LD object populated from `SITE_CONFIG`, including `@id`, `name`, `jobTitle`, `email`, `url`, `worksFor` (Organization), `sameAs` (social profile URLs), and `knowsAbout` (author topical expertise).
  */
 export function generatePersonSchema() {
   return {
@@ -191,9 +190,9 @@ export function generatePersonSchema() {
 }
 
 /**
- * Create a JSON-LD WebSite schema object for the site.
+ * Creates a JSON-LD WebSite schema for the site.
  *
- * @returns A JSON-LD `WebSite` schema object containing the site's `@id`, `url`, `name`, `description`, `publisher` reference, and `inLanguage`.
+ * @returns A JSON-LD `WebSite` object with `@id`, `url`, `name`, `description`, `publisher` reference, and `inLanguage`.
  */
 export function generateWebsiteSchema() {
   return {
@@ -372,15 +371,15 @@ declare global {
 }
 
 /**
- * Convert Markdown/inline HTML-like content to plain text suitable for meta descriptions.
+ * Convert Markdown or HTML-like text into plain text suitable for meta descriptions.
  *
- * Strips code blocks, inline code, Markdown formatting (bold/italic), headers, and links,
- * collapses consecutive newlines to single spaces, trims surrounding whitespace, and
- * truncates the result to `maxLength` characters by appending an ellipsis when needed.
+ * Removes code blocks, inline code, Markdown formatting (bold, italic, headers) and link markup,
+ * collapses consecutive newlines into single spaces, trims surrounding whitespace, and
+ * truncates the result to `maxLength` characters, appending `...` when truncation occurs.
  *
  * @param content - The Markdown or HTML-like string to sanitize
- * @param maxLength - Maximum length of the returned string; defaults to 160. If truncation occurs, the returned string ends with `...` and its total length will not exceed `maxLength`.
- * @returns A plain-text string with Markdown removed; truncated and suffixed with `...` when longer than `maxLength`
+ * @param maxLength - Maximum length of the returned string; defaults to 160. When truncation occurs, the returned string ends with `...` and its total length will not exceed `maxLength`.
+ * @returns Plain-text string with Markdown removed; truncated and suffixed with `...` when longer than `maxLength`
  */
 export function stripMarkdown(content: string, maxLength: number = 160): string {
   const plain = content
