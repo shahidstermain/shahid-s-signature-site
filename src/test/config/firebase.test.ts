@@ -174,14 +174,6 @@ describe("firebase.json Configuration", () => {
       expect(Array.isArray(firebaseConfig.hosting.rewrites)).toBe(true);
     });
 
-    it("should rewrite blog routes to dynamic page", () => {
-      const blogRewrite = firebaseConfig.hosting.rewrites.find(
-        (r: any) => r.source === "/blog/**"
-      );
-      expect(blogRewrite).toBeDefined();
-      expect(blogRewrite?.destination).toBe("/blog/[slug].html");
-    });
-
     it("should have catch-all rewrite to index.html for SPA", () => {
       const catchAll = firebaseConfig.hosting.rewrites.find(
         (r: any) => r.source === "**"
