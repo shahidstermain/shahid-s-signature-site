@@ -42,11 +42,14 @@ function stripHtml(content: string): string {
  */
 export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
+  const sortedArticles = [...articles].sort(
+    (a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime()
+  );
   
-  const items = articles
+  const items = sortedArticles
     .map(article => {
       const pubDate = parseArticleDate(article.date).toUTCString();
-      const description = stripHtml(article.content);
+      const description = stripHtml(article.content).replace(/]]>/g, ']]]]><![CDATA[>');
       
       return `
     <item>
@@ -54,7 +57,7 @@ export function generateRSSFeed(): string {
       <link>${siteConfig.siteUrl}/blog/${article.slug}</link>
       <guid isPermaLink="true">${siteConfig.siteUrl}/blog/${article.slug}</guid>
       <description>${escapeXml(article.description)}</description>
-      <content:encoded><![CDATA[${escapeXml(description)}...]]></content:encoded>
+      <content:encoded><![CDATA[${description}...]]></content:encoded>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
       ${article.seoKeywords?.map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ') || ''}
@@ -89,7 +92,10 @@ export function generateRSSFeed(): string {
  * @returns A pretty-printed JSON string (2-space indentation) conforming to JSON Feed 1.1 containing feed metadata and an item for each article. Each item includes id, url, title, summary, plain-text content, ISO 8601 publish date, and tags.
  */
 export function generateJSONFeed(): string {
-  const items = articles.map(article => ({
+  const sortedArticles = [...articles].sort(
+    (a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime()
+  );
+  const items = sortedArticles.map(article => ({
     id: `${siteConfig.siteUrl}/blog/${article.slug}`,
     url: `${siteConfig.siteUrl}/blog/${article.slug}`,
     title: article.title,

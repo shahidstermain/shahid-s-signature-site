@@ -90,13 +90,3 @@ export const Seo = ({
 
         return (
           <script
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
-            key={`jsonld-${typeKey}-${index}`}
-            type="application/ld+json"
-          />
-        );
-      })}
-    </Helmet>
-  );
-};

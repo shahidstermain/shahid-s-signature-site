@@ -23,7 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Generated SEO assets
 public/rss.xml
 public/feed.json
 public/sitemap.xml
