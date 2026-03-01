@@ -25,7 +25,7 @@ export const toAbsoluteUrl = (pathOrUrl: string): string => {
 };
 
 export const buildCanonicalUrl = (path?: string): string => {
-  if (!path) {
+  if (!path || path === "") {
     return siteConfig.siteUrl;
   }
 
@@ -34,21 +34,11 @@ export const buildCanonicalUrl = (path?: string): string => {
 
 export const parseArticleDate = (dateStr: string): Date => {
   const [month, year] = dateStr.split(" ");
-
-  if (!month || !year) {
-    throw new Error(`Invalid article date string (expected "Mon YYYY"): "${dateStr}"`);
-  }
-
-  const monthIndex = MONTHS[month];
-
-  if (monthIndex === undefined) {
-    throw new Error(`Invalid month in article date string: "${dateStr}"`);
-  }
-
-  const yearNumber = Number.parseInt(year, 10);
+  const monthIndex = MONTHS[month] ?? 0;
+  const yearNumber = Number.parseInt(year ?? "", 10);
 
   if (Number.isNaN(yearNumber)) {
-    throw new Error(`Invalid year in article date string: "${dateStr}"`);
+    return new Date();
   }
 
   return new Date(Date.UTC(yearNumber, monthIndex, 1));
