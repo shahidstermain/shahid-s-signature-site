@@ -17,10 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Converts a date string in the format "Mon YYYY" (e.g., "Nov 2025") to a Date set to the 15th of that month.
+ * Convert a date string like "Nov 2025" into a Date set to the 15th day of that month and year.
  *
- * @param dateStr - Month abbreviation and year separated by a space (e.g., "Nov 2025")
- * @returns A Date for the parsed month and year with day set to 15; returns the current date if parsing fails
+ * @param dateStr - String in the format "Mon YYYY" where `Mon` is a three-letter English month abbreviation (e.g., "Jan", "Feb").
+ * @returns A `Date` set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If `dateStr` does not match the expected format, returns the current date.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -37,12 +37,9 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Build the sitemap entries for the site including the homepage and blog posts.
+ * Generates the sitemap for the site including the homepage and all blog posts.
  *
- * Blog post entries use each article's parsed date as `lastModified`, set `changeFrequency` to "monthly",
- * assign `priority` to 0.9 for featured posts or 0.8 otherwise, and are sorted newest-first.
- *
- * @returns An array of sitemap entries with the homepage first followed by blog posts sorted by `lastModified` (newest first)
+ * @returns A `MetadataRoute.Sitemap` array with the homepage entry first and blog post entries afterwards, sorted by `lastModified` (newest first). Blog entries use the article's `date` for `lastModified`, have `changeFrequency` set to `monthly`, and a `priority` of `0.9` for featured posts or `0.8` otherwise.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   // Current date for homepage
