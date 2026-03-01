@@ -50,7 +50,7 @@ export const Seo = ({
         name="robots"
         content={
           noindex
-            ? "noindex, nofollow"
+            ? "noindex"
             : "index, follow, max-image-preview:large"
         }
       />
