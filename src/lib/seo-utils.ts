@@ -38,7 +38,10 @@ export const parseArticleDate = (dateStr: string): Date => {
   const yearNumber = Number.parseInt(year ?? "", 10);
 
   if (Number.isNaN(yearNumber)) {
-    return new Date();
+    // Use a deterministic fallback date to avoid non-deterministic behavior in feeds.
+    // Also log the issue so invalid article metadata can be detected and fixed.
+    console.warn(`Invalid article date string "${dateStr}", falling back to 1970-01-01.`);
+    return new Date(Date.UTC(1970, 0, 1));
   }
 
   return new Date(Date.UTC(yearNumber, monthIndex, 1));
