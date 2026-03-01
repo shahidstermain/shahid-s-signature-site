@@ -6,75 +6,20 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackgroundGlow } from "@/components/ui/BackgroundGlow";
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar";
-import { useEffect } from "react";
+import { Seo } from "@/components/seo/Seo";
+import { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/lib/structured-data";
+import { formatArticleDateIso } from "@/lib/seo-utils";
 
-const SITE_URL = "https://shahidster.tech";
-const AUTHOR_NAME = "Shahid Moosa";
-const TWITTER_HANDLE = "@shahidster_";
-
-// Update document meta tags for social sharing
-function updateMetaTags(article: Article) {
-  const articleUrl = `${SITE_URL}/blog/${article.slug}`;
-  
-  // Helper to set or create meta tag
-  const setMeta = (property: string, content: string, isName = false) => {
-    const selector = isName ? `meta[name="${property}"]` : `meta[property="${property}"]`;
-    let meta = document.querySelector(selector) as HTMLMetaElement;
-    if (!meta) {
-      meta = document.createElement("meta");
-      if (isName) {
-        meta.name = property;
-      } else {
-        meta.setAttribute("property", property);
-      }
-      document.head.appendChild(meta);
-    }
-    meta.content = content;
-  };
-
-  // Update page title
-  document.title = `${article.title} | ${AUTHOR_NAME}`;
-
-  // Open Graph tags
-  setMeta("og:type", "article");
-  setMeta("og:title", article.title);
-  setMeta("og:description", article.description);
-  setMeta("og:url", articleUrl);
-  setMeta("og:site_name", `${AUTHOR_NAME} - Distributed Systems Engineer`);
-  setMeta("og:locale", "en_US");
-  setMeta("og:image", `${SITE_URL}/og-image.png`);
-  setMeta("article:author", AUTHOR_NAME);
-  setMeta("article:published_time", new Date(article.date).toISOString());
-  setMeta("article:section", article.category);
-  setMeta("article:tag", article.seoKeywords?.join(", ") || article.category);
-  
-  // Twitter Card tags
-  setMeta("twitter:card", "summary_large_image", true);
-  setMeta("twitter:site", TWITTER_HANDLE, true);
-  setMeta("twitter:creator", TWITTER_HANDLE, true);
-  setMeta("twitter:title", article.title, true);
-  setMeta("twitter:description", article.description, true);
-  setMeta("twitter:image", `${SITE_URL}/og-image.png`, true);
-  
-  // Keywords
-  if (article.seoKeywords?.length) {
-    setMeta("keywords", article.seoKeywords.join(", "), true);
-  }
-  
-  // Description
-  setMeta("description", article.description, true);
-  
-  // Canonical URL
-  let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-  if (!canonical) {
-    canonical = document.createElement("link");
-    canonical.rel = "canonical";
-    document.head.appendChild(canonical);
-  }
-  canonical.href = articleUrl;
-}
-
-// Get prev/next articles in series order
+/**
+ * Determine the previous and next articles within the series for a given article slug.
+ *
+ * @param currentSlug - The slug of the current article to locate in the series.
+ * @returns An object containing:
+ *  - `prev`: the previous article in series or `null` if none or the slug is not found,
+ *  - `next`: the next article in series or `null` if none or the slug is not found,
+ *  - `currentIndex`: the 1-based position of the current article in the series (0 if the slug is not found),
+ *  - `total`: the total number of articles in the series.
+ */
 function getSeriesNavigation(currentSlug: string): { prev: Article | null; next: Article | null; currentIndex: number; total: number } {
   const currentIndex = articles.findIndex(a => a.slug === currentSlug);
   return {
@@ -85,87 +30,19 @@ function getSeriesNavigation(currentSlug: string): { prev: Article | null; next:
   };
 }
 
-// Generate JSON-LD structured data for Article schema
-function generateArticleJsonLd(article: Article, currentIndex: number, total: number): object {
-  const siteUrl = "https://shahidster.tech";
-  const articleUrl = `${siteUrl}/blog/${article.slug}`;
-  
-  return {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "@id": articleUrl,
-    "headline": article.title,
-    "description": article.description,
-    "datePublished": new Date(article.date).toISOString(),
-    "dateModified": new Date(article.date).toISOString(),
-    "author": {
-      "@type": "Person",
-      "name": "Shahid Moosa",
-      "url": siteUrl,
-      "jobTitle": "Distributed Systems Engineer"
-    },
-    "publisher": {
-      "@type": "Person",
-      "name": "Shahid Moosa",
-      "url": siteUrl
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": articleUrl
-    },
-    "articleSection": article.category,
-    "keywords": article.seoKeywords?.join(", ") || article.category,
-    "wordCount": Math.round(article.content.split(/\s+/).length),
-    "isPartOf": {
-      "@type": "CreativeWorkSeries",
-      "name": "Distributed Systems Series",
-      "position": currentIndex,
-      "numberOfItems": total
-    },
-    "about": {
-      "@type": "Thing",
-      "name": "Distributed Systems"
-    },
-    "inLanguage": "en-US",
-    "image": {
-      "@type": "ImageObject",
-      "url": `${siteUrl}/og-image.png`,
-      "width": 1200,
-      "height": 630
-    }
-  };
-}
+const getArticleKeywords = (article: Article): string[] => {
+  if (article.seoKeywords?.length) {
+    return Array.from(new Set([...article.seoKeywords, article.category]));
+  }
 
-// Generate BreadcrumbList JSON-LD
-function generateBreadcrumbJsonLd(article: Article): object {
-  const siteUrl = "https://shahidster.tech";
-  
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": siteUrl
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Writing",
-        "item": `${siteUrl}/#writing`
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": article.title,
-        "item": `${siteUrl}/blog/${article.slug}`
-      }
-    ]
-  };
-}
+  return [article.category];
+};
 
+/**
+ * Render the blog article page for the current route slug or a not-found view when no matching article exists.
+ *
+ * @returns The rendered blog post UI for the current route slug, or a not-found view if the article is missing.
+ */
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
@@ -173,42 +50,16 @@ export default function BlogPost() {
     ? getSeriesNavigation(article.slug) 
     : { prev: null, next: null, currentIndex: 0, total: 0 };
 
-  // Inject JSON-LD structured data and meta tags into head
-  useEffect(() => {
-    if (!article) return;
-
-    // Update social meta tags
-    updateMetaTags(article);
-
-    // Remove any existing JSON-LD scripts
-    const existingScripts = document.querySelectorAll('script[type="application/ld+json"][data-blog-jsonld]');
-    existingScripts.forEach(script => script.remove());
-
-    // Create Article schema script
-    const articleScript = document.createElement('script');
-    articleScript.type = 'application/ld+json';
-    articleScript.setAttribute('data-blog-jsonld', 'article');
-    articleScript.textContent = JSON.stringify(generateArticleJsonLd(article, currentIndex, total));
-    document.head.appendChild(articleScript);
-
-    // Create BreadcrumbList schema script
-    const breadcrumbScript = document.createElement('script');
-    breadcrumbScript.type = 'application/ld+json';
-    breadcrumbScript.setAttribute('data-blog-jsonld', 'breadcrumb');
-    breadcrumbScript.textContent = JSON.stringify(generateBreadcrumbJsonLd(article));
-    document.head.appendChild(breadcrumbScript);
-
-    // Cleanup on unmount
-    return () => {
-      articleScript.remove();
-      breadcrumbScript.remove();
-      document.title = `${AUTHOR_NAME} - Distributed Systems Engineer`;
-    };
-  }, [article, currentIndex, total]);
-
   if (!article) {
+    const missingPath = slug ? `/blog/${slug}` : undefined;
     return (
       <div className="min-h-screen flex flex-col">
+        <Seo
+          description="The requested article could not be found."
+          noindex
+          path={missingPath}
+          title="Article not found"
+        />
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -232,9 +83,26 @@ export default function BlogPost() {
   const relatedArticles = articles
     .filter(a => a.category === article.category && a.slug !== article.slug)
     .slice(0, 3);
+  const publishedTime = formatArticleDateIso(article.date);
+  const articlePath = `/blog/${article.slug}`;
+  const jsonLd = [
+    buildArticleJsonLd(article, { currentIndex, total }),
+    buildBreadcrumbJsonLd(article),
+  ];
+  const keywords = getArticleKeywords(article);
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      <Seo
+        description={article.description}
+        jsonLd={jsonLd}
+        keywords={keywords}
+        modifiedTime={publishedTime}
+        path={articlePath}
+        publishedTime={publishedTime}
+        title={article.title}
+        type="article"
+      />
       <ReadingProgressBar />
       <BackgroundGlow />
       <Header />
