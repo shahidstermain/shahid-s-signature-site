@@ -17,10 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Parse a date string like "Nov 2025" and return a Date for the 15th of that month and year.
+ * Convert a date string like "Nov 2025" to a Date representing the 15th day of that month and year.
  *
- * @param dateStr - A string in the format "Mon YYYY" where `Mon` is a three-letter month abbreviation (e.g., "Jan", "Feb").
- * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If the input does not match "Mon YYYY", returns the current date.
+ * @param dateStr - A string in the format "Mon YYYY" where `Mon` is a three-letter English month abbreviation (e.g., "Jan", "Feb").
+ * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If `dateStr` does not match the expected format, returns the current date.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -37,9 +37,9 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Build the site's sitemap containing the homepage and blog post entries.
+ * Generate the sitemap entries for the site, including the homepage and all blog posts.
  *
- * @returns An array of sitemap entries where the first entry is the homepage (weekly changeFrequency, priority 1.0) followed by blog posts at `/blog/{slug}` with `lastModified` derived from each article's `date`, `changeFrequency` set to `monthly`, priority `0.9` for featured posts and `0.8` otherwise; blog post entries are sorted by `lastModified` in descending order (newest first).
+ * @returns The `MetadataRoute.Sitemap` array containing the homepage entry first (weekly `changeFrequency`, priority `1.0`) followed by blog post entries at `/blog/{slug}`. Each blog entry has `lastModified` derived from the article's `date`, `changeFrequency` set to `monthly`, and priority `0.9` for featured posts or `0.8` otherwise; blog posts are sorted by `lastModified` in descending order (newest first).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   // Current date for homepage

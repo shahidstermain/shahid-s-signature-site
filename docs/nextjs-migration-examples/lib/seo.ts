@@ -68,12 +68,12 @@ export function parseArticleDateToISO(dateStr: string): string {
 }
 
 /**
- * Create a base Next.js Metadata object populated with the site's default values.
+ * Builds page metadata initialized with the site's default values and applies any provided overrides.
  *
- * Merges any provided `overrides` into the generated base metadata so supplied fields replace defaults.
+ * Provided fields replace the corresponding defaults in the generated metadata.
  *
  * @param overrides - Partial metadata fields to merge into the base; provided values override defaults
- * @returns A Metadata object containing site defaults merged with `overrides`
+ * @returns A Metadata object populated with site defaults merged with the given `overrides`
  */
 export function generateBaseMetadata(overrides: Partial<Metadata> = {}): Metadata {
   return {
@@ -210,24 +210,19 @@ export function generateWebsiteSchema() {
 }
 
 /**
- * Builds a JSON-LD TechArticle schema object for an article suitable for embedding in a webpage.
+ * Create a JSON-LD TechArticle object for embedding Schema.org metadata for a blog article.
  *
- * Produces a Schema.org TechArticle representation that includes headline, description,
- * publication and modification dates, author and publisher references, mainEntityOfPage,
- * section, keywords, word count, proficiency level, and language. If `seriesInfo` is provided,
- * the result includes an `isPartOf` CreativeWorkSeries entry.
- *
- * @param article - Article properties:
+ * @param article - Article data including:
  *   - title: Article headline
  *   - description: Short summary of the article
- *   - slug: URL path segment for the article (appended to the site's /blog/ path)
+ *   - slug: URL path segment for the article
  *   - date: Publish date in "Mon YYYY" format (e.g., "Nov 2025")
  *   - category: Article section or category
  *   - content: Full article content used to compute word count
  *   - seoKeywords: Optional list of SEO keywords
- *   - seriesPosition: Optional position within a series (string form)
+ *   - seriesPosition: Optional position within a series
  * @param seriesInfo - Optional series metadata with `currentIndex` (position) and `total` (number of items)
- * @returns A JSON-LD object representing a Schema.org `TechArticle` for the provided article
+ * @returns A JSON-LD object representing a Schema.org `TechArticle` populated with headline, description, publication/modification dates, author and publisher, mainEntityOfPage, section, keywords, word count, proficiency level, language, and optional series information
  */
 export function generateArticleSchema(article: {
   title: string;
