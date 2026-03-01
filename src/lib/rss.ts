@@ -38,16 +38,13 @@ function stripHtml(content: string): string {
 /**
  * Generate an RSS 2.0 XML feed for the site's blog articles.
  *
- * @returns A string containing the complete RSS 2.0 XML document for the blog, where each article is represented as an `<item>` including title, link, guid, description, content:encoded, pubDate, and category elements. Items are sorted newest-first.
+ * @returns A string containing the complete RSS 2.0 XML document for the blog, where each article is represented as an `<item>` including title, link, guid, description, content:encoded, pubDate, and category elements.
  */
 export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
 
-  const sortedArticles = [...articles].sort(
-    (a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime()
-  );
-
-  const items = sortedArticles
+  const items = [...articles]
+    .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
     .map(article => {
       const pubDate = parseArticleDate(article.date).toUTCString();
       const description = stripHtml(article.content);
