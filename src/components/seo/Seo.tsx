@@ -88,10 +88,15 @@ export const Seo = ({
             ? ((item as { [key: string]: unknown })["@type"] as string)
             : "unknown";
 
+        const safeJson = JSON.stringify(item)
+          .replace(/</g, "\\u003c")
+          .replace(/>/g, "\\u003e")
+          .replace(/&/g, "\\u0026");
+
         return (
           <script
             // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+            dangerouslySetInnerHTML={{ __html: safeJson }}
             key={`jsonld-${typeKey}-${index}`}
             type="application/ld+json"
           />

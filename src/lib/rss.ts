@@ -54,7 +54,7 @@ export function generateRSSFeed(): string {
       <link>${siteConfig.siteUrl}/blog/${article.slug}</link>
       <guid isPermaLink="true">${siteConfig.siteUrl}/blog/${article.slug}</guid>
       <description>${escapeXml(article.description)}</description>
-      <content:encoded><![CDATA[${escapeXml(description)}...]]></content:encoded>
+      <content:encoded><![CDATA[${description}...]]></content:encoded>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
       ${article.seoKeywords?.map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ') || ''}

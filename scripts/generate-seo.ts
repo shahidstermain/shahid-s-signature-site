@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateRSSFeed, generateJSONFeed } from "../src/lib/rss";
@@ -15,6 +15,8 @@ const outputs = [
   { name: "feed.json", contents: generateJSONFeed() },
   { name: "robots.txt", contents: generateRobotsTxt() },
 ];
+
+await mkdir(publicDir, { recursive: true });
 
 await Promise.all(
   outputs.map((output) =>
