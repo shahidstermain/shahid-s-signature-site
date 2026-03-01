@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { Hero } from "./Hero";
 
 // Mock framer-motion to avoid animation issues in tests
@@ -7,6 +7,8 @@ vi.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
     h1: ({ children, ...props }: any) => <h1 {...props}>{children}</h1>,
+    p: ({ children, ...props }: any) => <p {...props}>{children}</p>,
+    section: ({ children, ...props }: any) => <section {...props}>{children}</section>,
   },
 }));
 
@@ -15,229 +17,230 @@ vi.mock("@/components/ui/LiveTerminal", () => ({
   LiveTerminal: () => <div data-testid="live-terminal">Terminal</div>,
 }));
 
-describe("Hero component", () => {
-  describe("basic rendering", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Hero />)).not.toThrow();
-    });
+describe("Hero", () => {
+  it("should render the hero section", () => {
+    const { container } = render(<Hero />);
+    const section = container.querySelector("section");
 
-    it("should render the main heading", () => {
-      render(<Hero />);
-      expect(screen.getByText(/I keep databases alive/i)).toBeInTheDocument();
-      expect(screen.getByText(/at scale\./i)).toBeInTheDocument();
-    });
+    expect(section).toBeInTheDocument();
+  });
 
-    it("should display the status badge", () => {
-      render(<Hero />);
-      expect(screen.getByText(/Active now/i)).toBeInTheDocument();
-    });
+  it("should display the main heading", () => {
+    render(<Hero />);
 
-    it("should render the profile image", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      expect(image).toBeInTheDocument();
-      expect(image).toHaveAttribute("src");
-    });
+    expect(screen.getByText(/I keep databases alive/i)).toBeInTheDocument();
+    expect(screen.getByText(/at scale/i)).toBeInTheDocument();
+  });
 
-    it("should render the LiveTerminal component", () => {
-      render(<Hero />);
-      expect(screen.getByTestId("live-terminal")).toBeInTheDocument();
+  it("should display job title", () => {
+    render(<Hero />);
+
+    expect(screen.getByText(/Cloud Database Support Engineer at/i)).toBeInTheDocument();
+  });
+
+  it("should display SingleStore company link", () => {
+    render(<Hero />);
+    const singlestoreLinks = screen.getAllByRole("link", { name: /singlestore/i });
+
+    expect(singlestoreLinks.length).toBeGreaterThan(0);
+    singlestoreLinks.forEach(link => {
+      expect(link).toHaveAttribute("href", "https://www.singlestore.com");
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
   });
 
-  describe("company branding", () => {
-    it("should display SingleStore information", () => {
-      render(<Hero />);
-      expect(screen.getByText("SingleStore")).toBeInTheDocument();
-    });
+  it("should display description text", () => {
+    render(<Hero />);
 
-    it("should show job title", () => {
-      render(<Hero />);
-      expect(screen.getByText(/Cloud Database Support Engineer at/i)).toBeInTheDocument();
-    });
-
-    it("should include SingleStore link", () => {
-      render(<Hero />);
-      const link = screen.getAllByRole("link").find(
-        (link) => link.getAttribute("href") === "https://www.singlestore.com"
-      );
-      expect(link).toBeInTheDocument();
-    });
-
-    it("should display job description", () => {
-      render(<Hero />);
-      expect(
-        screen.getByText(/I debug distributed systems/i)
-      ).toBeInTheDocument();
-    });
-
-    it("should show SingleStore endorsement section", () => {
-      render(<Hero />);
-      expect(screen.getByText(/Verified Systems Expertise/i)).toBeInTheDocument();
-      expect(screen.getByText(/SingleStore DB/i)).toBeInTheDocument();
-    });
+    expect(
+      screen.getByText(/I debug distributed systems, optimize queries at petabyte scale/i)
+    ).toBeInTheDocument();
   });
 
-  describe("call-to-action buttons", () => {
-    it("should render 'Let's talk' button", () => {
-      render(<Hero />);
-      expect(screen.getByText("Let's talk")).toBeInTheDocument();
-    });
+  it("should render 'Let's talk' button", () => {
+    render(<Hero />);
+    const button = screen.getByRole("button", { name: /let's talk/i });
 
-    it("should render 'See my work' button", () => {
-      render(<Hero />);
-      expect(screen.getByText("See my work")).toBeInTheDocument();
-    });
-
-    it("should render 'Resume' button", () => {
-      render(<Hero />);
-      expect(screen.getByText("Resume")).toBeInTheDocument();
-    });
-
-    it("should have resume download link", () => {
-      render(<Hero />);
-      const resumeLink = screen.getByRole("link", { name: /Resume/i });
-      expect(resumeLink).toHaveAttribute("href", "/resume.pdf");
-      expect(resumeLink).toHaveAttribute("download", "Shahid_Moosa_Resume.pdf");
-    });
+    expect(button).toBeInTheDocument();
   });
 
-  describe("social links", () => {
-    it("should render GitHub link", () => {
-      render(<Hero />);
-      const githubLink = screen.getByLabelText("GitHub");
-      expect(githubLink).toBeInTheDocument();
-      expect(githubLink).toHaveAttribute("href", "https://github.com/shahidmoosa");
-      expect(githubLink).toHaveAttribute("target", "_blank");
-      expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
-    });
+  it("should render 'See my work' button", () => {
+    render(<Hero />);
+    const button = screen.getByRole("button", { name: /see my work/i });
 
-    it("should render LinkedIn link", () => {
-      render(<Hero />);
-      const linkedinLink = screen.getByLabelText("LinkedIn");
-      expect(linkedinLink).toBeInTheDocument();
-      expect(linkedinLink).toHaveAttribute("href", "https://linkedin.com/in/shahidmoosa");
-      expect(linkedinLink).toHaveAttribute("target", "_blank");
-      expect(linkedinLink).toHaveAttribute("rel", "noopener noreferrer");
-    });
-
-    it("should render Email link", () => {
-      render(<Hero />);
-      const emailLink = screen.getByLabelText("Email");
-      expect(emailLink).toBeInTheDocument();
-      expect(emailLink).toHaveAttribute("href", "mailto:connect2shahidmoosa@gmail.com");
-    });
+    expect(button).toBeInTheDocument();
   });
 
-  describe("accessibility", () => {
-    it("should have proper heading hierarchy", () => {
-      render(<Hero />);
-      const mainHeading = screen.getByRole("heading", { level: 1 });
-      expect(mainHeading).toBeInTheDocument();
-    });
+  it("should render Resume download link", () => {
+    render(<Hero />);
+    const resumeLink = screen.getByRole("link", { name: /resume/i });
 
-    it("should have aria-labels on social links", () => {
-      render(<Hero />);
-      expect(screen.getByLabelText("GitHub")).toBeInTheDocument();
-      expect(screen.getByLabelText("LinkedIn")).toBeInTheDocument();
-      expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    });
-
-    it("should have alt text on image", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      expect(image).toBeInTheDocument();
-    });
-
-    it("should use semantic section element", () => {
-      const { container } = render(<Hero />);
-      const section = container.querySelector("section");
-      expect(section).toBeInTheDocument();
-    });
+    expect(resumeLink).toBeInTheDocument();
+    expect(resumeLink).toHaveAttribute("href", "/resume.pdf");
+    expect(resumeLink).toHaveAttribute("download", "Shahid_Moosa_Resume.pdf");
   });
 
-  describe("image optimization", () => {
-    it("should set fetchPriority to high for profile image", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      // Note: React uses fetchPriority but DOM uses fetchpriority
-      expect(image).toHaveAttribute("fetchpriority", "high");
-    });
+  it("should render GitHub link with proper attributes", () => {
+    render(<Hero />);
+    const githubLink = screen.getByRole("link", { name: /github/i });
 
-    it("should set decoding to async for profile image", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      expect(image).toHaveAttribute("decoding", "async");
-    });
-
-    it("should have width and height attributes", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      expect(image).toHaveAttribute("width", "256");
-      expect(image).toHaveAttribute("height", "256");
-    });
+    expect(githubLink).toBeInTheDocument();
+    expect(githubLink).toHaveAttribute("href", "https://github.com/shahidmoosa");
+    expect(githubLink).toHaveAttribute("target", "_blank");
+    expect(githubLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(githubLink).toHaveAttribute("aria-label", "GitHub");
   });
 
-  describe("external links security", () => {
-    it("should have rel='noopener noreferrer' on external links", () => {
-      render(<Hero />);
-      const externalLinks = screen.getAllByRole("link").filter(
-        (link) => link.getAttribute("target") === "_blank"
-      );
+  it("should render LinkedIn link with proper attributes", () => {
+    render(<Hero />);
+    const linkedinLink = screen.getByRole("link", { name: /linkedin/i });
 
-      externalLinks.forEach((link) => {
-        expect(link).toHaveAttribute("rel", "noopener noreferrer");
-      });
-    });
+    expect(linkedinLink).toBeInTheDocument();
+    expect(linkedinLink).toHaveAttribute("href", "https://linkedin.com/in/shahidmoosa");
+    expect(linkedinLink).toHaveAttribute("target", "_blank");
+    expect(linkedinLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(linkedinLink).toHaveAttribute("aria-label", "LinkedIn");
   });
 
-  describe("content verification", () => {
-    it("should display petabyte scale text", () => {
-      render(<Hero />);
-      expect(screen.getByText(/petabyte scale/i)).toBeInTheDocument();
-    });
+  it("should render Email link with proper attributes", () => {
+    render(<Hero />);
+    const emailLink = screen.getByRole("link", { name: /email/i });
 
-    it("should display Fortune 500 reference", () => {
-      render(<Hero />);
-      expect(screen.getByText(/Fortune 500/i)).toBeInTheDocument();
-    });
-
-    it("should display SingleStore database description", () => {
-      render(<Hero />);
-      expect(
-        screen.getByText(/transact, analyze & contextualize data in real-time/i)
-      ).toBeInTheDocument();
-    });
+    expect(emailLink).toBeInTheDocument();
+    expect(emailLink).toHaveAttribute("href", "mailto:connect2shahidmoosa@gmail.com");
+    expect(emailLink).toHaveAttribute("aria-label", "Email");
   });
 
-  describe("layout structure", () => {
-    it("should have grid layout container", () => {
-      const { container } = render(<Hero />);
-      const grid = container.querySelector(".grid");
-      expect(grid).toBeInTheDocument();
-    });
+  it("should render status badge with 'Active now' text", () => {
+    render(<Hero />);
 
-    it("should render profile photo section", () => {
-      render(<Hero />);
-      const image = screen.getByAltText("Shahid Moosa");
-      expect(image.closest("div")).toBeInTheDocument();
-    });
+    expect(screen.getByText(/active now/i)).toBeInTheDocument();
   });
 
-  describe("scroll indicator", () => {
-    it("should render scroll indicator", () => {
-      const { container } = render(<Hero />);
-      // Check for the presence of the scroll indicator section
-      const sections = container.querySelectorAll("section");
-      expect(sections.length).toBeGreaterThan(0);
-    });
+  it("should render profile photo with correct alt text", () => {
+    render(<Hero />);
+    const photo = screen.getByAltText("Shahid Moosa");
+
+    expect(photo).toBeInTheDocument();
+    expect(photo).toHaveAttribute("width", "256");
+    expect(photo).toHaveAttribute("height", "256");
   });
 
-  describe("branding colors", () => {
-    it("should apply SingleStore purple color scheme", () => {
-      const { container } = render(<Hero />);
-      // The component uses inline styles with SingleStore purple
-      expect(container.innerHTML).toContain("170, 140, 255");
-    });
+  it("should render LiveTerminal component", () => {
+    render(<Hero />);
+
+    expect(screen.getByTestId("live-terminal")).toBeInTheDocument();
+  });
+
+  it("should have 'Let's talk' button scroll to connect section", () => {
+    // Mock scrollIntoView
+    const scrollIntoViewMock = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    // Create a mock element with id 'connect'
+    const connectElement = document.createElement("div");
+    connectElement.id = "connect";
+    document.body.appendChild(connectElement);
+
+    render(<Hero />);
+    const talkButton = screen.getByRole("button", { name: /let's talk/i });
+
+    fireEvent.click(talkButton);
+
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth" });
+
+    // Cleanup
+    document.body.removeChild(connectElement);
+  });
+
+  it("should have 'See my work' button scroll to work section", () => {
+    const scrollIntoViewMock = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoViewMock;
+
+    const workElement = document.createElement("div");
+    workElement.id = "work";
+    document.body.appendChild(workElement);
+
+    render(<Hero />);
+    const workButton = screen.getByRole("button", { name: /see my work/i });
+
+    fireEvent.click(workButton);
+
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth" });
+
+    document.body.removeChild(workElement);
+  });
+
+  it("should display SingleStore endorsement card", () => {
+    render(<Hero />);
+
+    expect(screen.getByText(/Verified Systems Expertise/i)).toBeInTheDocument();
+    expect(screen.getByText(/SingleStore DB/i)).toBeInTheDocument();
+  });
+
+  it("should render SingleStore description in endorsement", () => {
+    render(<Hero />);
+
+    expect(
+      screen.getByText(/Power your data-intensive apps with the only database/i)
+    ).toBeInTheDocument();
+  });
+
+  it("should render arrow down icon for scroll indicator", () => {
+    const { container } = render(<Hero />);
+    const arrowIcon = container.querySelector('svg.lucide-arrow-down');
+
+    expect(arrowIcon).toBeInTheDocument();
+  });
+
+  it("should have responsive grid layout", () => {
+    const { container } = render(<Hero />);
+    const grid = container.querySelector(".grid");
+
+    expect(grid?.className).toContain("lg:grid-cols-2");
+  });
+
+  it("should have all three call-to-action buttons", () => {
+    render(<Hero />);
+
+    expect(screen.getByRole("button", { name: /let's talk/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /see my work/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /resume/i })).toBeInTheDocument();
+  });
+
+  it("should handle missing connect element gracefully", () => {
+    render(<Hero />);
+    const talkButton = screen.getByRole("button", { name: /let's talk/i });
+
+    // Should not throw error when element doesn't exist
+    expect(() => fireEvent.click(talkButton)).not.toThrow();
+  });
+
+  it("should handle missing work element gracefully", () => {
+    render(<Hero />);
+    const workButton = screen.getByRole("button", { name: /see my work/i });
+
+    // Should not throw error when element doesn't exist
+    expect(() => fireEvent.click(workButton)).not.toThrow();
+  });
+
+  it("should render all social media links", () => {
+    render(<Hero />);
+    const githubLink = screen.getByRole("link", { name: /github/i });
+    const linkedinLink = screen.getByRole("link", { name: /linkedin/i });
+    const emailLink = screen.getByRole("link", { name: /email/i });
+
+    expect(githubLink).toBeInTheDocument();
+    expect(linkedinLink).toBeInTheDocument();
+    expect(emailLink).toBeInTheDocument();
+  });
+
+  it("should have proper image loading attributes", () => {
+    render(<Hero />);
+    const photo = screen.getByAltText("Shahid Moosa");
+
+    expect(photo).toHaveAttribute("fetchpriority", "high");
+    expect(photo).toHaveAttribute("decoding", "async");
   });
 });
