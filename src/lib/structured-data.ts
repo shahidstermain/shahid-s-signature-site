@@ -8,7 +8,7 @@ export const buildPersonJsonLd = () => ({
   "@context": "https://schema.org",
   "@type": "Person",
   name: siteConfig.author.name,
-  url: siteConfig.siteUrl,
+  url: siteConfig.author.url,
   jobTitle: siteConfig.author.jobTitle,
   sameAs: siteConfig.author.sameAs,
 });

@@ -91,7 +91,7 @@ export const Seo = ({
         return (
           <script
             // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(item).replace(/<\//g, "<\\/") }}
             key={`jsonld-${typeKey}-${index}`}
             type="application/ld+json"
           />

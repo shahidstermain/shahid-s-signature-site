@@ -43,7 +43,8 @@ function stripHtml(content: string): string {
 export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
   
-  const items = articles
+  const items = [...articles]
+    .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
     .map(article => {
       const pubDate = parseArticleDate(article.date).toUTCString();
       const description = stripHtml(article.content);
@@ -54,7 +55,7 @@ export function generateRSSFeed(): string {
       <link>${siteConfig.siteUrl}/blog/${article.slug}</link>
       <guid isPermaLink="true">${siteConfig.siteUrl}/blog/${article.slug}</guid>
       <description>${escapeXml(article.description)}</description>
-      <content:encoded><![CDATA[${escapeXml(description)}...]]></content:encoded>
+      <content:encoded><![CDATA[${description}...]]></content:encoded>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
       ${article.seoKeywords?.map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ') || ''}
