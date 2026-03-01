@@ -50,7 +50,6 @@ export const buildArticleJsonLd = (
     headline: article.title,
     description: article.description,
     datePublished: formatArticleDateIso(article.date),
-    dateModified: formatArticleDateIso(article.date),
     author: {
       "@type": "Person",
       name: siteConfig.author.name,

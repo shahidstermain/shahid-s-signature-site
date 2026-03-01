@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated SEO assets
+public/rss.xml
+public/feed.json
+public/sitemap.xml
+public/robots.txt
