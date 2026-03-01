@@ -33,7 +33,11 @@ export const metadata: Metadata = {
 };
 
 // Enable ISR with 1-day revalidation (optional)
-// export const revalidate = 86400;
+/**
+ * Render the site's homepage composed of the page chrome and sequential content sections.
+ *
+ * @returns A JSX element for the homepage layout containing the background glow, header, main content sections (Hero, Philosophy, Skills, Work, Credentials, Writing, Now, Connect), and footer.
+ */
 
 export default function HomePage() {
   return (

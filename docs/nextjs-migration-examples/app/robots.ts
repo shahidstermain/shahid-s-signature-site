@@ -16,6 +16,18 @@ import { MetadataRoute } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
+/**
+ * Generate robots.txt metadata for the Next.js App Router based on environment and site URL.
+ *
+ * In non-production environments or when the configured SITE_URL does not include "shahidster.tech",
+ * returns a directives set that blocks all crawlers. In production on the shahidster.tech domain,
+ * returns production-optimized rules: per-bot allowances for Google, Google Images, and Bing; allowances
+ * for social crawlers (Twitter, Facebook, LinkedIn, Slack, Discord); and a default rule that allows
+ * the site root but disallows /api/, /admin/, /_next/, /private/, and JSON file patterns. Also sets
+ * the sitemap and host to the configured SITE_URL.
+ *
+ * @returns A `MetadataRoute.Robots` object containing crawler rules, `sitemap`, and `host`.
+ */
 export default function robots(): MetadataRoute.Robots {
   // Block all crawlers on non-production environments
   const isProduction = process.env.NODE_ENV === 'production';

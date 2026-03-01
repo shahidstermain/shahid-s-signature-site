@@ -120,7 +120,11 @@ export const metadata: Metadata = {
   classification: 'Personal Portfolio',
 };
 
-// Structured data for Person schema
+/**
+ * Builds a Schema.org Person JSON-LD object describing the site owner.
+ *
+ * @returns An object containing a `Person` JSON-LD schema with fields such as `@context`, `@type`, `@id`, `name`, `jobTitle`, `description`, `worksFor`, `url`, `image`, `email`, `sameAs`, and `knowsAbout`, suitable for embedding in a page head.
+ */
 function getPersonSchema() {
   return {
     '@context': 'https://schema.org',
@@ -156,7 +160,11 @@ function getPersonSchema() {
   };
 }
 
-// Structured data for WebSite schema
+/**
+ * Build a JSON-LD WebSite schema describing the site and its search action.
+ *
+ * @returns A plain object containing a schema.org `WebSite` JSON-LD with `@id`, `url`, `name`, `description`, `publisher` reference, `inLanguage`, and a `potentialAction` SearchAction that includes a search URL template.
+ */
 function getWebsiteSchema() {
   return {
     '@context': 'https://schema.org',
@@ -180,6 +188,15 @@ function getWebsiteSchema() {
   };
 }
 
+/**
+ * Root layout component that renders the application's top-level HTML structure, global head elements, and body wrapper.
+ *
+ * Renders <html> with configured fonts and injects preconnect links, favicons, JSON-LD structured data (Person and WebSite),
+ * and production-only Google Analytics scripts, then wraps the provided page content inside <body> with global classes.
+ *
+ * @param children - The page content to be rendered inside the layout's <body>.
+ * @returns The root HTML element containing the configured <head> and <body>.
+ */
 export default function RootLayout({
   children,
 }: {

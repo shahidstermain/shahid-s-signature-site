@@ -26,6 +26,11 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Renders the site's custom 404 Not Found page with primary navigation and links to popular content.
+ *
+ * @returns A JSX.Element representing the 404 Not Found page
+ */
 export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col bg-background">

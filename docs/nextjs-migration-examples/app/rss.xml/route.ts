@@ -23,7 +23,10 @@ const AUTHOR_NAME = 'Shahid Moosa';
 const AUTHOR_EMAIL = 'hello@shahidster.tech';
 
 /**
- * Escape XML special characters
+ * Replace XML special characters in a string with their corresponding XML entities.
+ *
+ * @param text - The input string to escape for safe inclusion in XML
+ * @returns The input string with `&`, `<`, `>`, `"` and `'` replaced by their XML entity equivalents
  */
 function escapeXml(text: string): string {
   return text
@@ -35,7 +38,13 @@ function escapeXml(text: string): string {
 }
 
 /**
- * Parse article date format "Nov 2025" to Date
+ * Parse a date string in the "Mon YYYY" format into a Date representing the 15th of that month.
+ *
+ * Accepts three-letter English month abbreviations (e.g., "Jan", "Feb", "Mar"). If the month is unrecognized,
+ * January is used. The resulting Date uses the parsed year and the 15th day of the month.
+ *
+ * @param dateStr - Date string in the form "Mon YYYY" (for example, "Nov 2025")
+ * @returns A Date set to the 15th day of the parsed month and year
  */
 function parseDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -47,7 +56,12 @@ function parseDate(dateStr: string): Date {
 }
 
 /**
- * Strip HTML/markdown from content for plain text summary
+ * Produce a plain-text summary by removing common Markdown/HTML-like constructs and truncating the result.
+ *
+ * Removes fenced code blocks and inline code, bold markup, top-level headers, converts Markdown links to their link text,
+ * collapses consecutive newlines into single spaces, trims surrounding whitespace, and limits the output to 500 characters.
+ *
+ * @returns The plain-text summary of `content`, trimmed and truncated to at most 500 characters.
  */
 function stripMarkdown(content: string): string {
   return content
@@ -62,8 +76,16 @@ function stripMarkdown(content: string): string {
 }
 
 /**
- * GET handler for RSS feed
- */
+ * Serve the site's RSS 2.0 feed for all blog articles at /rss.xml.
+ *
+ * The feed includes per-item title, link, guid (permalink), description,
+ * content:encoded, pubDate, author, and category elements derived from each
+ * article's metadata. The response includes RSS XML content and caching
+ * headers suitable for public CDN caching and revalidation.
+ *
+ * @returns A Response containing the RSS 2.0 XML document with
+ *          Content-Type `application/rss+xml; charset=utf-8`, cache-control,
+ *          and X-Content-Type-Options headers set.
 export async function GET() {
   const now = new Date().toUTCString();
 

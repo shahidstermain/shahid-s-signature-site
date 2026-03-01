@@ -17,7 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Parse article date format "Nov 2025" to Date object
+ * Convert an article date string in the format "Mon YYYY" (e.g., "Nov 2025") into a Date.
+ *
+ * @param dateStr - The month abbreviation and year separated by a space (three-letter month like `Jan`, `Feb`, ..., `Dec`).
+ * @returns A Date set to the 15th day of the parsed month and year, or the current date if the input cannot be parsed.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -34,19 +37,12 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Generate the sitemap
- * 
- * Priority guidelines:
- * - 1.0: Homepage
- * - 0.8: Important content pages (blog posts)
- * - 0.6: Category pages, archives
- * - 0.4: Utility pages
- * 
- * Change frequency guidelines:
- * - daily: News, frequently updated
- * - weekly: Regular updates
- * - monthly: Stable content
- * - yearly: Archive, rarely changes
+ * Generate sitemap entries for the site, including the homepage and blog posts.
+ *
+ * The homepage entry uses the current date, a weekly change frequency, and priority 1.0.
+ * Blog post entries use parsed article dates, a monthly change frequency, and priority 0.9 for featured posts or 0.8 otherwise; blog posts are sorted newest first.
+ *
+ * @returns An array of sitemap entries combining the homepage followed by blog posts ordered from newest to oldest
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   // Current date for homepage
