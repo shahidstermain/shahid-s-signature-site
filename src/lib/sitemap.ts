@@ -1,6 +1,6 @@
-import { articles } from "@/data/articles";
-
-const SITE_URL = "https://shahidster.tech";
+import { articles } from "../data/articles";
+import { siteConfig } from "./site-config";
+import { formatArticleDateOnly } from "./seo-utils";
 
 interface SitemapUrl {
   loc: string;
@@ -9,37 +9,28 @@ interface SitemapUrl {
   priority?: number;
 }
 
-// Parse article date format "Nov 2025" to ISO date string
-function parseArticleDate(dateStr: string): string {
-  const months: Record<string, string> = {
-    "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04",
-    "May": "05", "Jun": "06", "Jul": "07", "Aug": "08",
-    "Sep": "09", "Oct": "10", "Nov": "11", "Dec": "12"
-  };
-  const parts = dateStr.split(" ");
-  if (parts.length === 2) {
-    const month = months[parts[0]] || "01";
-    const year = parts[1];
-    return `${year}-${month}-01`;
-  }
-  return new Date().toISOString().split("T")[0];
-}
-
+/**
+ * Generate an XML sitemap containing the site homepage and all blog post URLs.
+ *
+ * The sitemap includes each entry's location, last modification date, change frequency, and priority; URL locations are XML-escaped.
+ *
+ * @returns A complete sitemap XML string conforming to the sitemaps.org schema (`<urlset>`), ready to be written to sitemap.xml.
+ */
 export function generateSitemap(): string {
   const urls: SitemapUrl[] = [
     // Homepage
     {
-      loc: SITE_URL,
+      loc: siteConfig.siteUrl,
       lastmod: new Date().toISOString().split("T")[0],
       changefreq: "weekly",
       priority: 1.0,
     },
     // Blog posts
     ...articles.map((article) => ({
-      loc: `${SITE_URL}/blog/${article.slug}`,
-      lastmod: parseArticleDate(article.date),
+      loc: `${siteConfig.siteUrl}/blog/${article.slug}`,
+      lastmod: formatArticleDateOnly(article.date),
       changefreq: "monthly" as const,
-      priority: article.featured || article.slug === "cap-theorem-production" ? 0.9 : 0.8,
+      priority: 0.8,
     })),
   ];
 
@@ -60,12 +51,16 @@ ${urlsXml}
 </urlset>`;
 }
 
-// Generate robots.txt with sitemap reference
+/**
+ * Produces a robots.txt content that allows all crawlers and points to the sitemap.
+ *
+ * @returns The robots.txt text containing "User-agent: *", "Allow: /", a blank line, and a "Sitemap: {siteUrl}/sitemap.xml" entry where `{siteUrl}` is taken from siteConfig.siteUrl.
+ */
 export function generateRobotsTxt(): string {
   return `User-agent: *
 Allow: /
 
-Sitemap: ${SITE_URL}/sitemap.xml
+Sitemap: ${siteConfig.siteUrl}/sitemap.xml
 `;
 }
 
