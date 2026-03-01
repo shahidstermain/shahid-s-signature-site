@@ -10,6 +10,26 @@ export const Footer = () => {
             <Heart className="w-4 h-4 text-primary fill-primary" />
             <span>by Shahid Moosa</span>
           </div>
+          <div className="flex items-center gap-4">
+            <a
+              className="hover:text-foreground transition-colors"
+              href="/rss.xml"
+            >
+              RSS
+            </a>
+            <a
+              className="hover:text-foreground transition-colors"
+              href="/feed.json"
+            >
+              JSON Feed
+            </a>
+            <a
+              className="hover:text-foreground transition-colors"
+              href="/sitemap.xml"
+            >
+              Sitemap
+            </a>
+          </div>
           <div>
             © {new Date().getFullYear()} · All rights reserved
           </div>
