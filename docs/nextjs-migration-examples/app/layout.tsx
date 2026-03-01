@@ -121,9 +121,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Builds a Schema.org Person JSON-LD object describing the site owner.
+ * Builds a JSON-LD Person schema object describing the site author.
  *
- * @returns An object containing a `Person` JSON-LD schema with fields such as `@context`, `@type`, `@id`, `name`, `jobTitle`, `description`, `worksFor`, `url`, `image`, `email`, `sameAs`, and `knowsAbout`, suitable for embedding in a page head.
+ * @returns A JSON-LD object (schema.org Person) containing the author's identity, job title, employer, contact URL, profile image, social profiles, and topical expertise.
  */
 function getPersonSchema() {
   return {
@@ -161,9 +161,9 @@ function getPersonSchema() {
 }
 
 /**
- * Build a JSON-LD WebSite schema describing the site and its search action.
+ * Provide a WebSite JSON-LD schema object describing the site and its search action.
  *
- * @returns A plain object containing a schema.org `WebSite` JSON-LD with `@id`, `url`, `name`, `description`, `publisher` reference, `inLanguage`, and a `potentialAction` SearchAction that includes a search URL template.
+ * @returns A JSON-LD object for Schema.org `WebSite` containing `@id`, `url`, `name`, `description`, a `publisher` reference, `inLanguage`, and a `potentialAction` `SearchAction` with a URL template for site search.
  */
 function getWebsiteSchema() {
   return {
@@ -189,13 +189,12 @@ function getWebsiteSchema() {
 }
 
 /**
- * Root layout component that renders the application's top-level HTML structure, global head elements, and body wrapper.
+ * Root application layout that provides global HTML structure, fonts, metadata scripts, and theme container for all pages.
  *
- * Renders <html> with configured fonts and injects preconnect links, favicons, JSON-LD structured data (Person and WebSite),
- * and production-only Google Analytics scripts, then wraps the provided page content inside <body> with global classes.
+ * Injects JSON-LD structured data for the site/person and, when configured in production, adds Google Analytics.
  *
- * @param children - The page content to be rendered inside the layout's <body>.
- * @returns The root HTML element containing the configured <head> and <body>.
+ * @param children - The page content to render inside the document body.
+ * @returns The top-level HTML element wrapping head elements and the application body.
  */
 export default function RootLayout({
   children,

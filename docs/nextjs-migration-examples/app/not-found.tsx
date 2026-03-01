@@ -27,9 +27,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Renders the site's custom 404 Not Found page with primary navigation and links to popular content.
+ * Renders the site's 404 Not Found page with a prominent 404 display, primary navigation actions, and suggested article links.
  *
- * @returns A JSX.Element representing the 404 Not Found page
+ * @returns The JSX element for the 404 page
  */
 export default function NotFound() {
   return (
