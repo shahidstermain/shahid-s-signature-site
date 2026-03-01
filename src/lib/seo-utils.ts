@@ -34,11 +34,21 @@ export const buildCanonicalUrl = (path?: string): string => {
 
 export const parseArticleDate = (dateStr: string): Date => {
   const [month, year] = dateStr.split(" ");
-  const monthIndex = MONTHS[month] ?? 0;
-  const yearNumber = Number.parseInt(year ?? "", 10);
+
+  if (!month || !year) {
+    throw new Error(`Invalid article date string (expected "Mon YYYY"): "${dateStr}"`);
+  }
+
+  const monthIndex = MONTHS[month];
+
+  if (monthIndex === undefined) {
+    throw new Error(`Invalid month in article date string: "${dateStr}"`);
+  }
+
+  const yearNumber = Number.parseInt(year, 10);
 
   if (Number.isNaN(yearNumber)) {
-    return new Date();
+    throw new Error(`Invalid year in article date string: "${dateStr}"`);
   }
 
   return new Date(Date.UTC(yearNumber, monthIndex, 1));
