@@ -387,14 +387,14 @@ describe("SEO Utility Functions", () => {
     it("should include author information", () => {
       const schema = generateArticleSchema(mockArticle);
       expect(schema.author).toBeDefined();
-      expect((schema.author as any)["@type"]).toBe("Person");
-      expect((schema.author as any).name).toBe("Shahid Moosa");
+      expect((schema.author as Record<string, unknown>)["@type"]).toBe("Person");
+      expect((schema.author as Record<string, unknown>).name).toBe("Shahid Moosa");
     });
 
     it("should include publisher information", () => {
       const schema = generateArticleSchema(mockArticle);
       expect(schema.publisher).toBeDefined();
-      expect((schema.publisher as any)["@type"]).toBe("Person");
+      expect((schema.publisher as Record<string, unknown>)["@type"]).toBe("Person");
     });
 
     it("should include article section", () => {
@@ -427,9 +427,9 @@ describe("SEO Utility Functions", () => {
     it("should include series information when provided", () => {
       const schema = generateArticleSchema(mockArticle, { currentIndex: 2, total: 9 });
       expect(schema.isPartOf).toBeDefined();
-      expect((schema.isPartOf as any)["@type"]).toBe("CreativeWorkSeries");
-      expect((schema.isPartOf as any).position).toBe(2);
-      expect((schema.isPartOf as any).numberOfItems).toBe(9);
+      expect((schema.isPartOf as Record<string, unknown>)["@type"]).toBe("CreativeWorkSeries");
+      expect((schema.isPartOf as Record<string, unknown>).position).toBe(2);
+      expect((schema.isPartOf as Record<string, unknown>).numberOfItems).toBe(9);
     });
 
     it("should not include series information when not provided", () => {
