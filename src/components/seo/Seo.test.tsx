@@ -147,55 +147,55 @@ describe("Seo component", () => {
       <Seo title="Test Article" description="Test description" path="/blog/test" />
     );
 
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    const ogDescription = document.querySelector('meta[property="og:description"]');
-    const ogType = document.querySelector('meta[property="og:type"]');
-    const ogUrl = document.querySelector('meta[property="og:url"]');
-    const ogImage = document.querySelector('meta[property="og:image"]');
-    const ogSiteName = document.querySelector('meta[property="og:site_name"]');
     await waitFor(() => {
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const ogDescription = document.querySelector('meta[property="og:description"]');
+      const ogType = document.querySelector('meta[property="og:type"]');
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogSiteName = document.querySelector('meta[property="og:site_name"]');
       const ogLocale = document.querySelector('meta[property="og:locale"]');
 
-    expect(ogTitle?.getAttribute("content")).toBe("Test Article | Shahid Moosa");
+      expect(ogTitle?.getAttribute("content")).toBe("Test Article | Shahid Moosa");
+      expect(ogDescription?.getAttribute("content")).toBe("Test description");
+      expect(ogType?.getAttribute("content")).toBe("website");
+      expect(ogUrl?.getAttribute("content")).toBe("https://shahidster.tech/blog/test");
+      expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
+      expect(ogSiteName?.getAttribute("content")).toBe("Shahid Moosa");
+      expect(ogLocale?.getAttribute("content")).toBe("en_US");
     });
-    expect(ogDescription?.getAttribute("content")).toBe("Test description");
-    expect(ogType?.getAttribute("content")).toBe("website");
-    expect(ogUrl?.getAttribute("content")).toBe("https://shahidster.tech/blog/test");
-    expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
-    expect(ogSiteName?.getAttribute("content")).toBe("Shahid Moosa");
-    expect(ogLocale?.getAttribute("content")).toBe("en_US");
   });
 
   it("should set Twitter Card meta tags", async () => {
     renderWithHelmet(<Seo title="Test" description="Test description" />);
 
-    const twitterCard = document.querySelector('meta[name="twitter:card"]');
-    const twitterSite = document.querySelector('meta[name="twitter:site"]');
-    const twitterCreator = document.querySelector('meta[name="twitter:creator"]');
-    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
-    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     await waitFor(() => {
+      const twitterCard = document.querySelector('meta[name="twitter:card"]');
+      const twitterSite = document.querySelector('meta[name="twitter:site"]');
+      const twitterCreator = document.querySelector('meta[name="twitter:creator"]');
+      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+      const twitterDescription = document.querySelector('meta[name="twitter:description"]');
       const twitterImage = document.querySelector('meta[name="twitter:image"]');
 
-    expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterCard?.getAttribute("content")).toBe("summary_large_image");
+      expect(twitterSite?.getAttribute("content")).toBe("@shahidster_");
+      expect(twitterCreator?.getAttribute("content")).toBe("@shahidster_");
+      expect(twitterTitle?.getAttribute("content")).toBe("Test | Shahid Moosa");
+      expect(twitterDescription?.getAttribute("content")).toBe("Test description");
+      expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
     });
-    expect(twitterSite?.getAttribute("content")).toBe("@shahidster_");
-    expect(twitterCreator?.getAttribute("content")).toBe("@shahidster_");
-    expect(twitterTitle?.getAttribute("content")).toBe("Test | Shahid Moosa");
-    expect(twitterDescription?.getAttribute("content")).toBe("Test description");
-    expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
   });
 
   it("should use custom image when provided", async () => {
     renderWithHelmet(<Seo image="/custom-image.png" />);
 
-    const ogImage = document.querySelector('meta[property="og:image"]');
     await waitFor(() => {
+      const ogImage = document.querySelector('meta[property="og:image"]');
       const twitterImage = document.querySelector('meta[name="twitter:image"]');
 
-    expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
+      expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
+      expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
     });
-    expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
   });
 
   it("should handle absolute image URLs", async () => {
@@ -276,12 +276,11 @@ describe("Seo component", () => {
 
     await waitFor(() => {
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+      expect(scripts.length).toBe(1);
+      const scriptContent = JSON.parse(scripts[0].textContent || "{}");
+      expect(scriptContent["@type"]).toBe("Person");
+      expect(scriptContent.name).toBe("Shahid Moosa");
     });
-
-    const scriptContent = JSON.parse(scripts[0].textContent || "{}");
-    expect(scriptContent["@type"]).toBe("Person");
-    expect(scriptContent.name).toBe("Shahid Moosa");
   });
 
   it("should render multiple JSON-LD scripts when provided as array", async () => {
@@ -331,9 +330,11 @@ describe("Seo component", () => {
 
     renderWithHelmet(<Seo jsonLd={jsonLd} />);
 
-    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    // Both should render despite same @type (keys should include index)
-    expect(scripts.length).toBe(2);
+    await waitFor(() => {
+      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+      // Both should render despite same @type (keys should include index)
+      expect(scripts.length).toBe(2);
+    });
   });
 
   it("should handle complex integration test", async () => {
@@ -363,7 +364,9 @@ describe("Seo component", () => {
     );
 
     // Verify all aspects
-    expect(document.title).toBe("Database Engineering Guide | Shahid Moosa");
+    await waitFor(() => {
+      expect(document.title).toBe("Database Engineering Guide | Shahid Moosa");
+    });
 
     await waitFor(() => {
       const description = document.querySelector('meta[name="description"]');
@@ -387,10 +390,9 @@ describe("Seo component", () => {
 
     await waitFor(() => {
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+      expect(scripts.length).toBe(1);
+      const scriptContent = JSON.parse(scripts[0].textContent || "{}");
+      expect(scriptContent["@type"]).toBe("BlogPosting");
     });
-
-    const scriptContent = JSON.parse(scripts[0].textContent || "{}");
-    expect(scriptContent["@type"]).toBe("BlogPosting");
   });
 });

@@ -45,8 +45,8 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
-      render(<Command ref={ref as any}>Content</Command>);
+      const ref = { current: null as HTMLDivElement | null };
+      render(<Command ref={ref}>Content</Command>);
 
       expect(ref.current).toBeTruthy();
     });
@@ -121,10 +121,10 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLInputElement | null };
       render(
         <Command>
-          <CommandInput ref={ref as any} placeholder="Search" />
+          <CommandInput ref={ref} placeholder="Search" />
         </Command>
       );
 
@@ -170,10 +170,10 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
-          <CommandList ref={ref as any}>
+          <CommandList ref={ref}>
             <div>Item</div>
           </CommandList>
         </Command>
@@ -223,11 +223,11 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
           <CommandList>
-            <CommandEmpty ref={ref as any}>Empty</CommandEmpty>
+            <CommandEmpty ref={ref}>Empty</CommandEmpty>
           </CommandList>
         </Command>
       );
@@ -281,11 +281,11 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
           <CommandList>
-            <CommandGroup ref={ref as any}>
+            <CommandGroup ref={ref}>
               <div>Item</div>
             </CommandGroup>
           </CommandList>
@@ -327,12 +327,12 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
           <CommandList>
             <CommandGroup>
-              <CommandItem ref={ref as any}>Item</CommandItem>
+              <CommandItem ref={ref}>Item</CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>
@@ -414,11 +414,11 @@ describe("command components", () => {
     });
 
     it("should forward ref correctly", () => {
-      const ref = { current: null };
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
           <CommandList>
-            <CommandSeparator ref={ref as any} />
+            <CommandSeparator ref={ref} />
           </CommandList>
         </Command>
       );

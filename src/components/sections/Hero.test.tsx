@@ -5,8 +5,8 @@ import { Hero } from "./Hero";
 // Mock framer-motion to avoid animation issues in tests
 vi.mock("framer-motion", () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    h1: ({ children, ...props }: any) => <h1 {...props}>{children}</h1>,
+    div: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <div {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>,
+    h1: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <h1 {...(props as React.HTMLAttributes<HTMLHeadingElement>)}>{children}</h1>,
   },
 }));
 

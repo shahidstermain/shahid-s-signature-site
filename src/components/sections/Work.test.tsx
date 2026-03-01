@@ -5,7 +5,7 @@ import { Work } from "./Work";
 // Mock framer-motion to avoid animation issues in tests
 vi.mock("framer-motion", () => ({
   motion: {
-    article: ({ children, ...props }: any) => <article {...props}>{children}</article>,
+    article: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => <article {...(props as React.HTMLAttributes<HTMLElement>)}>{children}</article>,
   },
 }));
 
