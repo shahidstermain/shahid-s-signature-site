@@ -197,6 +197,8 @@ function getArticleSchema(article: Article, currentIndex: number, total: number)
     },
   };
 }
+
+/**
  * Create a Schema.org BreadcrumbList JSON-LD object for the given article page.
  *
  * @param article - Article whose title and slug populate the final breadcrumb item
