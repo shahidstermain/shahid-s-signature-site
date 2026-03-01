@@ -9,6 +9,13 @@ interface SitemapUrl {
   priority?: number;
 }
 
+/**
+ * Generate the site's XML sitemap including the homepage and all blog posts.
+ *
+ * Each <url> entry includes <loc> and may include <lastmod>, <changefreq>, and <priority>.
+ *
+ * @returns The complete sitemap XML as a string with an XML declaration and a <urlset> root.
+ */
 export function generateSitemap(): string {
   const urls: SitemapUrl[] = [
     // Homepage
@@ -44,7 +51,11 @@ ${urlsXml}
 </urlset>`;
 }
 
-// Generate robots.txt with sitemap reference
+/**
+ * Builds a robots.txt file allowing all crawlers and referencing the site's sitemap.
+ *
+ * @returns The robots.txt content containing `User-agent: *`, `Allow: /`, and a `Sitemap` directive pointing to the site's sitemap URL.
+ */
 export function generateRobotsTxt(): string {
   return `User-agent: *
 Allow: /

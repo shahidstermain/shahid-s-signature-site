@@ -2,6 +2,12 @@ import { articles } from "../data/articles";
 import { siteConfig } from "./site-config";
 import { parseArticleDate } from "./seo-utils";
 
+/**
+ * Escape XML special characters in a string.
+ *
+ * @param text - The input string to escape
+ * @returns The input with `&`, `<`, `>`, `"` and `'` replaced by their corresponding XML entities
+ */
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -11,6 +17,12 @@ function escapeXml(text: string): string {
     .replace(/'/g, '&apos;');
 }
 
+/**
+ * Produce a plain-text summary from Markdown/HTML-like content by removing formatting and truncating.
+ *
+ * @param content - The input string containing Markdown or HTML-like markup
+ * @returns A plain-text string with code blocks, inline code, bold markers, headers, and link markup removed, consecutive newlines collapsed to spaces, trimmed, and limited to the first 500 characters
+ */
 function stripHtml(content: string): string {
   return content
     .replace(/```[\s\S]*?```/g, '') // Remove code blocks
@@ -23,6 +35,11 @@ function stripHtml(content: string): string {
     .slice(0, 500);
 }
 
+/**
+ * Generate an RSS 2.0 XML feed for the site's blog articles.
+ *
+ * @returns A string containing the complete RSS 2.0 XML document for the blog, where each article is represented as an `<item>` including title, link, guid, description, content:encoded, pubDate, and category elements.
+ */
 export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
   
@@ -66,6 +83,11 @@ export function generateRSSFeed(): string {
 </rss>`;
 }
 
+/**
+ * Generate a JSON Feed 1.1 document representing the site's blog articles.
+ *
+ * @returns A pretty-printed JSON string (2-space indentation) conforming to JSON Feed 1.1 containing feed metadata and an item for each article. Each item includes id, url, title, summary, plain-text content, ISO 8601 publish date, and tags.
+ */
 export function generateJSONFeed(): string {
   const items = articles.map(article => ({
     id: `${siteConfig.siteUrl}/blog/${article.slug}`,

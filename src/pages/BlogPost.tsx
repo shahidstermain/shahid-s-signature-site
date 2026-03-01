@@ -10,7 +10,16 @@ import { Seo } from "@/components/seo/Seo";
 import { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/lib/structured-data";
 import { formatArticleDateIso } from "@/lib/seo-utils";
 
-// Get prev/next articles in series order
+/**
+ * Determine the previous and next articles within the series for a given article slug.
+ *
+ * @param currentSlug - The slug of the current article to locate in the series.
+ * @returns An object containing:
+ *  - `prev`: the previous article in series or `null` if none or the slug is not found,
+ *  - `next`: the next article in series or `null` if none or the slug is not found,
+ *  - `currentIndex`: the 1-based position of the current article in the series (0 if the slug is not found),
+ *  - `total`: the total number of articles in the series.
+ */
 function getSeriesNavigation(currentSlug: string): { prev: Article | null; next: Article | null; currentIndex: number; total: number } {
   const currentIndex = articles.findIndex(a => a.slug === currentSlug);
   return {
@@ -29,6 +38,15 @@ const getArticleKeywords = (article: Article): string[] => {
   return [article.category];
 };
 
+/**
+ * Renders a blog article page (or a not-found view if the slug does not match an article).
+ *
+ * When an article is found, the page includes SEO metadata (structured JSON‑LD, keywords, times, path), a series navigation banner
+ * with previous/next controls, the article header (category, title, description, read time, date), the formatted article content,
+ * bottom series navigation cards, and a related-articles section. When the article is not found, renders a not-found UI with a noindex SEO state and a link back to the articles list.
+ *
+ * @returns The rendered blog post UI for the current route slug, or a not-found view if the article is missing.
+ */
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
