@@ -164,7 +164,39 @@ function getSeriesNavigation(currentSlug: string) {
  * @param total - Total number of articles in the series
  * @returns A plain object containing JSON-LD for a `TechArticle`
  */
-/**
+function getArticleSchema(article: Article, currentIndex: number, total: number) {
+  const publishDate = parseArticleDate(article.date).toISOString();
+  const articleUrl = `${SITE_URL}/blog/${article.slug}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: article.title,
+    description: article.description,
+    articleSection: article.category,
+    keywords: article.seoKeywords,
+    datePublished: publishDate,
+    dateModified: publishDate,
+    author: {
+      '@type': 'Person',
+      name: AUTHOR_NAME,
+      url: SITE_URL,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': articleUrl,
+    },
+    url: articleUrl,
+    inLanguage: 'en-US',
+    wordCount: article.content.split(/\s+/).length,
+    isPartOf: {
+      '@type': 'CreativeWorkSeries',
+      name: 'Distributed Systems Series',
+      position: currentIndex,
+      numberOfItems: total,
+    },
+  };
+}
  * Create a Schema.org BreadcrumbList JSON-LD object for the given article page.
  *
  * @param article - Article whose title and slug populate the final breadcrumb item
