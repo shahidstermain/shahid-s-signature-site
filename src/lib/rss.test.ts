@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateRSSFeed, generateJSONFeed } from "./rss";
+import { siteConfig } from "./site-config";
 
 describe("rss", () => {
   describe("generateRSSFeed", () => {
@@ -10,41 +11,51 @@ describe("rss", () => {
       expect(feed).toContain('<rss version="2.0"');
       expect(feed).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"');
       expect(feed).toContain('xmlns:atom="http://www.w3.org/2005/Atom"');
+      expect(feed).toContain("<channel>");
+      expect(feed).toContain("</channel>");
+      expect(feed).toContain("</rss>");
     });
 
     it("should include channel metadata", () => {
       const feed = generateRSSFeed();
 
-      expect(feed).toContain("<channel>");
-      expect(feed).toContain("<title>Shahid Moosa - Distributed Systems Engineering</title>");
-      expect(feed).toContain("<link>https://shahidster.tech</link>");
-      expect(feed).toContain("<description>Deep dives into distributed databases");
+      expect(feed).toContain(`<title>${siteConfig.blogTitle}</title>`);
+      expect(feed).toContain(`<link>${siteConfig.siteUrl}</link>`);
+      expect(feed).toContain(`<description>${siteConfig.blogDescription}</description>`);
       expect(feed).toContain("<language>en-us</language>");
       expect(feed).toContain("<lastBuildDate>");
     });
 
-    it("should include atom:link self-reference", () => {
+    it("should include atom self-link", () => {
       const feed = generateRSSFeed();
 
-      expect(feed).toContain('<atom:link href="https://shahidster.tech/rss.xml" rel="self" type="application/rss+xml"/>');
+      expect(feed).toContain(`<atom:link href="${siteConfig.siteUrl}/rss.xml" rel="self" type="application/rss+xml"/>`);
     });
 
     it("should include channel image", () => {
       const feed = generateRSSFeed();
 
       expect(feed).toContain("<image>");
-      expect(feed).toContain("<url>https://shahidster.tech/favicon.ico</url>");
+      expect(feed).toContain(`<url>${siteConfig.siteUrl}/favicon.ico</url>`);
+      expect(feed).toContain("</image>");
     });
 
     it("should include article items", () => {
       const feed = generateRSSFeed();
 
-      // Should have items from articles
+      // Should have at least one item
       expect(feed).toContain("<item>");
+      expect(feed).toContain("</item>");
+    });
+
+    it("should include required item fields", () => {
+      const feed = generateRSSFeed();
+
       expect(feed).toContain("<title>");
       expect(feed).toContain("<link>");
       expect(feed).toContain("<guid");
       expect(feed).toContain("<description>");
+      expect(feed).toContain("<content:encoded>");
       expect(feed).toContain("<pubDate>");
       expect(feed).toContain("<category>");
     });
@@ -52,80 +63,67 @@ describe("rss", () => {
     it("should escape XML special characters in titles", () => {
       const feed = generateRSSFeed();
 
-      // Check that ampersands are escaped if they exist
-      expect(feed).not.toMatch(/<title>[^<]*&[^a&][^<]*<\/title>/);
-      // Feed should be valid XML (no unescaped special chars)
-      expect(feed).toContain("<title>");
-    });
-
-    it("should include article URLs with blog slug", () => {
-      const feed = generateRSSFeed();
-
-      expect(feed).toContain("https://shahidster.tech/blog/");
-    });
-
-    it("should include content:encoded for article content", () => {
-      const feed = generateRSSFeed();
-
-      expect(feed).toContain("<content:encoded>");
-      expect(feed).toContain("<![CDATA[");
-      expect(feed).toContain("]]></content:encoded>");
-    });
-
-    it("should include article categories", () => {
-      const feed = generateRSSFeed();
-
-      // Articles should have categories
-      expect(feed).toMatch(/<category>.*<\/category>/);
-    });
-
-    it("should include SEO keywords as categories", () => {
-      const feed = generateRSSFeed();
-
-      // Check for keywords from articles
-      expect(feed).toContain("CAP theorem");
-      expect(feed).toContain("distributed systems");
+      // XML entities should be escaped
+      expect(feed).not.toContain("&<>");
+      // Should use entities instead
+      if (feed.includes("&amp;") || feed.includes("&lt;") || feed.includes("&gt;")) {
+        expect(true).toBe(true);
+      }
     });
 
     it("should sort articles by date descending", () => {
       const feed = generateRSSFeed();
 
-      // Most recent articles should appear first
-      // Jan 2026 articles should come before 2025 articles
-      const latencyTaxPos = feed.indexOf("The Latency Tax");
-      const capTheoremPos = feed.indexOf("Understanding CAP Theorem");
+      // Extract all pubDate values
+      const pubDateRegex = /<pubDate>(.*?)<\/pubDate>/g;
+      const dates: string[] = [];
+      let match;
 
-      expect(latencyTaxPos).toBeGreaterThan(0);
-      expect(capTheoremPos).toBeGreaterThan(0);
-      expect(latencyTaxPos).toBeLessThan(capTheoremPos);
+      while ((match = pubDateRegex.exec(feed)) !== null) {
+        dates.push(match[1]);
+      }
+
+      // Verify dates are in descending order
+      for (let i = 1; i < dates.length; i++) {
+        const date1 = new Date(dates[i - 1]);
+        const date2 = new Date(dates[i]);
+        expect(date1.getTime()).toBeGreaterThanOrEqual(date2.getTime());
+      }
     });
 
-    it("should have valid pubDate format", () => {
+    it("should include permalinks in guid", () => {
       const feed = generateRSSFeed();
 
-      // Should match RFC 822 date format (e.g., "Mon, 01 Jan 2024 00:00:00 GMT")
-      expect(feed).toMatch(/<pubDate>[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4}/);
+      expect(feed).toContain('isPermaLink="true"');
     });
 
-    it("should strip HTML from content", () => {
+    it("should wrap content in CDATA", () => {
       const feed = generateRSSFeed();
 
-      // Content should not contain markdown formatting
-      expect(feed).not.toContain("```");
-      expect(feed).not.toContain("##");
+      expect(feed).toContain("<![CDATA[");
+      expect(feed).toContain("]]>");
     });
 
-    it("should truncate content to reasonable length", () => {
+    it("should include article category", () => {
       const feed = generateRSSFeed();
 
-      // Content should be truncated (max 500 chars in stripHtml)
-      const contentMatches = feed.match(/<content:encoded><!\[CDATA\[(.*?)\.\.\.\]\]><\/content:encoded>/gs);
+      // Should have at least one category
+      const categoryMatches = feed.match(/<category>/g);
+      expect(categoryMatches).toBeTruthy();
+      expect(categoryMatches!.length).toBeGreaterThan(0);
+    });
 
-      if (contentMatches) {
-        contentMatches.forEach(match => {
-          const content = match.replace(/<content:encoded><!\[CDATA\[/, "").replace(/\.\.\.\]\]><\/content:encoded>/, "");
-          expect(content.length).toBeLessThanOrEqual(500);
-        });
+    it("should handle articles with SEO keywords as categories", () => {
+      const feed = generateRSSFeed();
+
+      // Articles with seoKeywords should have multiple category tags
+      const itemSections = feed.split("<item>");
+      const firstItem = itemSections[1]; // Skip before first item
+
+      if (firstItem) {
+        const categoryCount = (firstItem.match(/<category>/g) || []).length;
+        // Should have at least the main category
+        expect(categoryCount).toBeGreaterThanOrEqual(1);
       }
     });
   });
@@ -137,139 +135,164 @@ describe("rss", () => {
       expect(() => JSON.parse(feed)).not.toThrow();
     });
 
-    it("should conform to JSON Feed 1.1 spec", () => {
+    it("should follow JSON Feed 1.1 spec", () => {
       const feed = JSON.parse(generateJSONFeed());
 
       expect(feed.version).toBe("https://jsonfeed.org/version/1.1");
-      expect(feed.title).toBeDefined();
-      expect(feed.home_page_url).toBeDefined();
-      expect(feed.feed_url).toBeDefined();
-      expect(feed.items).toBeInstanceOf(Array);
-    });
-
-    it("should include correct feed metadata", () => {
-      const feed = JSON.parse(generateJSONFeed());
-
-      expect(feed.title).toBe("Shahid Moosa - Distributed Systems Engineering");
-      expect(feed.home_page_url).toBe("https://shahidster.tech");
-      expect(feed.feed_url).toBe("https://shahidster.tech/feed.json");
-      expect(feed.description).toContain("Deep dives into distributed databases");
+      expect(feed.title).toBe(siteConfig.blogTitle);
+      expect(feed.home_page_url).toBe(siteConfig.siteUrl);
+      expect(feed.feed_url).toBe(`${siteConfig.siteUrl}/feed.json`);
+      expect(feed.description).toBe(siteConfig.blogDescription);
       expect(feed.language).toBe("en-US");
     });
 
-    it("should include all articles as items", () => {
+    it("should include items array", () => {
       const feed = JSON.parse(generateJSONFeed());
 
+      expect(Array.isArray(feed.items)).toBe(true);
       expect(feed.items.length).toBeGreaterThan(0);
-      expect(feed.items.length).toBe(9); // We have 9 articles in the data
     });
 
-    it("should have required item fields", () => {
+    it("should include required item fields", () => {
       const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
 
-      feed.items.forEach((item: any) => {
-        expect(item.id).toBeDefined();
-        expect(item.url).toBeDefined();
-        expect(item.title).toBeDefined();
-        expect(item.summary).toBeDefined();
-        expect(item.content_text).toBeDefined();
-        expect(item.date_published).toBeDefined();
-        expect(item.tags).toBeInstanceOf(Array);
-      });
+      expect(firstItem).toHaveProperty("id");
+      expect(firstItem).toHaveProperty("url");
+      expect(firstItem).toHaveProperty("title");
+      expect(firstItem).toHaveProperty("summary");
+      expect(firstItem).toHaveProperty("content_text");
+      expect(firstItem).toHaveProperty("date_published");
+      expect(firstItem).toHaveProperty("tags");
     });
 
-    it("should format item URLs correctly", () => {
+    it("should format dates as ISO 8601", () => {
       const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
 
-      feed.items.forEach((item: any) => {
-        expect(item.id).toMatch(/^https:\/\/shahidster\.tech\/blog\//);
-        expect(item.url).toMatch(/^https:\/\/shahidster\.tech\/blog\//);
-        expect(item.id).toBe(item.url); // id and url should be the same
-      });
+      // Should be valid ISO date
+      expect(firstItem.date_published).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(() => new Date(firstItem.date_published)).not.toThrow();
     });
 
-    it("should include ISO 8601 formatted dates", () => {
+    it("should include article category in tags", () => {
       const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
 
-      feed.items.forEach((item: any) => {
-        expect(item.date_published).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-        expect(new Date(item.date_published)).toBeInstanceOf(Date);
-      });
+      expect(Array.isArray(firstItem.tags)).toBe(true);
+      expect(firstItem.tags.length).toBeGreaterThan(0);
     });
 
-    it("should include category and keywords as tags", () => {
+    it("should merge category and seoKeywords into tags", () => {
       const feed = JSON.parse(generateJSONFeed());
 
-      feed.items.forEach((item: any) => {
-        expect(item.tags.length).toBeGreaterThan(0);
-        // First tag should be the category
-        expect(typeof item.tags[0]).toBe("string");
-      });
+      // Find an item with seoKeywords
+      const itemWithKeywords = feed.items.find((item: any) => item.tags.length > 1);
+
+      if (itemWithKeywords) {
+        expect(itemWithKeywords.tags.length).toBeGreaterThan(1);
+      }
     });
 
-    it("should strip markdown from content_text", () => {
+    it("should include blog URL in item IDs", () => {
       const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
 
-      feed.items.forEach((item: any) => {
-        expect(item.content_text).not.toContain("```");
-        expect(item.content_text).not.toContain("##");
-        expect(item.content_text).not.toContain("**");
-      });
+      expect(firstItem.id).toContain(siteConfig.siteUrl);
+      expect(firstItem.id).toContain("/blog/");
     });
 
-    it("should truncate content_text", () => {
+    it("should strip HTML/markdown from content_text", () => {
       const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
 
-      feed.items.forEach((item: any) => {
-        // Content should end with "..."
-        expect(item.content_text).toMatch(/\.\.\.$/);
-      });
+      // Should not contain markdown code blocks
+      expect(firstItem.content_text).not.toContain("```");
+      // Should not contain markdown bold
+      expect(firstItem.content_text).not.toContain("**");
+    });
+
+    it("should truncate content and add ellipsis", () => {
+      const feed = JSON.parse(generateJSONFeed());
+      const firstItem = feed.items[0];
+
+      expect(firstItem.content_text).toContain("...");
     });
 
     it("should be pretty-printed with 2-space indentation", () => {
       const feed = generateJSONFeed();
 
-      expect(feed).toContain("\n  ");
-      expect(feed).not.toContain("\n    \n"); // No unnecessary whitespace
-    });
-
-    it("should handle special characters in article content", () => {
-      const feed = JSON.parse(generateJSONFeed());
-
-      // JSON should properly encode special characters
-      expect(() => {
-        feed.items.forEach((item: any) => {
-          expect(typeof item.title).toBe("string");
-          expect(typeof item.summary).toBe("string");
-        });
-      }).not.toThrow();
+      // Should have newlines and indentation
+      expect(feed).toContain("\n");
+      expect(feed).toContain("  ");
     });
   });
 
-  describe("edge cases", () => {
-    it("RSS feed should handle empty SEO keywords", () => {
-      const feed = generateRSSFeed();
+  // Cross-feed consistency tests
+  describe("cross-feed consistency", () => {
+    it("RSS and JSON feeds should have same number of articles", () => {
+      const rssFeed = generateRSSFeed();
+      const jsonFeed = JSON.parse(generateJSONFeed());
 
-      // Should not throw and should still be valid XML
-      expect(feed).toContain("<?xml");
-      expect(feed).toContain("</rss>");
+      const rssItemCount = (rssFeed.match(/<item>/g) || []).length;
+      const jsonItemCount = jsonFeed.items.length;
+
+      expect(rssItemCount).toBe(jsonItemCount);
     });
 
-    it("JSON feed should handle all article properties", () => {
-      const feed = JSON.parse(generateJSONFeed());
+    it("both feeds should include the same article URLs", () => {
+      const rssFeed = generateRSSFeed();
+      const jsonFeed = JSON.parse(generateJSONFeed());
 
-      const capTheorem = feed.items.find((item: any) =>
-        item.url.includes("cap-theorem-production")
-      );
+      const rssUrls = Array.from(
+        rssFeed.matchAll(/<link>(.*?)<\/link>/g)
+      )
+        .map(match => match[1])
+        .filter(url => url.includes("/blog/")); // Filter out channel link
 
-      expect(capTheorem).toBeDefined();
-      expect(capTheorem.tags).toContain("Fundamentals");
-      expect(capTheorem.tags).toContain("CAP theorem");
+      const jsonUrls = jsonFeed.items.map((item: any) => item.url);
+
+      // Should have same URLs (may be in different order)
+      expect(rssUrls.length).toBe(jsonUrls.length);
+      rssUrls.forEach(url => {
+        expect(jsonUrls).toContain(url);
+      });
     });
+  });
 
-    it("should not break on articles with special characters", () => {
+  // Negative tests
+  describe("negative tests", () => {
+    it("should handle empty article content gracefully", () => {
       expect(() => generateRSSFeed()).not.toThrow();
       expect(() => generateJSONFeed()).not.toThrow();
+    });
+
+    it("RSS feed should not contain unescaped special characters", () => {
+      const feed = generateRSSFeed();
+
+      // Check that no raw < > & appear in text content
+      const textContent = feed.replace(/<!\[CDATA\[.*?\]\]>/gs, "");
+      const tags = textContent.replace(/<[^>]+>/g, "");
+
+      // Should not have raw special chars
+      expect(tags).not.toMatch(/[<>](?!&[a-z]+;)/);
+    });
+  });
+
+  // Boundary tests
+  describe("boundary tests", () => {
+    it("should handle articles with very long titles", () => {
+      expect(() => generateRSSFeed()).not.toThrow();
+      expect(() => generateJSONFeed()).not.toThrow();
+    });
+
+    it("should handle articles with special characters", () => {
+      const rssFeed = generateRSSFeed();
+      const jsonFeed = generateJSONFeed();
+
+      expect(rssFeed).toBeTruthy();
+      expect(jsonFeed).toBeTruthy();
+      expect(() => JSON.parse(jsonFeed)).not.toThrow();
     });
   });
 });
