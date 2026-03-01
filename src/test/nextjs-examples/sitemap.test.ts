@@ -254,7 +254,7 @@ describe('Sitemap Generation', () => {
     it('should handle articles without featured flag', () => {
       const articlesWithoutFeatured = mockArticles.map((a) => ({
         ...a,
-        featured: undefined as any,
+        featured: undefined as unknown as boolean,
       }));
 
       const sitemap = generateSitemap(articlesWithoutFeatured);
