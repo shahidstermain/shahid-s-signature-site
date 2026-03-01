@@ -210,19 +210,11 @@ export function generateWebsiteSchema() {
 }
 
 /**
- * Builds a JSON-LD TechArticle object for a blog article.
+ * Create a JSON-LD object representing a Schema.org `TechArticle` for a blog post.
  *
- * @param article - Article fields:
- *   - title: Article headline
- *   - description: Short summary
- *   - slug: URL path segment used to form the article's canonical URL
- *   - date: Publish month and year in "Mon YYYY" format (e.g., "Nov 2025")
- *   - category: Article section or category
- *   - content: Full article text (used to compute word count)
- *   - seoKeywords: Optional list of SEO keywords
- *   - seriesPosition: Optional position within a series
- * @param seriesInfo - Optional series metadata with `currentIndex` (position) and `total` (number of items)
- * @returns A JSON-LD object conforming to Schema.org's `TechArticle` describing the article (headline, description, dates, author, publisher, mainEntityOfPage, section, keywords, word count, proficiency level, language, and optional series membership)
+ * @param article - Article data used to populate the TechArticle fields (headline, description, canonical URL derived from `slug`, publish date from `date`, category, content for word count, and optional `seoKeywords`/`seriesPosition`)
+ * @param seriesInfo - Optional series metadata with `currentIndex` (position in series) and `total` (number of items); when provided, adds `isPartOf` information to the schema
+ * @returns A JSON-LD object conforming to Schema.org's `TechArticle` describing the article (IDs, headline, description, publish/modified dates, author, publisher, mainEntityOfPage, section, keywords, word count, proficiency level, and language)
  */
 export function generateArticleSchema(article: {
   title: string;
@@ -321,12 +313,12 @@ export function generateFAQSchema(faqs: Array<{ question: string; answer: string
 }
 
 /**
- * Send a page-view event to Google Analytics 4 for the specified URL.
+ * Report a page view to Google Analytics 4 for the given page path.
  *
- * If the analytics function is unavailable in the runtime environment, this is a no-op.
+ * If the GA `gtag` function is not available in the runtime environment, this function does nothing.
  *
- * @param url - The page path to report as `page_path`
- * @param title - Optional page title to report as `page_title`
+ * @param url - The page path to send as `page_path`
+ * @param title - Optional page title to send as `page_title`
  */
 export function trackPageView(url: string, title?: string) {
   if (typeof window !== 'undefined' && window.gtag) {
@@ -366,15 +358,15 @@ declare global {
 }
 
 /**
- * Convert Markdown or HTML-like text into plain text suitable for meta descriptions.
+ * Sanitizes Markdown- or HTML-like text into plain text suitable for meta descriptions.
  *
  * Removes code blocks, inline code, Markdown formatting (bold, italic, headers) and link markup,
- * collapses consecutive newlines into single spaces, trims surrounding whitespace, and
- * truncates the result to `maxLength` characters, appending `...` when truncation occurs.
+ * collapses consecutive newlines to single spaces, trims surrounding whitespace, and truncates
+ * the result when it exceeds the specified maximum length.
  *
- * @param content - The Markdown or HTML-like string to sanitize
- * @param maxLength - Maximum length of the returned string; defaults to 160. When truncation occurs, the returned string ends with `...` and its total length will not exceed `maxLength`.
- * @returns Plain-text string with Markdown removed; truncated and suffixed with `...` when longer than `maxLength`
+ * @param content - The Markdown or HTML-like string to sanitize.
+ * @param maxLength - Maximum allowed length of the returned string (default: 160). When truncation occurs, the returned string ends with `...` and its total length will not exceed `maxLength`.
+ * @returns Plain-text string with Markdown/HTML removed; truncated and suffixed with `...` when longer than `maxLength`.
  */
 export function stripMarkdown(content: string, maxLength: number = 160): string {
   const plain = content

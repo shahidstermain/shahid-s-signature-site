@@ -37,9 +37,9 @@ interface PageProps {
 export const revalidate = 3600;
 
 /**
- * Provide route parameter objects for every article so Next.js can pre-render their pages.
+ * Generate route parameter objects for all articles to enable pre-rendering.
  *
- * @returns An array of objects each containing a `slug` property for an article, used as static route params
+ * @returns An array of route parameter objects where each object has a `slug` property for an article
  */
 export async function generateStaticParams() {
   return articles.map((article) => ({
@@ -137,14 +137,14 @@ export async function generateMetadata(
 }
 
 /**
- * Computes the previous and next articles and the current position within the article series.
+ * Determine neighboring articles and the 1-based position of a given article slug within the series.
  *
  * @param currentSlug - Slug of the current article
  * @returns An object containing:
- *  - `prev`: the previous article object, or `null` if the current article is the first
- *  - `next`: the next article object, or `null` if the current article is the last
- *  - `currentIndex`: the 1-based index of the current article within the series
- *  - `total`: the total number of articles in the series
+ *  - `prev` — the previous article object, or `null` if there is no previous article
+ *  - `next` — the next article object, or `null` if there is no next article
+ *  - `currentIndex` — the 1-based index of the current article within the series
+ *  - `total` — the total number of articles in the series
  */
 function getSeriesNavigation(currentSlug: string) {
   const currentIndex = articles.findIndex((a) => a.slug === currentSlug);

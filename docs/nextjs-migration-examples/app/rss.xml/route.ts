@@ -45,10 +45,10 @@ function escapeXml(text: string): string {
  */
 
 /**
- * Produces a plain-text excerpt from Markdown or HTML suitable for summaries.
+ * Converts Markdown or HTML into a plain-text excerpt suitable for summaries.
  *
- * @param content - The Markdown or HTML string to convert into a plain-text summary.
- * @returns Plain text with code blocks, inline code, basic formatting, and links removed or converted; trimmed and truncated to 500 characters.
+ * @param content - Markdown or HTML to convert.
+ * @returns Plain text with code blocks and inline code removed, basic formatting and headings stripped, links converted to their link text, collapsed whitespace trimmed, and truncated to 500 characters.
  */
 function stripMarkdown(content: string): string {
   return content

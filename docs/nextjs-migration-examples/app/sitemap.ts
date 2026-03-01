@@ -17,10 +17,10 @@ import { articles } from '@/data/articles';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Parse a date string like "Nov 2025" into a Date set to the 15th day of that month and year.
+ * Parses a date string like "Nov 2025" and returns a Date set to the 15th of that month and year.
  *
- * @param dateStr - A string in the format "Mon YYYY" where `Mon` is a three-letter English month abbreviation (e.g., "Jan", "Feb").
- * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If `dateStr` does not match the expected format, returns the current date.
+ * @param dateStr - A string in the format "Mon YYYY" where `Mon` is a three-letter English month abbreviation (e.g., "Jan", "Feb")
+ * @returns A Date set to the 15th day of the parsed month and year. If the month abbreviation is unrecognized, January is used. If `dateStr` does not match the expected "Mon YYYY" format, returns the current date.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {

@@ -161,9 +161,9 @@ function getPersonSchema() {
 }
 
 /**
- * Generate a Schema.org `WebSite` JSON-LD object describing the site and its search action.
+ * Generates a Schema.org WebSite JSON-LD object describing the site and its search action.
  *
- * @returns A JSON-LD object for Schema.org `WebSite` with site metadata (`@id`, `url`, `name`, `description`, `publisher`, `inLanguage`) and a `potentialAction` `SearchAction` that provides a URL template for site search.
+ * @returns A JSON-LD object for Schema.org `WebSite` including `@id`, `url`, `name`, `description`, `publisher`, `inLanguage`, and a `potentialAction` `SearchAction` with a URL template for site search.
  */
 function getWebsiteSchema() {
   return {
