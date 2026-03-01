@@ -204,10 +204,6 @@
 
     "rewrites": [
       {
-        "source": "/blog/**",
-        "destination": "/blog/[slug].html"
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }
