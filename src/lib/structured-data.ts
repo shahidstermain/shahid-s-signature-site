@@ -34,7 +34,9 @@ export const buildArticleJsonLd = (
   const articleUrl = `${siteConfig.siteUrl}/blog/${article.slug}`;
   const wordCount = article.content.split(/\s+/).length;
   const isPartOf =
-    options?.total && options?.currentIndex
+    options?.total &&
+    options?.currentIndex != null &&
+    options.currentIndex > 0
       ? {
           "@type": "CreativeWorkSeries",
           name: article.category,
