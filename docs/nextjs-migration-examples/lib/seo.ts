@@ -42,7 +42,16 @@ export const SITE_CONFIG = {
  * @returns The canonical absolute URL for the given path
  */
 export function getCanonicalUrl(path: string = ''): string {
-  const cleanPath = path === '/' ? '' : path.replace(/\/$/, '');
+  // Empty or root path should yield the site base URL
+  if (!path || path === '/') {
+    return SITE_CONFIG.url;
+  }
+
+  // Ensure the path starts with a leading slash
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+
+  // Remove a trailing slash (if any) from non-root paths
+  const cleanPath = withLeadingSlash.replace(/\/$/, '');
   return `${SITE_CONFIG.url}${cleanPath}`;
 }
 
