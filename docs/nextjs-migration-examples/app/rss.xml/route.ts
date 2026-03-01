@@ -63,14 +63,14 @@ function stripMarkdown(content: string): string {
 }
 
 /**
- * Generates and returns the site's RSS 2.0 feed XML for all blog articles.
+ * Generate the site's RSS 2.0 feed XML for all blog articles.
  *
- * Builds an RSS document containing channel metadata, an Atom self-link, an image block,
- * and one <item> per article. Each item includes title, link/guid, description, CDATA-wrapped
- * content:encoded (excerpt), pubDate, author, and category elements derived from the article's
- * category and SEO keywords. Article dates are sorted newest-first and textual fields are XML-escaped.
+ * The feed includes channel metadata (title, link, description, language, dates, ttl, generator,
+ * managing editor, web master, copyright), an Atom self-link, an image block, and one <item> per
+ * article. Each item contains title, link/guid, description, CDATA-wrapped content:encoded excerpt,
+ * publication date, author, and category elements derived from the article's category and SEO keywords.
  *
- * @returns An HTTP Response whose body is the RSS XML document and which includes Content-Type and cache-related headers.
+ * @returns An HTTP Response whose body is the RSS 2.0 XML document and which includes Content-Type and cache-related headers.
  */
 export async function GET() {
   const now = new Date().toUTCString();

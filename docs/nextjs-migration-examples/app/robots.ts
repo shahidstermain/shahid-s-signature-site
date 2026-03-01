@@ -17,11 +17,11 @@ import { MetadataRoute } from 'next';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 
 /**
- * Produces a robots.txt configuration appropriate for the current environment and site URL.
+ * Generate a robots configuration tailored to the runtime environment and SITE_URL.
  *
- * In non-production environments or when the SITE_URL is not the production domain, returns a configuration that blocks all crawlers. In production on the expected domain, returns per-user-agent allow/disallow rules for common crawlers and includes `sitemap` and `host` entries.
+ * Blocks all crawlers when NODE_ENV is not "production" or SITE_URL does not include "shahidster.tech". In production on the production domain, returns per-user-agent allow/disallow rules for common crawlers and includes `sitemap` and `host`.
  *
- * @returns The robots configuration: in non-production or for a non-production domain, a single rule disallowing all crawlers; in production on the production domain, a full robots configuration with per-user-agent rules plus `sitemap` and `host`.
+ * @returns The robots configuration: if not production or domain mismatch, an object that disallows all crawlers; otherwise an object containing a `rules` array of per-user-agent directives plus `sitemap` and `host` set to the site URL.
  */
 export default function robots(): MetadataRoute.Robots {
   // Block all crawlers on non-production environments

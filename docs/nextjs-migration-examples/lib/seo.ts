@@ -210,19 +210,19 @@ export function generateWebsiteSchema() {
 }
 
 /**
- * Create a JSON-LD TechArticle object for embedding Schema.org metadata for a blog article.
+ * Builds a JSON-LD TechArticle object for a blog article.
  *
- * @param article - Article data including:
+ * @param article - Article fields:
  *   - title: Article headline
- *   - description: Short summary of the article
- *   - slug: URL path segment for the article
- *   - date: Publish date in "Mon YYYY" format (e.g., "Nov 2025")
+ *   - description: Short summary
+ *   - slug: URL path segment used to form the article's canonical URL
+ *   - date: Publish month and year in "Mon YYYY" format (e.g., "Nov 2025")
  *   - category: Article section or category
- *   - content: Full article content used to compute word count
+ *   - content: Full article text (used to compute word count)
  *   - seoKeywords: Optional list of SEO keywords
  *   - seriesPosition: Optional position within a series
  * @param seriesInfo - Optional series metadata with `currentIndex` (position) and `total` (number of items)
- * @returns A JSON-LD object representing a Schema.org `TechArticle` populated with headline, description, publication/modification dates, author and publisher, mainEntityOfPage, section, keywords, word count, proficiency level, language, and optional series information
+ * @returns A JSON-LD object conforming to Schema.org's `TechArticle` describing the article (headline, description, dates, author, publisher, mainEntityOfPage, section, keywords, word count, proficiency level, language, and optional series membership)
  */
 export function generateArticleSchema(article: {
   title: string;
@@ -395,13 +395,13 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
 }
 
 /**
- * Estimate the reading time for the provided text content.
+ * Estimate reading time for the given text using a words-per-minute rate.
  *
- * Rounds up to the nearest whole minute.
+ * Rounds the result up to the nearest whole minute.
  *
- * @param content - The text whose reading time will be estimated.
- * @param wordsPerMinute - Reading speed to use (words per minute). Defaults to 200.
- * @returns A string in the form `X min read` where `X` is the estimated minutes.
+ * @param content - Text to estimate reading time for.
+ * @param wordsPerMinute - Words-per-minute rate to use; defaults to 200.
+ * @returns A string in the form `X min read` where `X` is the estimated minutes (rounded up).
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
   const wordCount = content.split(/\s+/).length;

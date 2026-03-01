@@ -65,13 +65,13 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Generates metadata for a blog post identified by the route slug.
+ * Build metadata for a blog post identified by the route slug.
  *
- * Builds a Metadata object from the article data including Open Graph (article type, images, authors, published/modified times, section, tags), Twitter card info, canonical alternate, and other article properties. If the article is not found, returns a fallback metadata object that indicates the article is missing and instructs crawlers not to index the page.
+ * Produces a Metadata object containing title, description, authors, Open Graph (article type, images, published/modified times, section, tags), Twitter card data, canonical alternate, and additional article-specific fields. If the article cannot be found, returns metadata indicating "Article Not Found" with a descriptive `description` and `robots: { index: false, follow: true }`.
  *
  * @param params - Route parameters; expects `params.slug` to identify the article
- * @param parent - Parent/resolved metadata used to inherit values (e.g., previous Open Graph images)
- * @returns Metadata for the requested article. If the article is missing, returns metadata with title "Article Not Found", a short descriptive `description`, and `robots: { index: false, follow: true }`
+ * @param parent - Parent/resolved metadata used to inherit values (for example, previous Open Graph images)
+ * @returns The Metadata for the requested article, or a fallback "Article Not Found" metadata when the article is missing
  */
 export async function generateMetadata(
   { params }: PageProps,
@@ -165,10 +165,10 @@ function getSeriesNavigation(currentSlug: string) {
  * @returns A plain object containing JSON-LD for a `TechArticle`
  */
 /**
- * Build a BreadcrumbList JSON-LD object for the article page.
+ * Create a Schema.org BreadcrumbList JSON-LD object for the given article page.
  *
- * @param article - Article used to populate the breadcrumb's final item (title and slug)
- * @returns A Schema.org `BreadcrumbList` object with Home, Writing, and the article entries
+ * @param article - Article whose title and slug populate the final breadcrumb item
+ * @returns A `BreadcrumbList` object with ordered items: Home, Writing, and the article's page URL
  */
 function getBreadcrumbSchema(article: Article) {
   return {
@@ -198,14 +198,14 @@ function getBreadcrumbSchema(article: Article) {
 }
 
 /**
- * Convert a lightweight markdown-like string to HTML.
+ * Converts a lightweight markdown-like string into HTML.
  *
- * Supports: level-2 and level-3 headings (##, ###), bold (`**bold**`), inline code/backticks,
- * fenced code blocks (```lang\n...\n```), horizontal rules (`---`), blockquotes (`> `),
- * unordered list items (`- `), paragraph separation, and removal of empty paragraphs.
+ * Supported syntax: level-2 and level-3 headings (##, ###), bold (`**bold**`),
+ * inline code/backticks, fenced code blocks (```lang ...```), horizontal rules (`---`),
+ * blockquotes (`> `), unordered list items (`- `), paragraph grouping, and removal of empty paragraphs.
  *
  * @param content - Source text containing lightweight markdown-like markup
- * @returns The input text converted to HTML using the supported transformations
+ * @returns The HTML string produced from `content` with the supported transformations applied
  */
 function formatContent(content: string): string {
   return content
