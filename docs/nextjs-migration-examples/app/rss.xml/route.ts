@@ -38,10 +38,10 @@ function escapeXml(text: string): string {
 }
 
 /**
- * Converts a "Mon YYYY" date string (e.g., "Nov 2025") to a Date set to the 15th of that month.
+ * Converts a "Mon YYYY" date string (e.g., "Nov 2025") to a Date set to the 1st of that month.
  *
  * @param dateStr - Three-letter English month abbreviation followed by the four-digit year.
- * @returns A Date for the 15th day of the specified month and year; uses January if the month abbreviation is unrecognized.
+ * @returns A Date for the 1st day of the specified month and year; uses January if the month abbreviation is unrecognized.
  */
 function parseDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -49,7 +49,14 @@ function parseDate(dateStr: string): Date {
     Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
   };
   const [month, year] = dateStr.split(' ');
-  return new Date(parseInt(year), months[month] || 0, 15);
+  const monthIndex = months[month] ?? 0;
+  const yearNumber = Number.parseInt(year ?? '', 10);
+
+  if (Number.isNaN(yearNumber)) {
+    return new Date();
+  }
+
+  return new Date(Date.UTC(yearNumber, monthIndex, 1));
 }
 
 /**
