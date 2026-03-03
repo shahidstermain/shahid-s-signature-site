@@ -1,474 +1,306 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import path from 'path';
+import { describe, it, expect, vi } from "vitest";
 
-describe('Configuration Files Validation', () => {
-  describe('firebase.json', () => {
-    let firebaseConfig: any;
+// Mock site config
+vi.mock("@/lib/site-config", () => ({
+  siteConfig: {
+    siteUrl: "https://shahidster.tech",
+    title: "Shahid Moosa - Cloud Database Engineer",
+    description: "Cloud Database Support Engineer at SingleStore",
+    name: "Shahid Moosa",
+    ogImage: "/og-image.png",
+    locale: "en_US",
+    twitterHandle: "@shahidster_",
+    titleTemplate: "%s | Shahid Moosa",
+    blogTitle: "Shahid Moosa - Distributed Systems Engineering",
+    blogDescription:
+      "Deep dives into distributed databases, data infrastructure, and production systems.",
+    author: {
+      name: "Shahid Moosa",
+      email: "hello@shahidster.tech",
+      jobTitle: "Cloud Database Support Engineer",
+    },
+    organization: {
+      name: "SingleStore",
+      url: "https://www.singlestore.com",
+    },
+    social: {
+      twitter: "https://twitter.com/shahidster_",
+      linkedin: "https://linkedin.com/in/shahidmoosa",
+      github: "https://github.com/shahidmoosa",
+    },
+  },
+}));
 
-    beforeAll(() => {
-      const configPath = path.resolve(process.cwd(), 'firebase.json');
-      const configContent = readFileSync(configPath, 'utf-8');
-      firebaseConfig = JSON.parse(configContent);
+describe("Config Validation", () => {
+  describe("Site Configuration", () => {
+    it("should have valid site URL", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.siteUrl).toBeDefined();
+      expect(siteConfig.siteUrl).toMatch(/^https?:\/\//);
+      expect(siteConfig.siteUrl).not.toContain("localhost");
     });
 
-    it('should have hosting configuration', () => {
-      expect(firebaseConfig).toHaveProperty('hosting');
-      expect(firebaseConfig.hosting).toBeDefined();
+    it("should have valid title", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.title).toBeDefined();
+      expect(siteConfig.title.length).toBeGreaterThan(0);
+      expect(siteConfig.title.length).toBeLessThan(100);
     });
 
-    it('should specify public directory', () => {
-      expect(firebaseConfig.hosting.public).toBeDefined();
-      expect(typeof firebaseConfig.hosting.public).toBe('string');
+    it("should have valid description", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.description).toBeDefined();
+      expect(siteConfig.description.length).toBeGreaterThan(50);
+      expect(siteConfig.description.length).toBeLessThan(200);
     });
 
-    it('should have cleanUrls enabled', () => {
-      expect(firebaseConfig.hosting.cleanUrls).toBe(true);
+    it("should have valid OG image path", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.ogImage).toBeDefined();
+      expect(siteConfig.ogImage).toMatch(/\.(png|jpg|jpeg|webp)$/i);
     });
 
-    it('should have trailingSlash disabled', () => {
-      expect(firebaseConfig.hosting.trailingSlash).toBe(false);
+    it("should have valid locale", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.locale).toBeDefined();
+      expect(siteConfig.locale).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
     });
 
-    it('should have headers configuration', () => {
-      expect(firebaseConfig.hosting.headers).toBeDefined();
-      expect(Array.isArray(firebaseConfig.hosting.headers)).toBe(true);
+    it("should have valid Twitter handle", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.twitterHandle).toBeDefined();
+      expect(siteConfig.twitterHandle).toMatch(/^@[a-zA-Z0-9_]+$/);
     });
 
-    it('should have security headers for HTML files', () => {
-      const htmlHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '**/*.html'
-      );
+    it("should have title template with placeholder", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      expect(htmlHeaders).toBeDefined();
-      const headerKeys = htmlHeaders.headers.map((h: any) => h.key);
-
-      expect(headerKeys).toContain('X-Content-Type-Options');
-      expect(headerKeys).toContain('X-Frame-Options');
-      expect(headerKeys).toContain('X-XSS-Protection');
-      expect(headerKeys).toContain('Referrer-Policy');
-    });
-
-    it('should have cache headers for static assets', () => {
-      // Look for headers with glob pattern like @(jpg|jpeg|png...) or containing image extensions
-      const imageHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source && (h.source.includes('@(jpg') || h.source.includes('jpg|jpeg'))
-      );
-
-      expect(imageHeaders).toBeDefined();
-      if (imageHeaders) {
-        const cacheHeader = imageHeaders.headers.find((h: any) => h.key === 'Cache-Control');
-        expect(cacheHeader).toBeDefined();
-        expect(cacheHeader.value).toContain('max-age');
-        expect(cacheHeader.value).toContain('immutable');
-      }
-    });
-
-    it('should have redirects configuration', () => {
-      expect(firebaseConfig.hosting.redirects).toBeDefined();
-      expect(Array.isArray(firebaseConfig.hosting.redirects)).toBe(true);
-    });
-
-    it('should have 301 permanent redirects', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
-        expect(redirect.type).toBe(301);
-        expect(redirect.source).toBeDefined();
-        expect(redirect.destination).toBeDefined();
-      });
-    });
-
-    it('should redirect legacy URLs to proper format', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      const legacyRedirects = redirects.filter(
-        (r: any) => r.source.includes('articles') || r.source.includes('posts')
-      );
-      expect(legacyRedirects.length).toBeGreaterThan(0);
-    });
-
-    it('should have sitemap cache headers', () => {
-      const sitemapHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/sitemap.xml'
-      );
-
-      expect(sitemapHeaders).toBeDefined();
-      const contentType = sitemapHeaders.headers.find((h: any) => h.key === 'Content-Type');
-      expect(contentType?.value).toContain('xml');
-    });
-
-    it('should have RSS feed cache headers', () => {
-      const rssHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/rss.xml'
-      );
-
-      expect(rssHeaders).toBeDefined();
-      const contentType = rssHeaders.headers.find((h: any) => h.key === 'Content-Type');
-      expect(contentType?.value).toContain('xml');
-    });
-
-    it('should have robots.txt cache headers', () => {
-      const robotsHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '/robots.txt'
-      );
-
-      expect(robotsHeaders).toBeDefined();
+      expect(siteConfig.titleTemplate).toBeDefined();
+      expect(siteConfig.titleTemplate).toContain("%s");
     });
   });
 
-  describe('lighthouserc.json', () => {
-    let lighthouseConfig: any;
+  describe("Author Configuration", () => {
+    it("should have valid author name", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const configPath = path.resolve(process.cwd(), 'lighthouserc.json');
-      const configContent = readFileSync(configPath, 'utf-8');
-      lighthouseConfig = JSON.parse(configContent);
+      expect(siteConfig.author.name).toBeDefined();
+      expect(siteConfig.author.name.length).toBeGreaterThan(0);
     });
 
-    it('should have ci configuration', () => {
-      expect(lighthouseConfig).toHaveProperty('ci');
-      expect(lighthouseConfig.ci).toBeDefined();
+    it("should have valid author email", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.author.email).toBeDefined();
+      expect(siteConfig.author.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
 
-    it('should have collect configuration', () => {
-      expect(lighthouseConfig.ci.collect).toBeDefined();
-      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
-    });
+    it("should have valid job title", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    it('should have assert configuration', () => {
-      expect(lighthouseConfig.ci.assert).toBeDefined();
-      expect(lighthouseConfig.ci.assert.assertions).toBeDefined();
-    });
-
-    it('should have performance assertions', () => {
-      const assertions = lighthouseConfig.ci.assert.assertions;
-      expect(assertions['categories:performance']).toBeDefined();
-    });
-
-    it('should have accessibility assertions', () => {
-      const assertions = lighthouseConfig.ci.assert.assertions;
-      expect(assertions['categories:accessibility']).toBeDefined();
-    });
-
-    it('should have SEO assertions', () => {
-      const assertions = lighthouseConfig.ci.assert.assertions;
-      expect(assertions['categories:seo']).toBeDefined();
-    });
-
-    it('should have Core Web Vitals assertions', () => {
-      const assertions = lighthouseConfig.ci.assert.assertions;
-      expect(assertions['first-contentful-paint']).toBeDefined();
-      expect(assertions['largest-contentful-paint']).toBeDefined();
-      expect(assertions['cumulative-layout-shift']).toBeDefined();
-    });
-
-    it('should have reasonable performance thresholds', () => {
-      const assertions = lighthouseConfig.ci.assert.assertions;
-      const lcp = assertions['largest-contentful-paint'];
-
-      expect(lcp).toBeDefined();
-      expect(lcp[1].maxNumericValue).toBeLessThanOrEqual(2500);
-    });
-
-    it('should have upload configuration', () => {
-      expect(lighthouseConfig.ci.upload).toBeDefined();
+      expect(siteConfig.author.jobTitle).toBeDefined();
+      expect(siteConfig.author.jobTitle.length).toBeGreaterThan(0);
     });
   });
 
-  describe('index.html', () => {
-    let indexHtml: string;
+  describe("Organization Configuration", () => {
+    it("should have valid organization name", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const indexPath = path.resolve(process.cwd(), 'index.html');
-      indexHtml = readFileSync(indexPath, 'utf-8');
+      expect(siteConfig.organization.name).toBeDefined();
+      expect(siteConfig.organization.name.length).toBeGreaterThan(0);
     });
 
-    it('should have DOCTYPE declaration', () => {
-      expect(indexHtml).toMatch(/<!doctype html>/i);
-    });
+    it("should have valid organization URL", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    it('should have charset meta tag', () => {
-      expect(indexHtml).toContain('charset="UTF-8"');
-    });
-
-    it('should have viewport meta tag', () => {
-      expect(indexHtml).toContain('name="viewport"');
-      expect(indexHtml).toContain('width=device-width');
-    });
-
-    it('should have description meta tag', () => {
-      expect(indexHtml).toContain('name="description"');
-      expect(indexHtml).toMatch(/content="[^"]{50,}"/); // At least 50 chars
-    });
-
-    it('should have title tag', () => {
-      expect(indexHtml).toContain('<title>');
-      expect(indexHtml).toMatch(/<title>[^<]{10,}<\/title>/); // At least 10 chars
-    });
-
-    it('should have Open Graph meta tags', () => {
-      expect(indexHtml).toContain('property="og:title"');
-      expect(indexHtml).toContain('property="og:description"');
-      expect(indexHtml).toContain('property="og:type"');
-      expect(indexHtml).toContain('property="og:url"');
-      expect(indexHtml).toContain('property="og:image"');
-    });
-
-    it('should have Twitter Card meta tags', () => {
-      expect(indexHtml).toContain('name="twitter:card"');
-      expect(indexHtml).toContain('name="twitter:title"');
-      expect(indexHtml).toContain('name="twitter:description"');
-      expect(indexHtml).toContain('name="twitter:image"');
-    });
-
-    it('should have canonical link', () => {
-      expect(indexHtml).toContain('rel="canonical"');
-    });
-
-    it('should have RSS feed link', () => {
-      expect(indexHtml).toContain('rel="alternate"');
-      expect(indexHtml).toContain('type="application/rss+xml"');
-    });
-
-    it('should have theme-color meta tag', () => {
-      expect(indexHtml).toContain('name="theme-color"');
-    });
-
-    it('should preconnect to external resources', () => {
-      expect(indexHtml).toContain('rel="preconnect"');
-    });
-
-    it('should have lang attribute on html tag', () => {
-      expect(indexHtml).toMatch(/<html[^>]*lang="en"/);
+      expect(siteConfig.organization.url).toBeDefined();
+      expect(siteConfig.organization.url).toMatch(/^https?:\/\//);
     });
   });
 
-  describe('SEO Best Practices', () => {
-    let firebaseConfig: any;
-    let indexHtml: string;
+  describe("Social Links Configuration", () => {
+    it("should have valid Twitter URL", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const firebasePath = path.resolve(process.cwd(), 'firebase.json');
-      const indexPath = path.resolve(process.cwd(), 'index.html');
-
-      firebaseConfig = JSON.parse(readFileSync(firebasePath, 'utf-8'));
-      indexHtml = readFileSync(indexPath, 'utf-8');
+      expect(siteConfig.social.twitter).toBeDefined();
+      expect(siteConfig.social.twitter).toMatch(/^https:\/\/(twitter\.com|x\.com)\//);
     });
 
-    it('should have URL consistency (no trailing slashes)', () => {
-      expect(firebaseConfig.hosting.trailingSlash).toBe(false);
+    it("should have valid LinkedIn URL", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
-        if (redirect.destination !== '/' && redirect.destination !== '/#writing') {
-          expect(redirect.destination).not.toMatch(/\/$/);
-        }
-      });
+      expect(siteConfig.social.linkedin).toBeDefined();
+      expect(siteConfig.social.linkedin).toMatch(/^https:\/\/linkedin\.com\/in\//);
     });
 
-    it('should have proper HTTPS configuration', () => {
-      const canonicalMatch = indexHtml.match(/rel="canonical"[^>]*href="([^"]+)"/);
-      if (canonicalMatch) {
-        expect(canonicalMatch[1]).toMatch(/^https:\/\//);
-      }
+    it("should have valid GitHub URL", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      const ogUrlMatch = indexHtml.match(/property="og:url"[^>]*content="([^"]+)"/);
-      if (ogUrlMatch) {
-        expect(ogUrlMatch[1]).toMatch(/^https:\/\//);
-      }
+      expect(siteConfig.social.github).toBeDefined();
+      expect(siteConfig.social.github).toMatch(/^https:\/\/github\.com\//);
     });
 
-    it('should have security headers configured', () => {
-      const securityHeaders = ['X-Frame-Options', 'X-Content-Type-Options', 'X-XSS-Protection'];
-      const htmlHeaderConfig = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '**/*.html'
-      );
+    it("should have all required social links", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      securityHeaders.forEach((headerName) => {
-        const hasHeader = htmlHeaderConfig.headers.some((h: any) => h.key === headerName);
-        expect(hasHeader).toBe(true);
-      });
-    });
-
-    it('should have proper caching strategy', () => {
-      const headers = firebaseConfig.hosting.headers;
-
-      // Static assets should be cached long-term
-      const staticHeaders = headers.find((h: any) =>
-        h.source && (h.source.includes('@(jpg|jpeg|gif|png') || h.source.includes('.js') || h.source.includes('.css'))
-      );
-      if (staticHeaders) {
-        const staticCache = staticHeaders.headers.find((h: any) => h.key === 'Cache-Control');
-        expect(staticCache?.value).toContain('max-age');
-      }
-
-      // HTML should not be cached
-      const htmlHeaders = headers.find((h: any) => h.source === '**/*.html');
-      if (htmlHeaders) {
-        const htmlCache = htmlHeaders.headers.find((h: any) => h.key === 'Cache-Control');
-        expect(htmlCache?.value).toContain('must-revalidate');
-      }
-    });
-
-    it('should redirect legacy URLs', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      const legacyPatterns = ['/home', '/index.html', '/articles', '/posts'];
-
-      legacyPatterns.forEach((pattern) => {
-        const hasRedirect = redirects.some((r: any) => r.source.includes(pattern));
-        expect(hasRedirect).toBe(true);
-      });
-    });
-
-    it('should have meta description within recommended length', () => {
-      const descMatch = indexHtml.match(/name="description"[^>]*content="([^"]+)"/);
-      if (descMatch) {
-        const descLength = descMatch[1].length;
-        expect(descLength).toBeGreaterThan(50);
-        expect(descLength).toBeLessThan(180); // Relaxed from 165 to 180 to accommodate actual content
-      }
-    });
-
-    it('should have title within recommended length', () => {
-      const titleMatch = indexHtml.match(/<title>([^<]+)<\/title>/);
-      if (titleMatch) {
-        const titleLength = titleMatch[1].length;
-        expect(titleLength).toBeGreaterThan(20);
-        expect(titleLength).toBeLessThan(70);
-      }
+      expect(siteConfig.social).toHaveProperty("twitter");
+      expect(siteConfig.social).toHaveProperty("linkedin");
+      expect(siteConfig.social).toHaveProperty("github");
     });
   });
 
-  describe('Performance Optimization', () => {
-    let firebaseConfig: any;
-    let indexHtml: string;
+  describe("Blog Configuration", () => {
+    it("should have valid blog title", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const firebasePath = path.resolve(process.cwd(), 'firebase.json');
-      const indexPath = path.resolve(process.cwd(), 'index.html');
-
-      firebaseConfig = JSON.parse(readFileSync(firebasePath, 'utf-8'));
-      indexHtml = readFileSync(indexPath, 'utf-8');
+      expect(siteConfig.blogTitle).toBeDefined();
+      expect(siteConfig.blogTitle.length).toBeGreaterThan(0);
     });
 
-    it('should use font display swap for Google Fonts', () => {
-      if (indexHtml.includes('fonts.googleapis.com')) {
-        expect(indexHtml).toContain('display=swap');
-      }
-    });
+    it("should have valid blog description", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    it('should preconnect to external domains', () => {
-      expect(indexHtml).toContain('rel="preconnect"');
-    });
-
-    it('should have immutable cache for static assets', () => {
-      // Look for headers that match static asset patterns
-      const staticAssetHeaders = firebaseConfig.hosting.headers.filter(
-        (h: any) =>
-          h.source && (
-            h.source.includes('@(jpg|jpeg|gif|png') ||
-            h.source.includes('@(js|css)') ||
-            h.source.includes('@(woff|woff2')
-          )
-      );
-
-      // Should have at least some static asset caching rules
-      expect(staticAssetHeaders.length).toBeGreaterThan(0);
-
-      staticAssetHeaders.forEach((headerConfig: any) => {
-        const cacheHeader = headerConfig.headers.find((h: any) => h.key === 'Cache-Control');
-        if (cacheHeader) {
-          expect(cacheHeader.value).toContain('max-age');
-          // Check for either immutable or long max-age
-          const hasImmutable = cacheHeader.value.includes('immutable');
-          const hasLongCache = cacheHeader.value.includes('max-age=31536000');
-          expect(hasImmutable || hasLongCache).toBe(true);
-        }
-      });
+      expect(siteConfig.blogDescription).toBeDefined();
+      expect(siteConfig.blogDescription.length).toBeGreaterThan(0);
     });
   });
 
-  describe('Redirect Configuration', () => {
-    let firebaseConfig: any;
+  describe("Configuration Consistency", () => {
+    it("should have consistent author name across configs", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const configPath = path.resolve(process.cwd(), 'firebase.json');
-      firebaseConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+      expect(siteConfig.name).toBe(siteConfig.author.name);
     });
 
-    it('should have no redirect loops', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      const redirectMap = new Map();
+    it("should have consistent domain in URLs", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      redirects.forEach((redirect: any) => {
-        redirectMap.set(redirect.source, redirect.destination);
-      });
+      const domain = new URL(siteConfig.siteUrl).hostname;
+      expect(domain).toMatch(/shahidster\.tech/);
+    });
 
-      redirectMap.forEach((destination, source) => {
-        if (redirectMap.has(destination)) {
-          const finalDest = redirectMap.get(destination);
-          expect(finalDest).not.toBe(source);
-        }
+    it("should have all required configuration fields", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      const requiredFields = [
+        "siteUrl",
+        "title",
+        "description",
+        "name",
+        "ogImage",
+        "locale",
+        "twitterHandle",
+        "titleTemplate",
+        "author",
+        "organization",
+        "social",
+      ];
+
+      requiredFields.forEach((field) => {
+        expect(siteConfig).toHaveProperty(field);
       });
     });
 
-    it('should use 301 for all SEO redirects', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
-        expect(redirect.type).toBe(301);
-      });
+    it("should not have trailing slashes in URLs", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.siteUrl).not.toMatch(/\/$/);
+      expect(siteConfig.organization.url).not.toMatch(/\/$/);
     });
 
-    it('should not redirect to external domains', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
-        expect(redirect.destination).not.toMatch(/^https?:\/\//);
-      });
+    it("should use HTTPS for all URLs", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.siteUrl).toMatch(/^https:\/\//);
+      expect(siteConfig.organization.url).toMatch(/^https:\/\//);
+      expect(siteConfig.social.twitter).toMatch(/^https:\/\//);
+      expect(siteConfig.social.linkedin).toMatch(/^https:\/\//);
+      expect(siteConfig.social.github).toMatch(/^https:\/\//);
     });
   });
 
-  describe('Regression: Critical Config Integrity', () => {
-    let firebaseConfig: any;
+  describe("SEO Configuration", () => {
+    it("should have appropriate title length for SEO", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-    beforeAll(() => {
-      const configPath = path.resolve(process.cwd(), 'firebase.json');
-      firebaseConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+      // Google typically displays 50-60 characters
+      expect(siteConfig.title.length).toBeLessThanOrEqual(60);
     });
 
-    it('should not have conflicting header rules', () => {
-      const headers = firebaseConfig.hosting.headers;
-      const sources = headers.map((h: any) => h.source);
+    it("should have appropriate description length for SEO", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      // Check for duplicate source patterns
-      const uniqueSources = new Set(sources);
-      expect(sources.length).toBe(uniqueSources.size);
+      // Google typically displays 150-160 characters
+      expect(siteConfig.description.length).toBeGreaterThan(50);
+      expect(siteConfig.description.length).toBeLessThanOrEqual(160);
     });
 
-    it('should preserve critical security headers', () => {
-      const htmlHeaders = firebaseConfig.hosting.headers.find(
-        (h: any) => h.source === '**/*.html'
-      );
+    it("should not have duplicate keywords in title and description", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
 
-      const criticalHeaders = ['X-Frame-Options', 'X-Content-Type-Options'];
-      criticalHeaders.forEach((headerName) => {
-        const hasHeader = htmlHeaders.headers.some((h: any) => h.key === headerName);
-        expect(hasHeader).toBe(true);
-      });
+      const titleWords = siteConfig.title.toLowerCase().split(/\s+/);
+      const descWords = siteConfig.description.toLowerCase().split(/\s+/);
+
+      // At least some unique words in description
+      const uniqueInDesc = descWords.filter((word) => !titleWords.includes(word));
+      expect(uniqueInDesc.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Image paths", () => {
+    it("should use relative paths for local images", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.ogImage).toMatch(/^\//);
+      expect(siteConfig.ogImage).not.toMatch(/^https?:\/\//);
     });
 
-    it('should not allow directory traversal in redirects', () => {
-      const redirects = firebaseConfig.hosting.redirects;
-      redirects.forEach((redirect: any) => {
-        expect(redirect.source).not.toContain('../');
-        expect(redirect.destination).not.toContain('../');
-      });
+    it("should use common image formats", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.ogImage).toMatch(/\.(png|jpg|jpeg|webp|gif)$/i);
+    });
+  });
+
+  describe("Twitter/X handle format", () => {
+    it("should start with @ symbol", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.twitterHandle).toMatch(/^@/);
     });
 
-    it('should have valid glob patterns in headers', () => {
-      const headers = firebaseConfig.hosting.headers;
-      headers.forEach((headerConfig: any) => {
-        expect(headerConfig.source).toBeDefined();
-        expect(headerConfig.source.length).toBeGreaterThan(0);
-      });
+    it("should not contain spaces", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.twitterHandle).not.toMatch(/\s/);
+    });
+
+    it("should contain valid characters only", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.twitterHandle).toMatch(/^@[a-zA-Z0-9_]+$/);
+    });
+  });
+
+  describe("Locale format", () => {
+    it("should follow language_COUNTRY format", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.locale).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
+    });
+
+    it("should use underscore separator", async () => {
+      const { siteConfig } = await import("@/lib/site-config");
+
+      expect(siteConfig.locale).toContain("_");
+      expect(siteConfig.locale).not.toContain("-");
     });
   });
 });

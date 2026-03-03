@@ -1,168 +1,210 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Footer } from "../components/layout/Footer";
+import { Footer } from "@/components/layout/Footer";
 
-describe("Footer Component", () => {
+// Mock lucide-react icons
+vi.mock("lucide-react", () => ({
+  Heart: ({ className }: { className?: string }) => (
+    <svg data-testid="heart-icon" className={className}></svg>
+  ),
+}));
+
+describe("Footer component", () => {
   it("should render without crashing", () => {
-    const { container } = render(<Footer />);
-    const footer = container.querySelector("footer");
-    expect(footer).toBeInTheDocument();
+    expect(() => render(<Footer />)).not.toThrow();
   });
 
-  it("should display the author name", () => {
+  it("should display the built with message", () => {
     render(<Footer />);
-    expect(screen.getByText(/Shahid Moosa/i)).toBeInTheDocument();
+
+    expect(screen.getByText("Built with")).toBeInTheDocument();
+    expect(screen.getByText("by Shahid Moosa")).toBeInTheDocument();
   });
 
-  it("should display 'Built with' text", () => {
+  it("should render heart icon", () => {
     render(<Footer />);
-    expect(screen.getByText(/Built with/i)).toBeInTheDocument();
-  });
 
-  it("should render Heart icon", () => {
-    const { container } = render(<Footer />);
-    // Heart icon should be present
-    const heartIcon = container.querySelector('svg');
+    const heartIcon = screen.getByTestId("heart-icon");
     expect(heartIcon).toBeInTheDocument();
+    expect(heartIcon).toHaveClass("text-primary");
+    expect(heartIcon).toHaveClass("fill-primary");
   });
 
-  it("should display RSS link", () => {
+  it("should render RSS feed link", () => {
     render(<Footer />);
-    const rssLink = screen.getByRole("link", { name: /RSS/i });
+
+    const rssLink = screen.getByText("RSS").closest("a");
     expect(rssLink).toBeInTheDocument();
     expect(rssLink).toHaveAttribute("href", "/rss.xml");
   });
 
-  it("should display JSON Feed link", () => {
+  it("should render JSON Feed link", () => {
     render(<Footer />);
-    const jsonFeedLink = screen.getByRole("link", { name: /JSON Feed/i });
+
+    const jsonFeedLink = screen.getByText("JSON Feed").closest("a");
     expect(jsonFeedLink).toBeInTheDocument();
     expect(jsonFeedLink).toHaveAttribute("href", "/feed.json");
   });
 
-  it("should display Sitemap link", () => {
+  it("should render Sitemap link", () => {
     render(<Footer />);
-    const sitemapLink = screen.getByRole("link", { name: /Sitemap/i });
+
+    const sitemapLink = screen.getByText("Sitemap").closest("a");
     expect(sitemapLink).toBeInTheDocument();
     expect(sitemapLink).toHaveAttribute("href", "/sitemap.xml");
   });
 
-  it("should display copyright text", () => {
+  it("should display copyright with current year", () => {
     render(<Footer />);
-    expect(screen.getByText(/All rights reserved/i)).toBeInTheDocument();
-  });
 
-  it("should display current year in copyright", () => {
-    render(<Footer />);
     const currentYear = new Date().getFullYear();
-    expect(screen.getByText(new RegExp(currentYear.toString()))).toBeInTheDocument();
+    expect(screen.getByText(`© ${currentYear} · All rights reserved`)).toBeInTheDocument();
   });
 
-  it("should have proper semantic HTML structure", () => {
+  it("should have proper footer semantic HTML", () => {
     const { container } = render(<Footer />);
+
     const footer = container.querySelector("footer");
     expect(footer).toBeInTheDocument();
   });
 
-  it("should apply border-t class for visual separation", () => {
+  it("should have border styling", () => {
     const { container } = render(<Footer />);
+
     const footer = container.querySelector("footer");
     expect(footer).toHaveClass("border-t");
+    expect(footer).toHaveClass("border-border");
   });
 
-  it("should have hover effects on links", () => {
-    render(<Footer />);
-    const rssLink = screen.getByRole("link", { name: /RSS/i });
-    expect(rssLink).toHaveClass("hover:text-foreground");
-  });
-
-  it("should have focus-visible styles for accessibility", () => {
-    render(<Footer />);
-    const rssLink = screen.getByRole("link", { name: /RSS/i });
-    expect(rssLink.className).toContain("focus-visible");
-  });
-
-  it("should render all three feed links", () => {
-    render(<Footer />);
-    const links = screen.getAllByRole("link");
-    const feedLinks = links.filter((link) =>
-      ["/rss.xml", "/feed.json", "/sitemap.xml"].includes(
-        link.getAttribute("href") || ""
-      )
-    );
-    expect(feedLinks).toHaveLength(3);
-  });
-
-  it("should have consistent spacing classes", () => {
+  it("should use section-container class", () => {
     const { container } = render(<Footer />);
-    const footer = container.querySelector("footer");
-    expect(footer).toHaveClass("py-8");
-  });
 
-  it("should use section-container for width constraint", () => {
-    const { container } = render(<Footer />);
     const sectionContainer = container.querySelector(".section-container");
     expect(sectionContainer).toBeInTheDocument();
   });
 
-  it("should be responsive with flex layout", () => {
+  it("should have hover effects on links", () => {
+    render(<Footer />);
+
+    const rssLink = screen.getByText("RSS").closest("a");
+    expect(rssLink).toHaveClass("hover:text-foreground");
+    expect(rssLink).toHaveClass("transition-colors");
+  });
+
+  it("should have responsive layout classes", () => {
     const { container } = render(<Footer />);
-    const flexContainer = container.querySelector(".flex.flex-col");
+
+    const flexContainer = container.querySelector(".flex-col");
+    expect(flexContainer).toHaveClass("md:flex-row");
+  });
+
+  it("should have muted text color", () => {
+    const { container } = render(<Footer />);
+
+    const textElement = container.querySelector(".text-muted-foreground");
+    expect(textElement).toBeInTheDocument();
+  });
+
+  it("should render all three feed links", () => {
+    render(<Footer />);
+
+    expect(screen.getByText("RSS")).toBeInTheDocument();
+    expect(screen.getByText("JSON Feed")).toBeInTheDocument();
+    expect(screen.getByText("Sitemap")).toBeInTheDocument();
+  });
+
+  it("should have proper spacing between elements", () => {
+    const { container } = render(<Footer />);
+
+    const gapContainer = container.querySelector(".gap-4");
+    expect(gapContainer).toBeInTheDocument();
+  });
+
+  it("should render all feed links as anchor tags", () => {
+    const { container } = render(<Footer />);
+
+    const links = container.querySelectorAll("a");
+    expect(links.length).toBe(3);
+  });
+
+  it("should have proper padding on footer", () => {
+    const { container } = render(<Footer />);
+
+    const footer = container.querySelector("footer");
+    expect(footer).toHaveClass("py-8");
+  });
+
+  it("should center items on mobile", () => {
+    const { container } = render(<Footer />);
+
+    const flexContainer = container.querySelector(".items-center");
     expect(flexContainer).toBeInTheDocument();
   });
 
-  it("should display components in correct order", () => {
+  it("should justify content between elements", () => {
     const { container } = render(<Footer />);
-    const text = container.textContent || "";
 
-    // "Built with" should come before "All rights reserved"
-    const builtWithIndex = text.indexOf("Built with");
-    const copyrightIndex = text.indexOf("All rights reserved");
-
-    expect(builtWithIndex).toBeLessThan(copyrightIndex);
+    const justifyContainer = container.querySelector(".justify-between");
+    expect(justifyContainer).toBeInTheDocument();
   });
 
-  it("should render Heart icon with primary color fill", () => {
-    const { container } = render(<Footer />);
-    const heartIcon = container.querySelector(".text-primary.fill-primary");
-    expect(heartIcon).toBeInTheDocument();
-  });
-
-  it("should have muted foreground color for text", () => {
-    const { container } = render(<Footer />);
-    const mutedText = container.querySelector(".text-muted-foreground");
-    expect(mutedText).toBeInTheDocument();
-  });
-
-  // Additional edge case tests for strengthening confidence
-  it("should handle multiple renders without errors", () => {
+  it("should update copyright year dynamically", () => {
     const { rerender } = render(<Footer />);
-    expect(() => rerender(<Footer />)).not.toThrow();
-    expect(() => rerender(<Footer />)).not.toThrow();
+
+    const currentYear = new Date().getFullYear();
+    expect(screen.getByText(new RegExp(`© ${currentYear}`))).toBeInTheDocument();
+
+    // Re-render to ensure year is dynamic
+    rerender(<Footer />);
+    expect(screen.getByText(new RegExp(`© ${currentYear}`))).toBeInTheDocument();
   });
 
-  it("should maintain accessibility with proper link context", () => {
-    render(<Footer />);
-    const links = screen.getAllByRole("link");
-    links.forEach((link) => {
-      // Each link should have text content or aria-label
-      expect(link.textContent || link.getAttribute("aria-label")).toBeTruthy();
-    });
-  });
-
-  it("should render within a bounded container", () => {
+  it("should have small text size", () => {
     const { container } = render(<Footer />);
-    const sectionContainer = container.querySelector(".section-container");
-    expect(sectionContainer?.parentElement?.tagName).toBe("FOOTER");
+
+    const smallText = container.querySelector(".text-sm");
+    expect(smallText).toBeInTheDocument();
   });
 
-  it("should not have any broken external links", () => {
+  it("should group feed links together", () => {
+    const { container } = render(<Footer />);
+
+    const feedLinksContainer = Array.from(container.querySelectorAll(".flex.items-center.gap-4")).find(
+      (el) => {
+        const links = el.querySelectorAll("a");
+        return links.length === 3;
+      }
+    );
+
+    expect(feedLinksContainer).toBeInTheDocument();
+  });
+
+  it("should render heart icon with proper dimensions", () => {
     render(<Footer />);
-    const links = screen.getAllByRole("link");
-    links.forEach((link) => {
-      const href = link.getAttribute("href");
-      expect(href).toBeTruthy();
-      expect(href?.startsWith("/")).toBe(true);
-    });
+
+    const heartIcon = screen.getByTestId("heart-icon");
+    expect(heartIcon).toHaveClass("w-4");
+    expect(heartIcon).toHaveClass("h-4");
+  });
+
+  it("should have proper structure for attribution section", () => {
+    const { container } = render(<Footer />);
+
+    const attribution = Array.from(container.querySelectorAll(".flex.items-center.gap-1")).find(
+      (el) => el.textContent?.includes("Built with")
+    );
+
+    expect(attribution).toBeInTheDocument();
+  });
+
+  it("should render complete footer content", () => {
+    render(<Footer />);
+
+    // Check all major sections are present
+    expect(screen.getByText("Built with")).toBeInTheDocument();
+    expect(screen.getByText("RSS")).toBeInTheDocument();
+    expect(screen.getByText("JSON Feed")).toBeInTheDocument();
+    expect(screen.getByText("Sitemap")).toBeInTheDocument();
+    expect(screen.getByText(/© \d{4}/)).toBeInTheDocument();
   });
 });

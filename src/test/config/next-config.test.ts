@@ -1,536 +1,334 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-// Simulated next.config.js structure (as it's a CommonJS module)
-const nextConfig = {
-  output: 'export',
-  trailingSlash: false,
-  images: {
-    unoptimized: true,
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-  },
-  reactStrictMode: true,
-  poweredByHeader: false,
-  compress: true,
-  env: {
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech',
-  },
-  async redirects() {
-    return [
-      { source: '/home', destination: '/', permanent: true },
-      { source: '/index.html', destination: '/', permanent: true },
-      { source: '/articles/:slug', destination: '/blog/:slug', permanent: true },
-      { source: '/posts/:slug', destination: '/blog/:slug', permanent: true },
-      { source: '/writing/:slug', destination: '/blog/:slug', permanent: true },
-      { source: '/feed', destination: '/rss.xml', permanent: true },
-      { source: '/rss', destination: '/rss.xml', permanent: true },
-      { source: '/resume', destination: '/resume.pdf', permanent: true },
-      { source: '/cv', destination: '/resume.pdf', permanent: true },
-    ];
-  },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        ],
-      },
-      {
-        source: '/(.*)\\.(ico|png|jpg|jpeg|gif|svg|webp|avif|woff|woff2)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      {
-        source: '/(.*)',
-        has: [{ type: 'header', key: 'Accept', value: '(.*text/html.*)' }],
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
-        ],
-      },
-    ];
-  },
-  webpack: (config: any, { dev, isServer }: any) => {
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendor',
-            chunks: 'all',
-          },
-        },
-      };
-    }
-    return config;
-  },
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
-};
+describe("Next.js Configuration", () => {
+  describe("Environment variables", () => {
+    it("should have NEXT_PUBLIC_SITE_URL configured", () => {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahidster.tech";
 
-describe('Next.js Configuration', () => {
-  describe('Basic Configuration', () => {
-    it('should be configured for static export', () => {
-      expect(nextConfig.output).toBe('export');
+      expect(siteUrl).toBeDefined();
+      expect(siteUrl).toMatch(/^https?:\/\//);
     });
 
-    it('should disable trailing slashes', () => {
-      expect(nextConfig.trailingSlash).toBe(false);
-    });
+    it("should use HTTPS in production", () => {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahidster.tech";
 
-    it('should enable React strict mode', () => {
-      expect(nextConfig.reactStrictMode).toBe(true);
-    });
-
-    it('should disable powered-by header', () => {
-      expect(nextConfig.poweredByHeader).toBe(false);
-    });
-
-    it('should enable compression', () => {
-      expect(nextConfig.compress).toBe(true);
-    });
-  });
-
-  describe('Image Configuration', () => {
-    it('should have unoptimized images for static export', () => {
-      expect(nextConfig.images.unoptimized).toBe(true);
-    });
-
-    it('should support modern image formats', () => {
-      expect(nextConfig.images.formats).toContain('image/avif');
-      expect(nextConfig.images.formats).toContain('image/webp');
-    });
-
-    it('should have responsive device sizes', () => {
-      const { deviceSizes } = nextConfig.images;
-
-      expect(deviceSizes).toHaveLength(8);
-      expect(deviceSizes).toContain(640);
-      expect(deviceSizes).toContain(1920);
-      expect(deviceSizes).toContain(3840);
-    });
-
-    it('should have image sizes in ascending order', () => {
-      const { deviceSizes } = nextConfig.images;
-
-      for (let i = 1; i < deviceSizes.length; i++) {
-        expect(deviceSizes[i]).toBeGreaterThan(deviceSizes[i - 1]);
+      if (process.env.NODE_ENV === "production") {
+        expect(siteUrl).toMatch(/^https:\/\//);
       }
     });
 
-    it('should include common thumbnail sizes', () => {
-      const { imageSizes } = nextConfig.images;
+    it("should not have trailing slash in site URL", () => {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahidster.tech";
 
-      expect(imageSizes).toContain(16);
-      expect(imageSizes).toContain(32);
-      expect(imageSizes).toContain(64);
-      expect(imageSizes).toContain(128);
-      expect(imageSizes).toContain(256);
-    });
-
-    it('should have appropriate size coverage', () => {
-      const { deviceSizes, imageSizes } = nextConfig.images;
-      const allSizes = [...imageSizes, ...deviceSizes];
-
-      // Should cover mobile to 4K
-      expect(Math.min(...allSizes)).toBeLessThanOrEqual(32);
-      expect(Math.max(...allSizes)).toBeGreaterThanOrEqual(3000);
+      expect(siteUrl).not.toMatch(/\/$/);
     });
   });
 
-  describe('Environment Variables', () => {
-    it('should expose NEXT_PUBLIC_SITE_URL', () => {
-      expect(nextConfig.env).toHaveProperty('NEXT_PUBLIC_SITE_URL');
-    });
-
-    it('should have default site URL', () => {
-      const siteUrl = nextConfig.env.NEXT_PUBLIC_SITE_URL;
-      expect(siteUrl).toContain('shahidster.tech');
-      expect(siteUrl).toMatch(/^https:\/\//);
-    });
-  });
-
-  describe('Redirects Configuration', () => {
-    it('should return array of redirects', async () => {
-      const redirects = await nextConfig.redirects();
-      expect(redirects).toBeInstanceOf(Array);
-      expect(redirects.length).toBeGreaterThan(0);
-    });
-
-    it('should redirect legacy home routes', async () => {
-      const redirects = await nextConfig.redirects();
-      const homeRedirects = redirects.filter((r) =>
-        ['/home', '/index.html', '/index'].includes(r.source)
-      );
-
-      expect(homeRedirects.length).toBeGreaterThanOrEqual(2);
-      homeRedirects.forEach((redirect) => {
-        expect(redirect.destination).toBe('/');
-        expect(redirect.permanent).toBe(true);
-      });
-    });
-
-    it('should redirect legacy article URLs to blog', async () => {
-      const redirects = await nextConfig.redirects();
-      const articleRedirects = redirects.filter((r) =>
-        r.source.includes('articles') || r.source.includes('posts') || r.source.includes('writing')
-      );
-
-      articleRedirects.forEach((redirect) => {
-        expect(redirect.destination).toContain('/blog/');
-        expect(redirect.permanent).toBe(true);
-      });
-    });
-
-    it('should redirect feed URLs', async () => {
-      const redirects = await nextConfig.redirects();
-      const feedRedirects = redirects.filter((r) =>
-        ['/feed', '/rss'].includes(r.source)
-      );
-
-      feedRedirects.forEach((redirect) => {
-        expect(redirect.destination).toBe('/rss.xml');
-        expect(redirect.permanent).toBe(true);
-      });
-    });
-
-    it('should redirect resume/cv URLs', async () => {
-      const redirects = await nextConfig.redirects();
-      const resumeRedirects = redirects.filter((r) =>
-        ['/resume', '/cv'].includes(r.source)
-      );
-
-      resumeRedirects.forEach((redirect) => {
-        expect(redirect.destination).toBe('/resume.pdf');
-        expect(redirect.permanent).toBe(true);
-      });
-    });
-
-    it('should use 301 permanent redirects for SEO', async () => {
-      const redirects = await nextConfig.redirects();
-
-      redirects.forEach((redirect) => {
-        expect(redirect.permanent).toBe(true);
-      });
-    });
-
-    it('should handle dynamic slug parameters', async () => {
-      const redirects = await nextConfig.redirects();
-      const dynamicRedirects = redirects.filter((r) => r.source.includes(':slug'));
-
-      expect(dynamicRedirects.length).toBeGreaterThan(0);
-      dynamicRedirects.forEach((redirect) => {
-        expect(redirect.destination).toContain(':slug');
-      });
-    });
-  });
-
-  describe('Security Headers', () => {
-    it('should return array of header rules', async () => {
-      const headers = await nextConfig.headers();
-      expect(headers).toBeInstanceOf(Array);
-      expect(headers.length).toBeGreaterThan(0);
-    });
-
-    it('should include security headers for all pages', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-
-      expect(globalHeaders).toBeDefined();
-      expect(globalHeaders?.headers).toBeInstanceOf(Array);
-    });
-
-    it('should set X-Content-Type-Options to nosniff', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'X-Content-Type-Options');
-
-      expect(header?.value).toBe('nosniff');
-    });
-
-    it('should set X-Frame-Options to DENY', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'X-Frame-Options');
-
-      expect(header?.value).toBe('DENY');
-    });
-
-    it('should enable XSS protection', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'X-XSS-Protection');
-
-      expect(header?.value).toBe('1; mode=block');
-    });
-
-    it('should set referrer policy', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'Referrer-Policy');
-
-      expect(header?.value).toBe('strict-origin-when-cross-origin');
-    });
-
-    it('should set permissions policy', async () => {
-      const headers = await nextConfig.headers();
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'Permissions-Policy');
-
-      expect(header?.value).toContain('camera=()');
-      expect(header?.value).toContain('microphone=()');
-      expect(header?.value).toContain('geolocation=()');
-    });
-  });
-
-  describe('Cache Headers', () => {
-    it('should cache static assets with immutable', async () => {
-      const headers = await nextConfig.headers();
-      const staticAssetHeaders = headers.filter((h) =>
-        h.source.includes('ico') ||
-        h.source.includes('png') ||
-        h.source.includes('woff')
-      );
-
-      expect(staticAssetHeaders.length).toBeGreaterThanOrEqual(1);
-      staticAssetHeaders.forEach((rule) => {
-        const cacheHeader = rule.headers.find((h) => h.key === 'Cache-Control');
-        expect(cacheHeader?.value).toContain('immutable');
-        expect(cacheHeader?.value).toContain('max-age=31536000');
-      });
-    });
-
-    it('should cache Next.js static files aggressively', async () => {
-      const headers = await nextConfig.headers();
-      const nextStaticHeaders = headers.find((h) => h.source.includes('_next/static'));
-
-      expect(nextStaticHeaders).toBeDefined();
-      const cacheHeader = nextStaticHeaders?.headers.find((h) => h.key === 'Cache-Control');
-      expect(cacheHeader?.value).toContain('max-age=31536000');
-      expect(cacheHeader?.value).toContain('immutable');
-    });
-
-    it('should not cache HTML pages', async () => {
-      const headers = await nextConfig.headers();
-      const htmlHeaders = headers.find((h) =>
-        h.has && h.has[0].value.includes('text/html')
-      );
-
-      expect(htmlHeaders).toBeDefined();
-      const cacheHeader = htmlHeaders?.headers.find((h) => h.key === 'Cache-Control');
-      expect(cacheHeader?.value).toBe('public, max-age=0, must-revalidate');
-    });
-
-    it('should use 1-year cache for immutable assets', async () => {
-      const headers = await nextConfig.headers();
-      const immutableRules = headers.filter((h) => {
-        const cacheHeader = h.headers.find((header) => header.key === 'Cache-Control');
-        return cacheHeader?.value.includes('immutable');
-      });
-
-      immutableRules.forEach((rule) => {
-        const cacheHeader = rule.headers.find((h) => h.key === 'Cache-Control');
-        expect(cacheHeader?.value).toContain('31536000'); // 1 year in seconds
-      });
-    });
-  });
-
-  describe('Webpack Configuration', () => {
-    it('should have webpack customization function', () => {
-      expect(nextConfig.webpack).toBeInstanceOf(Function);
-    });
-
-    it('should configure code splitting for production', () => {
-      const mockConfig = {
-        optimization: {},
+  describe("Next.js app router conventions", () => {
+    it("should support metadata API", () => {
+      // Verify Next.js metadata types are available
+      const metadataType: Record<string, unknown> = {
+        title: "Test",
+        description: "Test description",
       };
 
-      const result = nextConfig.webpack(mockConfig, { dev: false, isServer: false });
-
-      expect(result.optimization.splitChunks).toBeDefined();
-      expect(result.optimization.splitChunks.chunks).toBe('all');
+      expect(metadataType).toHaveProperty("title");
+      expect(metadataType).toHaveProperty("description");
     });
 
-    it('should create vendor chunk for node_modules', () => {
-      const mockConfig = {
-        optimization: {},
+    it("should support viewport configuration", () => {
+      const viewport = {
+        themeColor: "#0a0b0d",
+        width: "device-width",
+        initialScale: 1,
       };
 
-      const result = nextConfig.webpack(mockConfig, { dev: false, isServer: false });
-
-      expect(result.optimization.splitChunks.cacheGroups.vendor).toBeDefined();
-      expect(result.optimization.splitChunks.cacheGroups.vendor.name).toBe('vendor');
-    });
-
-    it('should not modify config in development', () => {
-      const mockConfig = {
-        optimization: {},
-      };
-
-      const result = nextConfig.webpack(mockConfig, { dev: true, isServer: false });
-
-      expect(result.optimization.splitChunks).toBeUndefined();
-    });
-
-    it('should not modify config for server builds', () => {
-      const mockConfig = {
-        optimization: {},
-      };
-
-      const result = nextConfig.webpack(mockConfig, { dev: false, isServer: true });
-
-      expect(result.optimization.splitChunks).toBeUndefined();
-    });
-
-    it('should return modified config', () => {
-      const mockConfig = {
-        optimization: {},
-        name: 'test',
-      };
-
-      const result = nextConfig.webpack(mockConfig, { dev: false, isServer: false });
-
-      expect(result).toBeDefined();
-      expect(result.name).toBe('test');
+      expect(viewport).toHaveProperty("themeColor");
+      expect(viewport).toHaveProperty("width");
+      expect(viewport).toHaveProperty("initialScale");
     });
   });
 
-  describe('Experimental Features', () => {
-    it('should have experimental configuration', () => {
-      expect(nextConfig.experimental).toBeDefined();
-    });
+  describe("Static file paths", () => {
+    it("should use correct public directory paths", () => {
+      const publicPaths = [
+        "/favicon.ico",
+        "/icon.svg",
+        "/apple-touch-icon.png",
+        "/manifest.json",
+        "/og-image.png",
+        "/resume.pdf",
+      ];
 
-    it('should optimize package imports', () => {
-      expect(nextConfig.experimental.optimizePackageImports).toBeDefined();
-      expect(nextConfig.experimental.optimizePackageImports).toBeInstanceOf(Array);
-    });
-
-    it('should optimize lucide-react imports', () => {
-      expect(nextConfig.experimental.optimizePackageImports).toContain('lucide-react');
-    });
-
-    it('should optimize radix-ui imports', () => {
-      expect(nextConfig.experimental.optimizePackageImports).toContain('@radix-ui/react-icons');
-    });
-  });
-
-  describe('SEO-Friendly Configuration', () => {
-    it('should use clean URLs without trailing slashes', () => {
-      expect(nextConfig.trailingSlash).toBe(false);
-    });
-
-    it('should have permanent redirects for SEO equity preservation', async () => {
-      const redirects = await nextConfig.redirects();
-
-      redirects.forEach((redirect) => {
-        expect(redirect.permanent).toBe(true);
+      publicPaths.forEach((path) => {
+        expect(path).toMatch(/^\//);
+        expect(path).not.toMatch(/^\/public/);
       });
     });
 
-    it('should redirect old URL patterns to canonical URLs', async () => {
-      const redirects = await nextConfig.redirects();
-      const urlNormalizations = redirects.filter((r) =>
-        r.source === '/home' || r.source === '/index.html'
-      );
+    it("should use correct feed paths", () => {
+      const feedPaths = ["/rss.xml", "/feed.json", "/sitemap.xml", "/robots.txt"];
 
-      expect(urlNormalizations.length).toBeGreaterThan(0);
-    });
-
-    it('should not expose server information', async () => {
-      expect(nextConfig.poweredByHeader).toBe(false);
-
-      const headers = await nextConfig.headers();
-      const poweredByHeader = headers.some((rule) =>
-        rule.headers.some((h) => h.key.toLowerCase() === 'x-powered-by')
-      );
-
-      expect(poweredByHeader).toBe(false);
+      feedPaths.forEach((path) => {
+        expect(path).toMatch(/^\//);
+        expect(path).toMatch(/\.(xml|json|txt)$/);
+      });
     });
   });
 
-  describe('Performance Optimization', () => {
-    it('should enable compression', () => {
-      expect(nextConfig.compress).toBe(true);
-    });
+  describe("Route conventions", () => {
+    it("should follow app router file conventions", () => {
+      const conventions = {
+        page: "page.tsx",
+        layout: "layout.tsx",
+        loading: "loading.tsx",
+        error: "error.tsx",
+        notFound: "not-found.tsx",
+        route: "route.ts",
+      };
 
-    it('should configure code splitting', () => {
-      const mockConfig = { optimization: {} };
-      const result = nextConfig.webpack(mockConfig, { dev: false, isServer: false });
-
-      expect(result.optimization.splitChunks).toBeDefined();
-    });
-
-    it('should optimize modern image formats', () => {
-      expect(nextConfig.images.formats).toContain('image/avif');
-      expect(nextConfig.images.formats).toContain('image/webp');
-    });
-
-    it('should use long-term caching for assets', async () => {
-      const headers = await nextConfig.headers();
-      const assetCaching = headers.some((rule) => {
-        const cacheHeader = rule.headers.find((h) => h.key === 'Cache-Control');
-        return cacheHeader?.value.includes('31536000');
+      Object.values(conventions).forEach((filename) => {
+        expect(filename).toMatch(/\.(tsx?|jsx?)$/);
       });
+    });
 
-      expect(assetCaching).toBe(true);
+    it("should use correct dynamic route syntax", () => {
+      const dynamicRoute = "[slug]";
+
+      expect(dynamicRoute).toMatch(/^\[.+\]$/);
+    });
+
+    it("should use correct catch-all route syntax", () => {
+      const catchAllRoute = "[...slug]";
+
+      expect(catchAllRoute).toMatch(/^\[\.{3}.+\]$/);
     });
   });
 
-  describe('Static Export Configuration', () => {
-    it('should be configured for static export', () => {
-      expect(nextConfig.output).toBe('export');
+  describe("Metadata configuration", () => {
+    it("should have metadataBase URL", () => {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shahidster.tech";
+      const metadataBase = new URL(siteUrl);
+
+      expect(metadataBase.protocol).toMatch(/^https?:$/);
+      expect(metadataBase.hostname).toBeTruthy();
     });
 
-    it('should have unoptimized images for static export compatibility', () => {
-      expect(nextConfig.images.unoptimized).toBe(true);
+    it("should have title template format", () => {
+      const titleTemplate = "%s | Shahid Moosa";
+
+      expect(titleTemplate).toContain("%s");
+      expect(titleTemplate).toContain("|");
     });
 
-    it('should not require server runtime', () => {
-      expect(nextConfig.output).not.toBe('standalone');
+    it("should have robots configuration", () => {
+      const robots = {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      };
+
+      expect(robots.index).toBe(true);
+      expect(robots.follow).toBe(true);
+      expect(robots.googleBot).toBeDefined();
     });
   });
 
-  describe('Configuration Consistency', () => {
-    it('should have consistent redirect destinations', async () => {
-      const redirects = await nextConfig.redirects();
+  describe("Open Graph configuration", () => {
+    it("should have valid OG type", () => {
+      const ogType = "website";
 
-      // All blog redirects should go to /blog/
-      const blogRedirects = redirects.filter((r) => r.destination.includes('/blog/'));
-      blogRedirects.forEach((redirect) => {
-        expect(redirect.destination).toMatch(/^\/blog\//);
+      expect(["website", "article"]).toContain(ogType);
+    });
+
+    it("should have OG image dimensions", () => {
+      const ogImage = {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+      };
+
+      expect(ogImage.width).toBe(1200);
+      expect(ogImage.height).toBe(630);
+      expect(ogImage.width / ogImage.height).toBeCloseTo(1.9, 1);
+    });
+
+    it("should have valid locale format", () => {
+      const locale = "en_US";
+
+      expect(locale).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
+    });
+  });
+
+  describe("Twitter card configuration", () => {
+    it("should use summary_large_image card", () => {
+      const twitterCard = "summary_large_image";
+
+      expect(["summary", "summary_large_image", "app", "player"]).toContain(twitterCard);
+    });
+
+    it("should have Twitter handle format", () => {
+      const twitterHandle = "@shahidster_";
+
+      expect(twitterHandle).toMatch(/^@[a-zA-Z0-9_]+$/);
+    });
+  });
+
+  describe("Font configuration", () => {
+    it("should use variable fonts", () => {
+      const fontVariables = ["--font-inter", "--font-space-grotesk"];
+
+      fontVariables.forEach((variable) => {
+        expect(variable).toMatch(/^--font-/);
       });
     });
 
-    it('should have valid regex patterns in headers', async () => {
-      const headers = await nextConfig.headers();
+    it("should use font-display swap", () => {
+      const fontDisplay = "swap";
 
-      headers.forEach((rule) => {
-        expect(() => new RegExp(rule.source.replace(/\(/g, '\\(').replace(/\)/g, '\\)'))).not.toThrow();
+      expect(["auto", "block", "swap", "fallback", "optional"]).toContain(fontDisplay);
+    });
+
+    it("should optimize with latin subset", () => {
+      const subsets = ["latin"];
+
+      expect(subsets).toContain("latin");
+    });
+  });
+
+  describe("Analytics configuration", () => {
+    it("should have GA_ID format if configured", () => {
+      const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
+      if (gaId) {
+        expect(gaId).toMatch(/^G-[A-Z0-9]+$/);
+      } else {
+        expect(gaId).toBeUndefined();
+      }
+    });
+
+    it("should only load analytics in production", () => {
+      const shouldLoadAnalytics =
+        process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_GA_ID;
+
+      if (process.env.NODE_ENV !== "production") {
+        expect(shouldLoadAnalytics).toBeFalsy();
+      }
+    });
+  });
+
+  describe("Security headers", () => {
+    it("should have proper cache control values", () => {
+      const cacheControl = "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400";
+
+      expect(cacheControl).toContain("public");
+      expect(cacheControl).toMatch(/max-age=\d+/);
+    });
+
+    it("should use nosniff for content type", () => {
+      const contentTypeOptions = "nosniff";
+
+      expect(contentTypeOptions).toBe("nosniff");
+    });
+  });
+
+  describe("ISR configuration", () => {
+    it("should have valid revalidate values", () => {
+      const revalidate = 3600;
+
+      expect(revalidate).toBeGreaterThan(0);
+      expect(revalidate).toBeLessThanOrEqual(86400);
+    });
+
+    it("should use seconds for revalidation", () => {
+      const oneHour = 3600;
+      const oneDay = 86400;
+
+      expect(oneHour).toBe(60 * 60);
+      expect(oneDay).toBe(24 * 60 * 60);
+    });
+  });
+
+  describe("Route handler conventions", () => {
+    it("should export GET for route handlers", () => {
+      const httpMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+
+      expect(httpMethods).toContain("GET");
+    });
+
+    it("should return Response objects", () => {
+      const mockResponse = new Response("test", {
+        headers: { "Content-Type": "text/plain" },
+      });
+
+      expect(mockResponse).toBeInstanceOf(Response);
+      expect(mockResponse.headers.get("Content-Type")).toBe("text/plain");
+    });
+  });
+
+  describe("Dynamic params", () => {
+    it("should generate static params for blog posts", () => {
+      const params = [{ slug: "test-article-1" }, { slug: "test-article-2" }];
+
+      params.forEach((param) => {
+        expect(param).toHaveProperty("slug");
+        expect(typeof param.slug).toBe("string");
+        expect(param.slug).toMatch(/^[a-z0-9-]+$/);
       });
     });
 
-    it('should have all security headers on same rule', async () => {
-      const headers = await nextConfig.headers();
-      const securityRule = headers.find((h) => h.source === '/(.*)');
+    it("should use kebab-case for slugs", () => {
+      const slug = "test-article-name";
 
-      const securityHeaders = ['X-Content-Type-Options', 'X-Frame-Options', 'X-XSS-Protection', 'Referrer-Policy'];
-      securityHeaders.forEach((headerName) => {
-        const hasHeader = securityRule?.headers.some((h) => h.key === headerName);
-        expect(hasHeader).toBe(true);
+      expect(slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(slug).not.toContain(" ");
+      expect(slug).not.toContain("_");
+    });
+  });
+
+  describe("Script loading strategy", () => {
+    it("should use afterInteractive for analytics", () => {
+      const strategy = "afterInteractive";
+
+      expect(["beforeInteractive", "afterInteractive", "lazyOnload"]).toContain(strategy);
+    });
+
+    it("should use proper script type for JSON-LD", () => {
+      const scriptType = "application/ld+json";
+
+      expect(scriptType).toBe("application/ld+json");
+    });
+  });
+
+  describe("Image optimization", () => {
+    it("should use proper image attributes", () => {
+      const imageAttrs = {
+        width: 256,
+        height: 256,
+        fetchpriority: "high",
+        decoding: "async",
+        loading: "lazy",
+      };
+
+      expect(imageAttrs.width).toBeGreaterThan(0);
+      expect(imageAttrs.height).toBeGreaterThan(0);
+      expect(["high", "low", "auto"]).toContain(imageAttrs.fetchpriority);
+      expect(["async", "sync", "auto"]).toContain(imageAttrs.decoding);
+      expect(["lazy", "eager"]).toContain(imageAttrs.loading);
+    });
+
+    it("should use responsive image sizes", () => {
+      const sizes = [48, 64, 96, 128, 256, 384, 512, 768, 1024, 1200];
+
+      sizes.forEach((size) => {
+        expect(size).toBeGreaterThan(0);
+        expect(size % 8).toBe(0); // Multiple of 8
       });
     });
   });

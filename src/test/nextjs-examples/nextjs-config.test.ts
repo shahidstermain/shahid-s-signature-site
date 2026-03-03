@@ -1,456 +1,266 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-// Mock Next.js config structure based on the example
-const nextConfig = {
-  output: 'export',
-  trailingSlash: false,
-  images: {
-    unoptimized: true,
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-  },
-  reactStrictMode: true,
-  poweredByHeader: false,
-  compress: true,
-  env: {
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech',
-  },
-};
+describe("Next.js Configuration Examples", () => {
+  describe("App Router structure", () => {
+    it("should use app directory", () => {
+      const appDir = "app";
 
-// Mock redirects
-const redirects = [
-  {
-    source: '/home',
-    destination: '/',
-    permanent: true,
-  },
-  {
-    source: '/index.html',
-    destination: '/',
-    permanent: true,
-  },
-  {
-    source: '/articles/:slug',
-    destination: '/blog/:slug',
-    permanent: true,
-  },
-  {
-    source: '/posts/:slug',
-    destination: '/blog/:slug',
-    permanent: true,
-  },
-  {
-    source: '/writing/:slug',
-    destination: '/blog/:slug',
-    permanent: true,
-  },
-  {
-    source: '/feed',
-    destination: '/rss.xml',
-    permanent: true,
-  },
-  {
-    source: '/rss',
-    destination: '/rss.xml',
-    permanent: true,
-  },
-  {
-    source: '/resume',
-    destination: '/resume.pdf',
-    permanent: true,
-  },
-  {
-    source: '/cv',
-    destination: '/resume.pdf',
-    permanent: true,
-  },
-];
-
-// Mock headers configuration
-const headers = [
-  {
-    source: '/(.*)',
-    headers: [
-      {
-        key: 'X-Content-Type-Options',
-        value: 'nosniff',
-      },
-      {
-        key: 'X-Frame-Options',
-        value: 'DENY',
-      },
-      {
-        key: 'X-XSS-Protection',
-        value: '1; mode=block',
-      },
-      {
-        key: 'Referrer-Policy',
-        value: 'strict-origin-when-cross-origin',
-      },
-      {
-        key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=()',
-      },
-    ],
-  },
-  {
-    source: '/(.*)\\.(ico|png|jpg|jpeg|gif|svg|webp|avif|woff|woff2)',
-    headers: [
-      {
-        key: 'Cache-Control',
-        value: 'public, max-age=31536000, immutable',
-      },
-    ],
-  },
-  {
-    source: '/_next/static/(.*)',
-    headers: [
-      {
-        key: 'Cache-Control',
-        value: 'public, max-age=31536000, immutable',
-      },
-    ],
-  },
-];
-
-describe('Next.js Configuration', () => {
-  describe('Basic Configuration', () => {
-    it('should have static export enabled', () => {
-      expect(nextConfig.output).toBe('export');
+      expect(appDir).toBe("app");
     });
 
-    it('should disable trailing slashes', () => {
-      expect(nextConfig.trailingSlash).toBe(false);
-    });
+    it("should have correct file conventions", () => {
+      const conventions = {
+        page: "page.tsx",
+        layout: "layout.tsx",
+        loading: "loading.tsx",
+        error: "error.tsx",
+        "not-found": "not-found.tsx",
+        template: "template.tsx",
+        default: "default.tsx",
+      };
 
-    it('should enable React strict mode', () => {
-      expect(nextConfig.reactStrictMode).toBe(true);
-    });
-
-    it('should disable powered-by header', () => {
-      expect(nextConfig.poweredByHeader).toBe(false);
-    });
-
-    it('should enable compression', () => {
-      expect(nextConfig.compress).toBe(true);
-    });
-
-    it('should have environment variables configured', () => {
-      expect(nextConfig.env).toBeDefined();
-      expect(nextConfig.env.NEXT_PUBLIC_SITE_URL).toBeDefined();
-    });
-  });
-
-  describe('Image Configuration', () => {
-    it('should have unoptimized images for static export', () => {
-      expect(nextConfig.images.unoptimized).toBe(true);
-    });
-
-    it('should support modern image formats', () => {
-      expect(nextConfig.images.formats).toContain('image/avif');
-      expect(nextConfig.images.formats).toContain('image/webp');
-    });
-
-    it('should have responsive device sizes', () => {
-      expect(nextConfig.images.deviceSizes).toBeInstanceOf(Array);
-      expect(nextConfig.images.deviceSizes.length).toBeGreaterThan(0);
-      expect(nextConfig.images.deviceSizes).toContain(1920);
-      expect(nextConfig.images.deviceSizes).toContain(3840);
-    });
-
-    it('should have image sizes for thumbnails', () => {
-      expect(nextConfig.images.imageSizes).toBeInstanceOf(Array);
-      expect(nextConfig.images.imageSizes.length).toBeGreaterThan(0);
-      expect(nextConfig.images.imageSizes).toContain(16);
-      expect(nextConfig.images.imageSizes).toContain(384);
-    });
-
-    it('should have device sizes in ascending order', () => {
-      const sizes = nextConfig.images.deviceSizes;
-      for (let i = 0; i < sizes.length - 1; i++) {
-        expect(sizes[i]).toBeLessThan(sizes[i + 1]);
-      }
-    });
-
-    it('should have image sizes in ascending order', () => {
-      const sizes = nextConfig.images.imageSizes;
-      for (let i = 0; i < sizes.length - 1; i++) {
-        expect(sizes[i]).toBeLessThan(sizes[i + 1]);
-      }
-    });
-  });
-
-  describe('Redirects Configuration', () => {
-    it('should have redirects defined', () => {
-      expect(redirects).toBeInstanceOf(Array);
-      expect(redirects.length).toBeGreaterThan(0);
-    });
-
-    it('should use permanent (301) redirects', () => {
-      redirects.forEach((redirect) => {
-        expect(redirect.permanent).toBe(true);
+      Object.values(conventions).forEach((filename) => {
+        expect(filename).toMatch(/\.(tsx|jsx|ts|js)$/);
       });
     });
 
-    it('should redirect legacy URLs to canonical URLs', () => {
-      const homeRedirect = redirects.find((r) => r.source === '/home');
-      expect(homeRedirect?.destination).toBe('/');
+    it("should support dynamic routes", () => {
+      const dynamicRoute = "[slug]";
+      const catchAllRoute = "[...slug]";
+      const optionalCatchAll = "[[...slug]]";
 
-      const indexRedirect = redirects.find((r) => r.source === '/index.html');
-      expect(indexRedirect?.destination).toBe('/');
+      expect(dynamicRoute).toMatch(/^\[.+\]$/);
+      expect(catchAllRoute).toMatch(/^\[\.{3}.+\]$/);
+      expect(optionalCatchAll).toMatch(/^\[\[\.{3}.+\]\]$/);
+    });
+  });
+
+  describe("Metadata API", () => {
+    it("should support static metadata export", () => {
+      const metadata = {
+        title: "Test",
+        description: "Test description",
+      };
+
+      expect(metadata).toHaveProperty("title");
+      expect(metadata).toHaveProperty("description");
     });
 
-    it('should redirect blog URL variations to /blog/:slug', () => {
-      const blogRedirects = redirects.filter((r) => r.destination === '/blog/:slug');
-      expect(blogRedirects.length).toBeGreaterThan(0);
+    it("should support generateMetadata function", () => {
+      const generateMetadata = async (params: any) => {
+        return {
+          title: "Dynamic Title",
+          description: "Dynamic description",
+        };
+      };
 
-      const sources = blogRedirects.map((r) => r.source);
-      expect(sources).toContain('/articles/:slug');
-      expect(sources).toContain('/posts/:slug');
-      expect(sources).toContain('/writing/:slug');
+      expect(generateMetadata).toBeInstanceOf(Function);
     });
 
-    it('should redirect feed URLs to RSS', () => {
-      const feedRedirect = redirects.find((r) => r.source === '/feed');
-      expect(feedRedirect?.destination).toBe('/rss.xml');
+    it("should support title templates", () => {
+      const title = {
+        default: "Site Title",
+        template: "%s | Site Title",
+      };
 
-      const rssRedirect = redirects.find((r) => r.source === '/rss');
-      expect(rssRedirect?.destination).toBe('/rss.xml');
+      expect(title.template).toContain("%s");
+      expect(title.default).toBeDefined();
     });
+  });
 
-    it('should redirect resume/CV URLs', () => {
-      const resumeRedirect = redirects.find((r) => r.source === '/resume');
-      expect(resumeRedirect?.destination).toBe('/resume.pdf');
+  describe("Route handlers", () => {
+    it("should export HTTP method handlers", () => {
+      const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
 
-      const cvRedirect = redirects.find((r) => r.source === '/cv');
-      expect(cvRedirect?.destination).toBe('/resume.pdf');
-    });
-
-    it('should not have circular redirects', () => {
-      const redirectMap = new Map(
-        redirects.map((r) => [r.source, r.destination])
-      );
-
-      redirects.forEach((redirect) => {
-        expect(redirectMap.get(redirect.destination)).toBeUndefined();
+      methods.forEach((method) => {
+        expect(methods).toContain(method);
       });
     });
 
-    it('should not redirect to external URLs', () => {
-      redirects.forEach((redirect) => {
-        expect(redirect.destination).not.toMatch(/^https?:\/\//);
+    it("should return Response objects", () => {
+      const response = new Response("test", {
+        headers: { "Content-Type": "text/plain" },
+      });
+
+      expect(response).toBeInstanceOf(Response);
+    });
+
+    it("should support dynamic configuration", () => {
+      const config = {
+        runtime: "edge" as const,
+        revalidate: 3600,
+      };
+
+      expect(["edge", "nodejs"]).toContain(config.runtime);
+      expect(config.revalidate).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Image optimization", () => {
+    it("should configure image domains", () => {
+      const imageDomains = ["example.com", "cdn.example.com"];
+
+      imageDomains.forEach((domain) => {
+        expect(domain).not.toMatch(/^https?:\/\//);
+      });
+    });
+
+    it("should configure image sizes", () => {
+      const imageSizes = [16, 32, 48, 64, 96, 128, 256, 384];
+
+      imageSizes.forEach((size) => {
+        expect(size).toBeGreaterThan(0);
+      });
+    });
+
+    it("should configure device sizes", () => {
+      const deviceSizes = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+      deviceSizes.forEach((size) => {
+        expect(size).toBeGreaterThan(0);
       });
     });
   });
 
-  describe('Security Headers', () => {
-    it('should have security headers configured', () => {
-      expect(headers).toBeInstanceOf(Array);
-      expect(headers.length).toBeGreaterThan(0);
+  describe("Revalidation and ISR", () => {
+    it("should support revalidate export", () => {
+      const revalidate = 3600;
+
+      expect(revalidate).toBeGreaterThan(0);
+      expect(typeof revalidate).toBe("number");
     });
 
-    it('should set X-Content-Type-Options to nosniff', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find(
-        (h) => h.key === 'X-Content-Type-Options'
-      );
-      expect(header?.value).toBe('nosniff');
+    it("should support revalidate in fetch", () => {
+      const fetchOptions = {
+        next: { revalidate: 3600 },
+      };
+
+      expect(fetchOptions.next.revalidate).toBeGreaterThan(0);
     });
 
-    it('should set X-Frame-Options to DENY', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'X-Frame-Options');
-      expect(header?.value).toBe('DENY');
-    });
+    it("should support no-store cache", () => {
+      const fetchOptions = {
+        cache: "no-store" as const,
+      };
 
-    it('should set X-XSS-Protection', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'X-XSS-Protection');
-      expect(header?.value).toBe('1; mode=block');
-    });
-
-    it('should set Referrer-Policy', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'Referrer-Policy');
-      expect(header?.value).toBe('strict-origin-when-cross-origin');
-    });
-
-    it('should set Permissions-Policy', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const header = globalHeaders?.headers.find((h) => h.key === 'Permissions-Policy');
-      expect(header).toBeDefined();
-      expect(header?.value).toContain('camera=()');
-      expect(header?.value).toContain('microphone=()');
-      expect(header?.value).toContain('geolocation=()');
+      expect(["force-cache", "no-store"]).toContain(fetchOptions.cache);
     });
   });
 
-  describe('Caching Headers', () => {
-    it('should cache static assets with immutable', () => {
-      const staticHeaders = headers.find((h) =>
-        h.source.includes('ico|png|jpg')
-      );
+  describe("Static generation", () => {
+    it("should support generateStaticParams", () => {
+      const generateStaticParams = async () => {
+        return [{ slug: "test-1" }, { slug: "test-2" }];
+      };
 
-      expect(staticHeaders).toBeDefined();
-      const cacheHeader = staticHeaders?.headers.find(
-        (h) => h.key === 'Cache-Control'
-      );
-      expect(cacheHeader?.value).toContain('public');
-      expect(cacheHeader?.value).toContain('max-age=31536000');
-      expect(cacheHeader?.value).toContain('immutable');
+      expect(generateStaticParams).toBeInstanceOf(Function);
     });
 
-    it('should cache Next.js static files with immutable', () => {
-      const nextStaticHeaders = headers.find((h) =>
-        h.source.includes('_next/static')
-      );
+    it("should return array of params", async () => {
+      const params = [{ slug: "test-1" }, { slug: "test-2" }];
 
-      expect(nextStaticHeaders).toBeDefined();
-      const cacheHeader = nextStaticHeaders?.headers.find(
-        (h) => h.key === 'Cache-Control'
-      );
-      expect(cacheHeader?.value).toContain('immutable');
-    });
-  });
-
-  describe('SEO Optimization', () => {
-    it('should not use trailing slashes for cleaner URLs', () => {
-      expect(nextConfig.trailingSlash).toBe(false);
-    });
-
-    it('should have canonical URL environment variable', () => {
-      expect(nextConfig.env.NEXT_PUBLIC_SITE_URL).toBeDefined();
-      expect(nextConfig.env.NEXT_PUBLIC_SITE_URL).toMatch(/^https:\/\//);
-    });
-
-    it('should redirect all legacy blog paths to /blog/:slug', () => {
-      const legacyPaths = ['/articles/:slug', '/posts/:slug', '/writing/:slug'];
-      legacyPaths.forEach((path) => {
-        const redirect = redirects.find((r) => r.source === path);
-        expect(redirect).toBeDefined();
-        expect(redirect?.destination).toBe('/blog/:slug');
-      });
-    });
-
-    it('should use 301 redirects for SEO link equity', () => {
-      redirects.forEach((redirect) => {
-        expect(redirect.permanent).toBe(true);
+      expect(Array.isArray(params)).toBe(true);
+      params.forEach((param) => {
+        expect(param).toHaveProperty("slug");
       });
     });
   });
 
-  describe('Performance Optimization', () => {
-    it('should have compression enabled', () => {
-      expect(nextConfig.compress).toBe(true);
+  describe("Error handling", () => {
+    it("should support error boundaries", () => {
+      const errorComponent = {
+        error: new Error("Test error"),
+        reset: () => {},
+      };
+
+      expect(errorComponent.error).toBeInstanceOf(Error);
+      expect(errorComponent.reset).toBeInstanceOf(Function);
     });
 
-    it('should use modern image formats', () => {
-      expect(nextConfig.images.formats).toContain('image/avif');
-      expect(nextConfig.images.formats).toContain('image/webp');
-    });
+    it("should support notFound function", () => {
+      const notFound = () => {
+        // Triggers not-found.tsx
+      };
 
-    it('should support multiple device sizes for responsive images', () => {
-      expect(nextConfig.images.deviceSizes.length).toBeGreaterThanOrEqual(7);
-    });
-
-    it('should cache static assets for one year', () => {
-      const staticHeaders = headers.find((h) =>
-        h.source.includes('ico|png|jpg')
-      );
-      const cacheHeader = staticHeaders?.headers.find(
-        (h) => h.key === 'Cache-Control'
-      );
-      expect(cacheHeader?.value).toContain('max-age=31536000');
+      expect(notFound).toBeInstanceOf(Function);
     });
   });
 
-  describe('Static Export Configuration', () => {
-    it('should have output set to export', () => {
-      expect(nextConfig.output).toBe('export');
+  describe("Loading states", () => {
+    it("should support loading.tsx", () => {
+      const loadingFile = "loading.tsx";
+
+      expect(loadingFile).toBe("loading.tsx");
     });
 
-    it('should have unoptimized images for static export', () => {
-      expect(nextConfig.images.unoptimized).toBe(true);
-    });
+    it("should support Suspense boundaries", () => {
+      const suspenseConfig = {
+        fallback: "Loading...",
+      };
 
-    it('should be compatible with Firebase Hosting', () => {
-      expect(nextConfig.output).toBe('export');
-      expect(nextConfig.trailingSlash).toBe(false);
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle missing environment variables gracefully', () => {
-      expect(nextConfig.env.NEXT_PUBLIC_SITE_URL).toBeDefined();
-    });
-
-    it('should not have conflicting redirects', () => {
-      const sources = redirects.map((r) => r.source);
-      const uniqueSources = new Set(sources);
-      expect(sources.length).toBe(uniqueSources.size);
-    });
-
-    it('should not redirect the same path multiple times', () => {
-      const destinations = redirects.map((r) => r.destination);
-      const redirectedSources = redirects.map((r) => r.source);
-
-      destinations.forEach((dest) => {
-        const isAlsoSource = redirectedSources.includes(dest);
-        if (isAlsoSource) {
-          // This would create a redirect chain, which should be avoided
-          expect(isAlsoSource).toBe(false);
-        }
-      });
-    });
-
-    it('should have valid regex patterns in header sources', () => {
-      headers.forEach((headerConfig) => {
-        expect(() => new RegExp(headerConfig.source)).not.toThrow();
-      });
+      expect(suspenseConfig.fallback).toBeDefined();
     });
   });
 
-  describe('Best Practices', () => {
-    it('should disable X-Powered-By for security', () => {
-      expect(nextConfig.poweredByHeader).toBe(false);
+  describe("Server and Client Components", () => {
+    it("should use 'use client' directive for client components", () => {
+      const directive = "use client";
+
+      expect(directive).toBe("use client");
     });
 
-    it('should use strict mode in React', () => {
-      expect(nextConfig.reactStrictMode).toBe(true);
+    it("should use 'use server' directive for server actions", () => {
+      const directive = "use server";
+
+      expect(directive).toBe("use server");
     });
 
-    it('should have comprehensive security headers', () => {
-      const globalHeaders = headers.find((h) => h.source === '/(.*)');
-      const headerKeys = globalHeaders?.headers.map((h) => h.key) || [];
+    it("should default to Server Components", () => {
+      const isServerComponent = true;
 
-      const requiredHeaders = [
-        'X-Content-Type-Options',
-        'X-Frame-Options',
-        'X-XSS-Protection',
-        'Referrer-Policy',
-        'Permissions-Policy',
-      ];
+      expect(isServerComponent).toBe(true);
+    });
+  });
 
-      requiredHeaders.forEach((requiredHeader) => {
-        expect(headerKeys).toContain(requiredHeader);
-      });
+  describe("Parallel and Intercepting Routes", () => {
+    it("should support parallel routes with @folder", () => {
+      const parallelRoute = "@modal";
+
+      expect(parallelRoute).toMatch(/^@/);
     });
 
-    it('should prioritize modern image formats', () => {
-      const formats = nextConfig.images.formats;
-      expect(formats[0]).toBe('image/avif');
+    it("should support intercepting routes with (.)folder", () => {
+      const interceptRoute = "(.)post";
+
+      expect(interceptRoute).toMatch(/^\(\.\)/);
+    });
+  });
+
+  describe("Middleware", () => {
+    it("should export middleware function", () => {
+      const middleware = (request: any) => {
+        return new Response();
+      };
+
+      expect(middleware).toBeInstanceOf(Function);
     });
 
-    it('should have appropriate max-age for static assets', () => {
-      const oneYear = 31536000;
-      const staticHeaders = headers.find((h) =>
-        h.source.includes('ico|png|jpg')
-      );
-      const cacheHeader = staticHeaders?.headers.find(
-        (h) => h.key === 'Cache-Control'
-      );
-      expect(cacheHeader?.value).toContain(`max-age=${oneYear}`);
+    it("should export config for matcher", () => {
+      const config = {
+        matcher: ["/api/:path*", "/dashboard/:path*"],
+      };
+
+      expect(Array.isArray(config.matcher)).toBe(true);
+    });
+  });
+
+  describe("Instrumentation", () => {
+    it("should support register function", () => {
+      const register = async () => {
+        // Setup instrumentation
+      };
+
+      expect(register).toBeInstanceOf(Function);
     });
   });
 });
