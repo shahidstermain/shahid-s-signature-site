@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
   Command,
@@ -12,452 +12,727 @@ import {
   CommandSeparator,
 } from "./command";
 
-// Mock ResizeObserver and scrollIntoView
-beforeAll(() => {
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
-
-  // Mock scrollIntoView for cmdk
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
-// Mock the Dialog component
-vi.mock("@/components/ui/dialog", () => ({
-  Dialog: ({ children, ...props }: any) => <div data-testid="dialog" {...props}>{children}</div>,
-  DialogContent: ({ children, ...props }: any) => (
-    <div data-testid="dialog-content" {...props}>{children}</div>
-  ),
-}));
-
-describe("Command components", () => {
+describe("command components", () => {
   describe("Command", () => {
     it("should render without crashing", () => {
-      expect(() => render(<Command />)).not.toThrow();
+      expect(() =>
+        render(
+          <Command>
+            <div>Content</div>
+          </Command>
+        )
+      ).not.toThrow();
     });
 
     it("should render children", () => {
       render(
         <Command>
-          <div data-testid="child">Test content</div>
+          <div data-testid="child">Test Content</div>
         </Command>
       );
+
       expect(screen.getByTestId("child")).toBeInTheDocument();
+      expect(screen.getByText("Test Content")).toBeInTheDocument();
     });
 
-    it("should apply custom className", () => {
-      const { container } = render(<Command className="custom-class" />);
+    it("should accept custom className", () => {
+      const { container } = render(
+        <Command className="custom-class">Content</Command>
+      );
+
       const element = container.querySelector(".custom-class");
       expect(element).toBeInTheDocument();
     });
 
-    it("should forward ref", () => {
-      const ref = vi.fn();
-      render(<Command ref={ref} />);
-      expect(ref).toHaveBeenCalled();
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
+      render(<Command ref={ref}>Content</Command>);
+
+      expect(ref.current).toBeTruthy();
     });
   });
 
   describe("CommandDialog", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<CommandDialog open={false} />)).not.toThrow();
-    });
-
-    it("should wrap content in Dialog", () => {
+    it("should render when open", () => {
       render(
         <CommandDialog open={true}>
-          <div data-testid="dialog-child">Dialog content</div>
+          <div data-testid="dialog-content">Dialog Content</div>
         </CommandDialog>
       );
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+
       expect(screen.getByTestId("dialog-content")).toBeInTheDocument();
     });
 
-    it("should pass Dialog props", () => {
-      const onOpenChange = vi.fn();
-      render(<CommandDialog open={true} onOpenChange={onOpenChange} />);
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    });
-
-    it("should render Command inside Dialog", () => {
+    it("should not render when closed", () => {
       render(
-        <CommandDialog open={true}>
-          <CommandInput placeholder="Search..." />
+        <CommandDialog open={false}>
+          <div data-testid="dialog-content">Dialog Content</div>
         </CommandDialog>
       );
-      // Should have both dialog and command structure
-      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+
+      expect(screen.queryByTestId("dialog-content")).not.toBeInTheDocument();
+    });
+
+    it("should wrap children in Command component", () => {
+      const { container } = render(
+        <CommandDialog open={true}>
+          <div data-testid="dialog-content-test">Content</div>
+        </CommandDialog>
+      );
+
+      // CommandDialog wraps content in Command component
+      expect(screen.getByTestId("dialog-content-test")).toBeInTheDocument();
     });
   });
 
   describe("CommandInput", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandInput /></Command>)).not.toThrow();
-    });
-
     it("should render search icon", () => {
-      const { container } = render(
+      render(
         <Command>
-          <CommandInput />
+          <CommandInput placeholder="Search..." />
         </Command>
       );
-      // Search icon from lucide-react should be rendered
-      const svg = container.querySelector("svg");
-      expect(svg).toBeInTheDocument();
+
+      // Search icon from lucide-react should be present
+      const icon = document.querySelector('svg');
+      expect(icon).toBeInTheDocument();
     });
 
-    it("should accept placeholder text", () => {
+    it("should render with placeholder", () => {
       render(
         <Command>
           <CommandInput placeholder="Type a command..." />
         </Command>
       );
+
       const input = screen.getByPlaceholderText("Type a command...");
       expect(input).toBeInTheDocument();
-    });
-
-    it("should be focusable", () => {
-      render(
-        <Command>
-          <CommandInput placeholder="Search" />
-        </Command>
-      );
-      const input = screen.getByPlaceholderText("Search");
-      input.focus();
-      expect(input).toHaveFocus();
     });
 
     it("should accept custom className", () => {
       render(
         <Command>
-          <CommandInput className="custom-input" />
+          <CommandInput className="custom-input" placeholder="Search" />
         </Command>
       );
-      const input = document.querySelector(".custom-input");
-      expect(input).toBeInTheDocument();
+
+      const input = screen.getByPlaceholderText("Search");
+      expect(input).toHaveClass("custom-input");
     });
 
-    it("should forward ref", () => {
-      const ref = vi.fn();
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLInputElement | null };
       render(
         <Command>
-          <CommandInput ref={ref} />
+          <CommandInput ref={ref} placeholder="Search" />
         </Command>
       );
-      expect(ref).toHaveBeenCalled();
+
+      expect(ref.current).toBeTruthy();
+    });
+
+    it("should be focusable", () => {
+      render(
+        <Command>
+          <CommandInput placeholder="Search..." />
+        </Command>
+      );
+
+      const input = screen.getByPlaceholderText("Search...");
+      expect(input).not.toHaveAttribute("disabled");
     });
   });
 
   describe("CommandList", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandList /></Command>)).not.toThrow();
-    });
-
     it("should render children", () => {
       render(
         <Command>
           <CommandList>
-            <div data-testid="list-child">List item</div>
+            <div data-testid="list-item">Item</div>
           </CommandList>
         </Command>
       );
-      expect(screen.getByTestId("list-child")).toBeInTheDocument();
+
+      expect(screen.getByTestId("list-item")).toBeInTheDocument();
     });
 
-    it("should apply custom className", () => {
+    it("should accept custom className", () => {
       const { container } = render(
         <Command>
-          <CommandList className="custom-list" />
+          <CommandList className="custom-list">
+            <div>Item</div>
+          </CommandList>
         </Command>
       );
+
       const element = container.querySelector(".custom-list");
       expect(element).toBeInTheDocument();
     });
 
-    it("should forward ref", () => {
-      const ref = vi.fn();
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
       render(
         <Command>
-          <CommandList ref={ref} />
+          <CommandList ref={ref}>
+            <div>Item</div>
+          </CommandList>
         </Command>
       );
-      expect(ref).toHaveBeenCalled();
+
+      expect(ref.current).toBeTruthy();
+    });
+
+    it("should have scrollable overflow", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <div>Item</div>
+          </CommandList>
+        </Command>
+      );
+
+      const list = container.querySelector('[cmdk-list]');
+      expect(list).toHaveClass("overflow-y-auto");
     });
   });
 
   describe("CommandEmpty", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandEmpty /></Command>)).not.toThrow();
-    });
-
-    it("should render children", () => {
+    it("should render empty message", () => {
       render(
         <Command>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandList>
+            <CommandEmpty>No results found</CommandEmpty>
+          </CommandList>
         </Command>
       );
-      expect(screen.getByText("No results found.")).toBeInTheDocument();
+
+      expect(screen.getByText("No results found")).toBeInTheDocument();
     });
 
-    it("should forward ref", () => {
-      const ref = vi.fn();
+    it("should be centered", () => {
       render(
         <Command>
-          <CommandEmpty ref={ref} />
+          <CommandList>
+            <CommandEmpty>Empty</CommandEmpty>
+          </CommandList>
         </Command>
       );
-      expect(ref).toHaveBeenCalled();
+
+      const element = screen.getByText("Empty");
+      expect(element).toHaveClass("text-center");
+    });
+
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
+      render(
+        <Command>
+          <CommandList>
+            <CommandEmpty ref={ref}>Empty</CommandEmpty>
+          </CommandList>
+        </Command>
+      );
+
+      expect(ref.current).toBeTruthy();
     });
   });
 
   describe("CommandGroup", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandGroup /></Command>)).not.toThrow();
-    });
-
     it("should render children", () => {
       render(
         <Command>
-          <CommandGroup>
-            <div data-testid="group-child">Group item</div>
-          </CommandGroup>
-        </Command>
-      );
-      expect(screen.getByTestId("group-child")).toBeInTheDocument();
-    });
-
-    it("should accept heading prop", () => {
-      render(
-        <Command>
-          <CommandGroup heading="Suggestions">
-            <CommandItem>Item 1</CommandItem>
-          </CommandGroup>
-        </Command>
-      );
-      expect(screen.getByText("Suggestions")).toBeInTheDocument();
-    });
-
-    it("should apply custom className", () => {
-      const { container } = render(
-        <Command>
-          <CommandGroup className="custom-group" />
-        </Command>
-      );
-      const element = container.querySelector(".custom-group");
-      expect(element).toBeInTheDocument();
-    });
-
-    it("should forward ref", () => {
-      const ref = vi.fn();
-      render(
-        <Command>
-          <CommandGroup ref={ref} />
-        </Command>
-      );
-      expect(ref).toHaveBeenCalled();
-    });
-  });
-
-  describe("CommandSeparator", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandSeparator /></Command>)).not.toThrow();
-    });
-
-    it("should apply custom className", () => {
-      const { container } = render(
-        <Command>
-          <CommandSeparator className="custom-separator" />
-        </Command>
-      );
-      const element = container.querySelector(".custom-separator");
-      expect(element).toBeInTheDocument();
-    });
-
-    it("should forward ref", () => {
-      const ref = vi.fn();
-      render(
-        <Command>
-          <CommandSeparator ref={ref} />
-        </Command>
-      );
-      expect(ref).toHaveBeenCalled();
-    });
-  });
-
-  describe("CommandItem", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<Command><CommandItem /></Command>)).not.toThrow();
-    });
-
-    it("should render children", () => {
-      render(
-        <Command>
-          <CommandItem>Test item</CommandItem>
-        </Command>
-      );
-      expect(screen.getByText("Test item")).toBeInTheDocument();
-    });
-
-    it("should apply custom className", () => {
-      const { container } = render(
-        <Command>
-          <CommandItem className="custom-item" />
-        </Command>
-      );
-      const element = container.querySelector(".custom-item");
-      expect(element).toBeInTheDocument();
-    });
-
-    it("should forward ref", () => {
-      const ref = vi.fn();
-      render(
-        <Command>
-          <CommandItem ref={ref} />
-        </Command>
-      );
-      expect(ref).toHaveBeenCalled();
-    });
-
-    it("should accept disabled prop", () => {
-      render(
-        <Command>
-          <CommandItem disabled>Disabled item</CommandItem>
-        </Command>
-      );
-      expect(screen.getByText("Disabled item")).toBeInTheDocument();
-    });
-  });
-
-  describe("CommandShortcut", () => {
-    it("should render without crashing", () => {
-      expect(() => render(<CommandShortcut />)).not.toThrow();
-    });
-
-    it("should render children", () => {
-      render(<CommandShortcut>⌘K</CommandShortcut>);
-      expect(screen.getByText("⌘K")).toBeInTheDocument();
-    });
-
-    it("should apply custom className", () => {
-      const { container } = render(
-        <CommandShortcut className="custom-shortcut">⌘K</CommandShortcut>
-      );
-      const element = container.querySelector(".custom-shortcut");
-      expect(element).toBeInTheDocument();
-    });
-
-    it("should render as span element", () => {
-      const { container } = render(<CommandShortcut>⌘K</CommandShortcut>);
-      const span = container.querySelector("span");
-      expect(span).toBeInTheDocument();
-      expect(span?.textContent).toBe("⌘K");
-    });
-  });
-
-  describe("integration tests", () => {
-    it("should render a complete command menu structure", () => {
-      render(
-        <Command>
-          <CommandInput placeholder="Type a command..." />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup heading="Suggestions">
-              <CommandItem>Calendar</CommandItem>
-              <CommandItem>Search Emoji</CommandItem>
-              <CommandItem>Calculator</CommandItem>
-            </CommandGroup>
-            <CommandSeparator />
-            <CommandGroup heading="Settings">
-              <CommandItem>Profile</CommandItem>
-              <CommandItem>Billing</CommandItem>
-              <CommandItem>Settings</CommandItem>
+            <CommandGroup>
+              <div data-testid="group-item">Item</div>
             </CommandGroup>
           </CommandList>
         </Command>
       );
 
-      expect(screen.getByPlaceholderText("Type a command...")).toBeInTheDocument();
+      expect(screen.getByTestId("group-item")).toBeInTheDocument();
+    });
+
+    it("should render with heading", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup heading="Commands">
+              <div>Item</div>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Commands")).toBeInTheDocument();
+    });
+
+    it("should accept custom className", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandGroup className="custom-group">
+              <div>Item</div>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      const element = container.querySelector(".custom-group");
+      expect(element).toBeInTheDocument();
+    });
+
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup ref={ref}>
+              <div>Item</div>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(ref.current).toBeTruthy();
+    });
+  });
+
+  describe("CommandItem", () => {
+    it("should render item text", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>Select item</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Select item")).toBeInTheDocument();
+    });
+
+    it("should accept custom className", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem className="custom-item">Item</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      const element = container.querySelector(".custom-item");
+      expect(element).toBeInTheDocument();
+    });
+
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem ref={ref}>Item</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(ref.current).toBeTruthy();
+    });
+
+    it("should be selectable by default", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>Selectable</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      const item = screen.getByText("Selectable");
+      expect(item).toHaveClass("cursor-default");
+    });
+  });
+
+  describe("CommandShortcut", () => {
+    it("should render shortcut text", () => {
+      render(<CommandShortcut>⌘K</CommandShortcut>);
+
+      expect(screen.getByText("⌘K")).toBeInTheDocument();
+    });
+
+    it("should accept custom className", () => {
+      render(<CommandShortcut className="custom-shortcut">Ctrl+C</CommandShortcut>);
+
+      const element = screen.getByText("Ctrl+C");
+      expect(element).toHaveClass("custom-shortcut");
+    });
+
+    it("should have muted appearance", () => {
+      render(<CommandShortcut>⌘V</CommandShortcut>);
+
+      const element = screen.getByText("⌘V");
+      expect(element).toHaveClass("text-muted-foreground");
+    });
+
+    it("should align to the right", () => {
+      render(<CommandShortcut>⌘S</CommandShortcut>);
+
+      const element = screen.getByText("⌘S");
+      expect(element).toHaveClass("ml-auto");
+    });
+  });
+
+  describe("CommandSeparator", () => {
+    it("should render separator", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandSeparator />
+          </CommandList>
+        </Command>
+      );
+
+      const separator = container.querySelector('[cmdk-separator]');
+      expect(separator).toBeInTheDocument();
+    });
+
+    it("should accept custom className", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandSeparator className="custom-separator" />
+          </CommandList>
+        </Command>
+      );
+
+      const element = container.querySelector(".custom-separator");
+      expect(element).toBeInTheDocument();
+    });
+
+    it("should forward ref correctly", () => {
+      const ref = { current: null as HTMLDivElement | null };
+      render(
+        <Command>
+          <CommandList>
+            <CommandSeparator ref={ref} />
+          </CommandList>
+        </Command>
+      );
+
+      expect(ref.current).toBeTruthy();
+    });
+
+    it("should have border styling", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandSeparator />
+          </CommandList>
+        </Command>
+      );
+
+      const separator = container.querySelector('[cmdk-separator]');
+      expect(separator).toHaveClass("bg-border");
+    });
+  });
+
+  describe("integration tests", () => {
+    it("should render complete command menu structure", () => {
+      render(
+        <Command>
+          <CommandInput placeholder="Search..." />
+          <CommandList>
+            <CommandEmpty>No results</CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              <CommandItem>
+                Calendar
+                <CommandShortcut>⌘K</CommandShortcut>
+              </CommandItem>
+              <CommandItem>
+                Search
+                <CommandShortcut>⌘S</CommandShortcut>
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Settings">
+              <CommandItem>Profile</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByPlaceholderText("Search...")).toBeInTheDocument();
       expect(screen.getByText("Suggestions")).toBeInTheDocument();
-      // Settings appears as both heading and item
-      expect(screen.getAllByText("Settings").length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText("Calendar")).toBeInTheDocument();
+      expect(screen.getByText("⌘K")).toBeInTheDocument();
+      expect(screen.getByText("Settings")).toBeInTheDocument();
       expect(screen.getByText("Profile")).toBeInTheDocument();
     });
 
-    it("should render items with shortcuts", () => {
+    it("should work with CommandDialog wrapper", () => {
+      render(
+        <CommandDialog open={true}>
+          <CommandInput placeholder="Type a command..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Actions">
+              <CommandItem>Action 1</CommandItem>
+              <CommandItem>Action 2</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
+      );
+
+      expect(screen.getByPlaceholderText("Type a command...")).toBeInTheDocument();
+      expect(screen.getByText("Actions")).toBeInTheDocument();
+      expect(screen.getByText("Action 1")).toBeInTheDocument();
+      expect(screen.getByText("Action 2")).toBeInTheDocument();
+    });
+
+    it("should handle multiple command groups", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup heading="Group 1">
+              <CommandItem>Item 1</CommandItem>
+            </CommandGroup>
+            <CommandGroup heading="Group 2">
+              <CommandItem>Item 2</CommandItem>
+            </CommandGroup>
+            <CommandGroup heading="Group 3">
+              <CommandItem>Item 3</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Group 1")).toBeInTheDocument();
+      expect(screen.getByText("Group 2")).toBeInTheDocument();
+      expect(screen.getByText("Group 3")).toBeInTheDocument();
+      expect(screen.getByText("Item 1")).toBeInTheDocument();
+      expect(screen.getByText("Item 2")).toBeInTheDocument();
+      expect(screen.getByText("Item 3")).toBeInTheDocument();
+    });
+
+    it("should render items with multiple shortcuts", () => {
       render(
         <Command>
           <CommandList>
             <CommandGroup>
               <CommandItem>
-                Search
-                <CommandShortcut>⌘K</CommandShortcut>
+                Save File
+                <CommandShortcut>⌘S</CommandShortcut>
               </CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>
       );
 
-      expect(screen.getByText("Search")).toBeInTheDocument();
+      expect(screen.getByText("Save File")).toBeInTheDocument();
+      expect(screen.getByText("⌘S")).toBeInTheDocument();
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle empty command list", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandEmpty>No items</CommandEmpty>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("No items")).toBeInTheDocument();
+    });
+
+    it("should handle command without input", () => {
+      expect(() =>
+        render(
+          <Command>
+            <CommandList>
+              <CommandItem>Item</CommandItem>
+            </CommandList>
+          </Command>
+        )
+      ).not.toThrow();
+    });
+
+    it("should handle command group without heading", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>Unheaded item</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Unheaded item")).toBeInTheDocument();
+    });
+
+    it("should handle nested command structures", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>
+                <div>
+                  <span>Complex item</span>
+                  <CommandShortcut>⌘K</CommandShortcut>
+                </div>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Complex item")).toBeInTheDocument();
       expect(screen.getByText("⌘K")).toBeInTheDocument();
     });
 
-    it("should handle empty state", () => {
+    it("should handle very long command names", () => {
+      const longName = "A".repeat(100);
       render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>{longName}</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText(longName)).toBeInTheDocument();
+    });
+
+    it("should handle special characters in command items", () => {
+      const itemText = "Test & Item with special chars";
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              <CommandItem>{itemText}</CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText(itemText)).toBeInTheDocument();
+    });
+
+    it("should handle empty command groups", () => {
+      render(
+        <Command>
+          <CommandList>
+            <CommandGroup heading="Empty Group">
+              {/* No items */}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      );
+
+      expect(screen.getByText("Empty Group")).toBeInTheDocument();
+    });
+
+    it("should handle multiple separators", () => {
+      const { container } = render(
+        <Command>
+          <CommandList>
+            <CommandSeparator />
+            <CommandSeparator />
+            <CommandSeparator />
+          </CommandList>
+        </Command>
+      );
+
+      const separators = container.querySelectorAll('[cmdk-separator]');
+      expect(separators.length).toBe(3);
+    });
+
+    it("should render shortcuts with different key combinations", () => {
+      render(
+        <div>
+          <CommandShortcut>⌘K</CommandShortcut>
+          <CommandShortcut>Ctrl+C</CommandShortcut>
+          <CommandShortcut>Alt+F4</CommandShortcut>
+          <CommandShortcut>⇧⌘P</CommandShortcut>
+        </div>
+      );
+
+      expect(screen.getByText("⌘K")).toBeInTheDocument();
+      expect(screen.getByText("Ctrl+C")).toBeInTheDocument();
+      expect(screen.getByText("Alt+F4")).toBeInTheDocument();
+      expect(screen.getByText("⇧⌘P")).toBeInTheDocument();
+    });
+
+    it("should handle CommandDialog with open state changes", () => {
+      const { rerender } = render(
+        <CommandDialog open={false}>
+          <div data-testid="dialog">Content</div>
+        </CommandDialog>
+      );
+
+      expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+
+      rerender(
+        <CommandDialog open={true}>
+          <div data-testid="dialog">Content</div>
+        </CommandDialog>
+      );
+
+      expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    });
+  });
+
+  describe("accessibility enhancements", () => {
+    it("should have proper ARIA attributes", () => {
+      const { container } = render(
         <Command>
           <CommandInput placeholder="Search..." />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandItem>Item</CommandItem>
           </CommandList>
         </Command>
       );
 
-      expect(screen.getByText("No results found.")).toBeInTheDocument();
-    });
-  });
-
-  describe("styling and classes", () => {
-    it("should apply default Tailwind classes to Command", () => {
-      const { container } = render(<Command />);
-      const element = container.firstElementChild;
-      expect(element?.className).toContain("flex");
+      // Command components use cmdk attributes
+      expect(container.querySelector('[cmdk-input]')).toBeInTheDocument();
+      expect(container.querySelector('[cmdk-list]')).toBeInTheDocument();
     });
 
-    it("should merge custom classes with defaults", () => {
-      const { container } = render(<Command className="my-custom-class" />);
-      const element = container.firstElementChild;
-      expect(element?.className).toContain("my-custom-class");
-      expect(element?.className).toContain("flex");
-    });
-  });
-
-  describe("accessibility", () => {
-    it("should have proper ARIA attributes on CommandInput", () => {
-      render(
+    it("should handle keyboard navigation structure", () => {
+      const { container } = render(
         <Command>
-          <CommandInput aria-label="Search commands" />
-        </Command>
-      );
-      const input = screen.getByLabelText("Search commands");
-      expect(input).toBeInTheDocument();
-    });
-
-    it("should support keyboard navigation", () => {
-      render(
-        <Command>
-          <CommandInput placeholder="Search" />
+          <CommandInput placeholder="Type..." />
           <CommandList>
-            <CommandItem>Item 1</CommandItem>
-            <CommandItem>Item 2</CommandItem>
+            <CommandGroup>
+              <CommandItem>Item 1</CommandItem>
+              <CommandItem>Item 2</CommandItem>
+              <CommandItem>Item 3</CommandItem>
+            </CommandGroup>
           </CommandList>
         </Command>
       );
 
-      const input = screen.getByPlaceholderText("Search");
-      expect(input).toBeInTheDocument();
-      // cmdk handles keyboard navigation internally
+      const items = container.querySelectorAll('[cmdk-item]');
+      expect(items.length).toBe(3);
+    });
+
+    it("should allow input to receive focus", () => {
+      render(
+        <Command>
+          <CommandInput placeholder="Search..." />
+        </Command>
+      );
+
+      const input = screen.getByPlaceholderText("Search...");
+      expect(input).not.toHaveAttribute("disabled");
     });
   });
 });

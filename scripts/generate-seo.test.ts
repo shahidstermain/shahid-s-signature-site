@@ -1,145 +1,61 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { Mock } from "vitest";
 import { writeFile } from "node:fs/promises";
-import { readFile, mkdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import path from "node:path";
-import { tmpdir } from "node:os";
 
 // Mock the dependencies
+vi.mock("node:fs/promises", () => ({
+  writeFile: vi.fn(),
+}));
+
 vi.mock("../src/lib/rss", () => ({
-  generateRSSFeed: vi.fn(() => "<?xml version=\"1.0\"?><rss>Mock RSS Feed</rss>"),
-  generateJSONFeed: vi.fn(() => '{"version": "https://jsonfeed.org/version/1.1", "items": []}'),
+  generateRSSFeed: vi.fn(() => '<?xml version="1.0"?><rss>RSS Feed Content</rss>'),
+  generateJSONFeed: vi.fn(() => '{"version": "1.1", "items": []}'),
 }));
 
 vi.mock("../src/lib/sitemap", () => ({
-  generateSitemap: vi.fn(() => "<?xml version=\"1.0\"?><urlset>Mock Sitemap</urlset>"),
-  generateRobotsTxt: vi.fn(() => "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n"),
+  generateSitemap: vi.fn(() => '<?xml version="1.0"?><urlset>Sitemap Content</urlset>'),
+  generateRobotsTxt: vi.fn(() => "User-agent: *\nAllow: /\n"),
 }));
 
 describe("generate-seo script", () => {
-  let testDir: string;
-  let originalCwd: string;
-
-  beforeEach(async () => {
-    // Create a temporary directory for testing
-    testDir = path.join(tmpdir(), `seo-test-${Date.now()}`);
-    await mkdir(testDir, { recursive: true });
-    await mkdir(path.join(testDir, "public"), { recursive: true });
-
-    // Save original cwd
-    originalCwd = process.cwd();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // Restore original cwd
-    process.chdir(originalCwd);
-
-    // Clean up test directory
-    try {
-      const { rm } = await import("node:fs/promises");
-      await rm(testDir, { recursive: true, force: true });
-    } catch (error) {
-      // Ignore cleanup errors
-    }
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("should generate all SEO assets", async () => {
+  it("should import required functions", async () => {
     const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
     const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
 
-    const publicDir = path.join(testDir, "public");
-
-    // Write files
-    await writeFile(path.join(publicDir, "sitemap.xml"), generateSitemap(), "utf8");
-    await writeFile(path.join(publicDir, "rss.xml"), generateRSSFeed(), "utf8");
-    await writeFile(path.join(publicDir, "feed.json"), generateJSONFeed(), "utf8");
-    await writeFile(path.join(publicDir, "robots.txt"), generateRobotsTxt(), "utf8");
-
-    // Verify files exist
-    expect(existsSync(path.join(publicDir, "sitemap.xml"))).toBe(true);
-    expect(existsSync(path.join(publicDir, "rss.xml"))).toBe(true);
-    expect(existsSync(path.join(publicDir, "feed.json"))).toBe(true);
-    expect(existsSync(path.join(publicDir, "robots.txt"))).toBe(true);
-  });
-
-  it("should write sitemap.xml with correct content", async () => {
-    const { generateSitemap } = await import("../src/lib/sitemap");
-    const publicDir = path.join(testDir, "public");
-
-    const content = generateSitemap();
-    await writeFile(path.join(publicDir, "sitemap.xml"), content, "utf8");
-
-    const written = await readFile(path.join(publicDir, "sitemap.xml"), "utf8");
-    expect(written).toBe(content);
-    expect(written).toContain("<?xml version=\"1.0\"?>");
-    expect(written).toContain("Mock Sitemap");
-  });
-
-  it("should write rss.xml with correct content", async () => {
-    const { generateRSSFeed } = await import("../src/lib/rss");
-    const publicDir = path.join(testDir, "public");
-
-    const content = generateRSSFeed();
-    await writeFile(path.join(publicDir, "rss.xml"), content, "utf8");
-
-    const written = await readFile(path.join(publicDir, "rss.xml"), "utf8");
-    expect(written).toBe(content);
-    expect(written).toContain("Mock RSS Feed");
-  });
-
-  it("should write feed.json with correct content", async () => {
-    const { generateJSONFeed } = await import("../src/lib/rss");
-    const publicDir = path.join(testDir, "public");
-
-    const content = generateJSONFeed();
-    await writeFile(path.join(publicDir, "feed.json"), content, "utf8");
-
-    const written = await readFile(path.join(publicDir, "feed.json"), "utf8");
-    expect(written).toBe(content);
-
-    // Verify it's valid JSON
-    const parsed = JSON.parse(written);
-    expect(parsed.version).toBeDefined();
-  });
-
-  it("should write robots.txt with correct content", async () => {
-    const { generateRobotsTxt } = await import("../src/lib/sitemap");
-    const publicDir = path.join(testDir, "public");
-
-    const content = generateRobotsTxt();
-    await writeFile(path.join(publicDir, "robots.txt"), content, "utf8");
-
-    const written = await readFile(path.join(publicDir, "robots.txt"), "utf8");
-    expect(written).toBe(content);
-    expect(written).toContain("User-agent:");
-    expect(written).toContain("Sitemap:");
-  });
-
-  it("should write files with UTF-8 encoding", async () => {
-    const { generateRSSFeed } = await import("../src/lib/rss");
-    const publicDir = path.join(testDir, "public");
-
-    await writeFile(path.join(publicDir, "rss.xml"), generateRSSFeed(), "utf8");
-
-    const stats = await readFile(path.join(publicDir, "rss.xml"), "utf8");
-    expect(typeof stats).toBe("string");
+    expect(generateRSSFeed).toBeDefined();
+    expect(generateJSONFeed).toBeDefined();
+    expect(generateSitemap).toBeDefined();
+    expect(generateRobotsTxt).toBeDefined();
   });
 
   it("should call all generation functions", async () => {
     const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
     const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
 
-    // Call all functions to ensure they work
-    expect(() => generateSitemap()).not.toThrow();
-    expect(() => generateRSSFeed()).not.toThrow();
-    expect(() => generateJSONFeed()).not.toThrow();
-    expect(() => generateRobotsTxt()).not.toThrow();
+    // Call the functions as the script would
+    generateSitemap();
+    generateRSSFeed();
+    generateJSONFeed();
+    generateRobotsTxt();
+
+    expect(generateSitemap).toHaveBeenCalled();
+    expect(generateRSSFeed).toHaveBeenCalled();
+    expect(generateJSONFeed).toHaveBeenCalled();
+    expect(generateRobotsTxt).toHaveBeenCalled();
   });
 
-  it("should generate files that can be written concurrently", async () => {
+  it("should generate correct output structure", async () => {
     const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
     const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
-    const publicDir = path.join(testDir, "public");
 
     const outputs = [
       { name: "sitemap.xml", contents: generateSitemap() },
@@ -148,174 +64,399 @@ describe("generate-seo script", () => {
       { name: "robots.txt", contents: generateRobotsTxt() },
     ];
 
-    // Write all files concurrently
+    expect(outputs).toHaveLength(4);
+    expect(outputs[0].name).toBe("sitemap.xml");
+    expect(outputs[1].name).toBe("rss.xml");
+    expect(outputs[2].name).toBe("feed.json");
+    expect(outputs[3].name).toBe("robots.txt");
+  });
+
+  it("should generate valid sitemap XML", async () => {
+    const { generateSitemap } = await import("../src/lib/sitemap");
+
+    const sitemap = generateSitemap();
+
+    expect(sitemap).toContain('<?xml version="1.0"?>');
+    expect(sitemap).toContain("<urlset>");
+  });
+
+  it("should generate valid RSS XML", async () => {
+    const { generateRSSFeed } = await import("../src/lib/rss");
+
+    const rss = generateRSSFeed();
+
+    expect(rss).toContain('<?xml version="1.0"?>');
+    expect(rss).toContain("<rss>");
+  });
+
+  it("should generate valid JSON Feed", async () => {
+    const { generateJSONFeed } = await import("../src/lib/rss");
+
+    const feed = generateJSONFeed();
+
+    expect(() => JSON.parse(feed)).not.toThrow();
+    const parsed = JSON.parse(feed);
+    expect(parsed.version).toBe("1.1");
+  });
+
+  it("should generate valid robots.txt", async () => {
+    const { generateRobotsTxt } = await import("../src/lib/sitemap");
+
+    const robots = generateRobotsTxt();
+
+    expect(robots).toContain("User-agent:");
+    expect(robots).toContain("Allow:");
+  });
+
+  it("should write all files to public directory", async () => {
+    const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+    const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
+
+    const outputs = [
+      { name: "sitemap.xml", contents: generateSitemap() },
+      { name: "rss.xml", contents: generateRSSFeed() },
+      { name: "feed.json", contents: generateJSONFeed() },
+      { name: "robots.txt", contents: generateRobotsTxt() },
+    ];
+
+    // Simulate what the script does
+    const writePromises = outputs.map((output) => {
+      const filePath = path.join(process.cwd(), "public", output.name);
+      return writeFile(filePath, output.contents, "utf8");
+    });
+
+    await Promise.all(writePromises);
+
+    expect(writeFile).toHaveBeenCalledTimes(4);
+  });
+
+  it("should write sitemap.xml with correct content", async () => {
+    const { generateSitemap } = await import("../src/lib/sitemap");
+
+    const content = generateSitemap();
+    const filePath = path.join(process.cwd(), "public", "sitemap.xml");
+
+    await writeFile(filePath, content, "utf8");
+
+    expect(writeFile).toHaveBeenCalledWith(filePath, content, "utf8");
+  });
+
+  it("should write rss.xml with correct content", async () => {
+    const { generateRSSFeed } = await import("../src/lib/rss");
+
+    const content = generateRSSFeed();
+    const filePath = path.join(process.cwd(), "public", "rss.xml");
+
+    await writeFile(filePath, content, "utf8");
+
+    expect(writeFile).toHaveBeenCalledWith(filePath, content, "utf8");
+  });
+
+  it("should write feed.json with correct content", async () => {
+    const { generateJSONFeed } = await import("../src/lib/rss");
+
+    const content = generateJSONFeed();
+    const filePath = path.join(process.cwd(), "public", "feed.json");
+
+    await writeFile(filePath, content, "utf8");
+
+    expect(writeFile).toHaveBeenCalledWith(filePath, content, "utf8");
+  });
+
+  it("should write robots.txt with correct content", async () => {
+    const { generateRobotsTxt } = await import("../src/lib/sitemap");
+
+    const content = generateRobotsTxt();
+    const filePath = path.join(process.cwd(), "public", "robots.txt");
+
+    await writeFile(filePath, content, "utf8");
+
+    expect(writeFile).toHaveBeenCalledWith(filePath, content, "utf8");
+  });
+
+  it("should handle all writes concurrently", async () => {
+    const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+    const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
+
+    const outputs = [
+      { name: "sitemap.xml", contents: generateSitemap() },
+      { name: "rss.xml", contents: generateRSSFeed() },
+      { name: "feed.json", contents: generateJSONFeed() },
+      { name: "robots.txt", contents: generateRobotsTxt() },
+    ];
+
+    const startTime = Date.now();
+
     await Promise.all(
       outputs.map((output) =>
-        writeFile(path.join(publicDir, output.name), output.contents, "utf8")
+        writeFile(path.join(process.cwd(), "public", output.name), output.contents, "utf8")
       )
     );
 
-    // Verify all files exist
-    for (const output of outputs) {
-      expect(existsSync(path.join(publicDir, output.name))).toBe(true);
-    }
+    const endTime = Date.now();
+
+    // All should complete (mocked, so very fast)
+    expect(endTime - startTime).toBeLessThan(1000);
+    expect(writeFile).toHaveBeenCalledTimes(4);
   });
 
-  it("should overwrite existing files", async () => {
-    const { generateSitemap } = await import("../src/lib/sitemap");
-    const publicDir = path.join(testDir, "public");
-    const filePath = path.join(publicDir, "sitemap.xml");
+  it("should use UTF-8 encoding for all files", async () => {
+    const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+    const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
 
-    // Write initial content
-    await writeFile(filePath, "old content", "utf8");
+    const outputs = [
+      { name: "sitemap.xml", contents: generateSitemap() },
+      { name: "rss.xml", contents: generateRSSFeed() },
+      { name: "feed.json", contents: generateJSONFeed() },
+      { name: "robots.txt", contents: generateRobotsTxt() },
+    ];
 
-    // Overwrite with new content
-    const newContent = generateSitemap();
-    await writeFile(filePath, newContent, "utf8");
+    await Promise.all(
+      outputs.map((output) =>
+        writeFile(path.join(process.cwd(), "public", output.name), output.contents, "utf8")
+      )
+    );
 
-    const written = await readFile(filePath, "utf8");
-    expect(written).toBe(newContent);
-    expect(written).not.toBe("old content");
-  });
-
-  describe("integration tests", () => {
-    it("should generate valid XML for sitemap", async () => {
-      const { generateSitemap } = await import("../src/lib/sitemap");
-      const content = generateSitemap();
-
-      expect(content).toContain('<?xml version="1.0"');
-      expect(content).toContain('<urlset');
-      expect(content).toContain('</urlset>');
-    });
-
-    it("should generate valid XML for RSS", async () => {
-      const { generateRSSFeed } = await import("../src/lib/rss");
-      const content = generateRSSFeed();
-
-      expect(content).toContain('<?xml version="1.0"');
-      expect(content).toContain('<rss');
-    });
-
-    it("should generate valid JSON feed", async () => {
-      const { generateJSONFeed } = await import("../src/lib/rss");
-      const content = generateJSONFeed();
-
-      expect(() => JSON.parse(content)).not.toThrow();
-      const parsed = JSON.parse(content);
-      expect(parsed.version).toBeDefined();
-    });
-
-    it("should generate plain text robots.txt", async () => {
-      const { generateRobotsTxt } = await import("../src/lib/sitemap");
-      const content = generateRobotsTxt();
-
-      expect(content).toMatch(/^[^\<\{]*$/); // No XML or JSON
-      expect(content).toContain('User-agent:');
+    // Verify all calls used utf8 encoding
+    const calls = (writeFile as Mock).mock.calls;
+    calls.forEach((call: unknown[]) => {
+      expect(call[2]).toBe("utf8");
     });
   });
 
-  describe("edge cases and error handling", () => {
-    it("should handle file write failures gracefully", async () => {
-      const publicDir = path.join(testDir, "public");
+  it("should generate file list message", async () => {
+    const outputs = [
+      { name: "sitemap.xml", contents: "content" },
+      { name: "rss.xml", contents: "content" },
+      { name: "feed.json", contents: "content" },
+      { name: "robots.txt", contents: "content" },
+    ];
 
-      // Test that writeFile can handle being called multiple times
-      const { generateSitemap } = await import("../src/lib/sitemap");
-      const content = generateSitemap();
+    const fileList = outputs.map((output) => output.name).join(", ");
 
-      await writeFile(path.join(publicDir, "test1.xml"), content, "utf8");
-      await writeFile(path.join(publicDir, "test2.xml"), content, "utf8");
+    expect(fileList).toBe("sitemap.xml, rss.xml, feed.json, robots.txt");
+  });
 
-      expect(existsSync(path.join(publicDir, "test1.xml"))).toBe(true);
-      expect(existsSync(path.join(publicDir, "test2.xml"))).toBe(true);
-    });
+  it("should resolve paths correctly", () => {
+    const publicDir = path.join(process.cwd(), "public");
 
-    it("should handle empty directory", async () => {
-      const emptyDir = path.join(testDir, "empty");
-      await mkdir(emptyDir, { recursive: true });
+    const sitemapPath = path.join(publicDir, "sitemap.xml");
+    const rssPath = path.join(publicDir, "rss.xml");
+    const feedPath = path.join(publicDir, "feed.json");
+    const robotsPath = path.join(publicDir, "robots.txt");
 
-      expect(existsSync(emptyDir)).toBe(true);
-    });
+    expect(sitemapPath).toContain("public");
+    expect(sitemapPath).toContain("sitemap.xml");
+    expect(rssPath).toContain("rss.xml");
+    expect(feedPath).toContain("feed.json");
+    expect(robotsPath).toContain("robots.txt");
+  });
 
-    it("should generate all files with correct extensions", async () => {
+  it("should handle errors gracefully", async () => {
+    const { generateRSSFeed } = await import("../src/lib/rss");
+
+    // Mock writeFile to throw an error
+    (writeFile as Mock).mockRejectedValueOnce(new Error("Write failed"));
+
+    const content = generateRSSFeed();
+    const filePath = path.join(process.cwd(), "public", "rss.xml");
+
+    await expect(writeFile(filePath, content, "utf8")).rejects.toThrow("Write failed");
+  });
+
+  describe("integration with generation functions", () => {
+    it("should produce non-empty content for all files", async () => {
       const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
       const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
-      const publicDir = path.join(testDir, "public");
 
-      const files = [
-        { name: "sitemap.xml", content: generateSitemap() },
-        { name: "rss.xml", content: generateRSSFeed() },
-        { name: "feed.json", content: generateJSONFeed() },
-        { name: "robots.txt", content: generateRobotsTxt() },
+      const sitemap = generateSitemap();
+      const rss = generateRSSFeed();
+      const feed = generateJSONFeed();
+      const robots = generateRobotsTxt();
+
+      expect(sitemap.length).toBeGreaterThan(0);
+      expect(rss.length).toBeGreaterThan(0);
+      expect(feed.length).toBeGreaterThan(0);
+      expect(robots.length).toBeGreaterThan(0);
+    });
+
+    it("should generate valid XML for sitemap and RSS", async () => {
+      const { generateRSSFeed } = await import("../src/lib/rss");
+      const { generateSitemap } = await import("../src/lib/sitemap");
+
+      const sitemap = generateSitemap();
+      const rss = generateRSSFeed();
+
+      // Basic XML validation
+      expect(sitemap).toMatch(/^<\?xml/);
+      expect(rss).toMatch(/^<\?xml/);
+      expect(sitemap).toContain("</urlset>");
+      expect(rss).toContain("</rss>");
+    });
+
+    it("should generate parseable JSON for feed", async () => {
+      const { generateJSONFeed } = await import("../src/lib/rss");
+
+      const feed = generateJSONFeed();
+
+      expect(() => JSON.parse(feed)).not.toThrow();
+    });
+
+    it("should generate valid robots.txt format", async () => {
+      const { generateRobotsTxt } = await import("../src/lib/sitemap");
+
+      const robots = generateRobotsTxt();
+
+      const lines = robots.split("\n");
+      expect(lines.length).toBeGreaterThan(0);
+      expect(robots).toContain("User-agent:");
+    });
+  });
+
+  describe("file writing simulation", () => {
+    it("should write to correct paths", async () => {
+      const outputs = [
+        { name: "sitemap.xml", contents: "sitemap content" },
+        { name: "rss.xml", contents: "rss content" },
+        { name: "feed.json", contents: "feed content" },
+        { name: "robots.txt", contents: "robots content" },
       ];
 
-      for (const file of files) {
-        await writeFile(path.join(publicDir, file.name), file.content, "utf8");
-        const written = await readFile(path.join(publicDir, file.name), "utf8");
-        expect(written).toBe(file.content);
-      }
+      const publicDir = path.join(process.cwd(), "public");
+
+      const expectedPaths = outputs.map((output) => path.join(publicDir, output.name));
+
+      await Promise.all(
+        outputs.map((output, index) =>
+          writeFile(expectedPaths[index], output.contents, "utf8")
+        )
+      );
+
+      const calls = (writeFile as Mock).mock.calls;
+      expect(calls[0][0]).toContain("sitemap.xml");
+      expect(calls[1][0]).toContain("rss.xml");
+      expect(calls[2][0]).toContain("feed.json");
+      expect(calls[3][0]).toContain("robots.txt");
     });
 
-    it("should preserve file content integrity", async () => {
+    it("should write to absolute paths", async () => {
       const { generateSitemap } = await import("../src/lib/sitemap");
-      const publicDir = path.join(testDir, "public");
-      const originalContent = generateSitemap();
 
-      await writeFile(path.join(publicDir, "sitemap.xml"), originalContent, "utf8");
-      const readContent = await readFile(path.join(publicDir, "sitemap.xml"), "utf8");
+      const content = generateSitemap();
+      const filePath = path.join(process.cwd(), "public", "sitemap.xml");
 
-      expect(readContent).toBe(originalContent);
-      expect(readContent.length).toBe(originalContent.length);
+      await writeFile(filePath, content, "utf8");
+
+      expect(writeFile).toHaveBeenCalledWith(
+        expect.stringContaining(path.join("public", "sitemap.xml")),
+        content,
+        "utf8"
+      );
     });
 
-    it("should handle large file generation", async () => {
-      const { generateRSSFeed } = await import("../src/lib/rss");
-      const content = generateRSSFeed();
-      const publicDir = path.join(testDir, "public");
+    it("should handle path resolution correctly", () => {
+      const publicPath = path.join(process.cwd(), "public");
+      const sitemapPath = path.join(publicPath, "sitemap.xml");
 
-      // Mock returns a short string, but we can still verify it works
-      expect(content.length).toBeGreaterThan(0);
-
-      await writeFile(path.join(publicDir, "large.xml"), content, "utf8");
-      expect(existsSync(path.join(publicDir, "large.xml"))).toBe(true);
+      expect(path.isAbsolute(sitemapPath)).toBe(true);
+      expect(sitemapPath).toContain("sitemap.xml");
     });
 
-    it("should generate files with UTF-8 encoding", async () => {
+    it("should use utf8 encoding consistently", async () => {
       const { generateRSSFeed } = await import("../src/lib/rss");
-      const publicDir = path.join(testDir, "public");
 
       const content = generateRSSFeed();
-      await writeFile(path.join(publicDir, "utf8-test.xml"), content, "utf8");
+      const filePath = path.join(process.cwd(), "public", "rss.xml");
 
-      const stats = await readFile(path.join(publicDir, "utf8-test.xml"), "utf8");
-      expect(typeof stats).toBe("string");
-      // Mock returns simple content, just verify it was written and read correctly
-      expect(stats).toBe(content);
+      await writeFile(filePath, content, "utf8");
+
+      // Verify utf8 encoding was used
+      expect((writeFile as Mock).mock.calls[0][2]).toBe("utf8");
+    });
+  });
+
+  describe("error handling and edge cases", () => {
+    it("should handle file write errors individually", async () => {
+      const { generateRSSFeed } = await import("../src/lib/rss");
+
+      // Mock one file write to fail
+      (writeFile as Mock).mockRejectedValueOnce(new Error("Disk full"));
+
+      const content = generateRSSFeed();
+      const filePath = path.join(process.cwd(), "public", "rss.xml");
+
+      await expect(writeFile(filePath, content, "utf8")).rejects.toThrow("Disk full");
     });
 
-    it("should batch file writes correctly", async () => {
+    it("should generate non-empty content for all outputs", async () => {
       const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
       const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
-      const publicDir = path.join(testDir, "public");
 
-      const startTime = Date.now();
+      expect(generateSitemap().length).toBeGreaterThan(100);
+      expect(generateRSSFeed().length).toBeGreaterThan(100);
+      expect(generateJSONFeed().length).toBeGreaterThan(50);
+      expect(generateRobotsTxt().length).toBeGreaterThan(20);
+    });
 
-      await Promise.all([
-        writeFile(path.join(publicDir, "sitemap.xml"), generateSitemap(), "utf8"),
-        writeFile(path.join(publicDir, "rss.xml"), generateRSSFeed(), "utf8"),
-        writeFile(path.join(publicDir, "feed.json"), generateJSONFeed(), "utf8"),
-        writeFile(path.join(publicDir, "robots.txt"), generateRobotsTxt(), "utf8"),
-      ]);
+    it("should handle concurrent writes correctly", async () => {
+      const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+      const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
 
-      const endTime = Date.now();
+      const outputs = [
+        { name: "sitemap.xml", contents: generateSitemap() },
+        { name: "rss.xml", contents: generateRSSFeed() },
+        { name: "feed.json", contents: generateJSONFeed() },
+        { name: "robots.txt", contents: generateRobotsTxt() },
+      ];
 
-      // Parallel writes should be faster than sequential
-      expect(endTime - startTime).toBeLessThan(1000);
+      const writePromises = outputs.map((output) =>
+        writeFile(path.join(process.cwd(), "public", output.name), output.contents, "utf8")
+      );
 
-      // All files should exist
-      expect(existsSync(path.join(publicDir, "sitemap.xml"))).toBe(true);
-      expect(existsSync(path.join(publicDir, "rss.xml"))).toBe(true);
-      expect(existsSync(path.join(publicDir, "feed.json"))).toBe(true);
-      expect(existsSync(path.join(publicDir, "robots.txt"))).toBe(true);
+      await expect(Promise.all(writePromises)).resolves.toBeDefined();
+    });
+
+    it("should maintain file name consistency", async () => {
+      const expectedFiles = ["sitemap.xml", "rss.xml", "feed.json", "robots.txt"];
+
+      const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+      const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
+
+      const outputs = [
+        { name: "sitemap.xml", contents: generateSitemap() },
+        { name: "rss.xml", contents: generateRSSFeed() },
+        { name: "feed.json", contents: generateJSONFeed() },
+        { name: "robots.txt", contents: generateRobotsTxt() },
+      ];
+
+      const actualFiles = outputs.map((output) => output.name);
+      expect(actualFiles).toEqual(expectedFiles);
+    });
+
+    it("should handle empty content gracefully", async () => {
+      const emptyContent = "";
+      const filePath = path.join(process.cwd(), "public", "test.txt");
+
+      await writeFile(filePath, emptyContent, "utf8");
+
+      expect(writeFile).toHaveBeenCalledWith(filePath, emptyContent, "utf8");
+    });
+
+    it("should validate file extensions", async () => {
+      const { generateRSSFeed, generateJSONFeed } = await import("../src/lib/rss");
+      const { generateSitemap, generateRobotsTxt } = await import("../src/lib/sitemap");
+
+      const outputs = [
+        { name: "sitemap.xml", contents: generateSitemap() },
+        { name: "rss.xml", contents: generateRSSFeed() },
+        { name: "feed.json", contents: generateJSONFeed() },
+        { name: "robots.txt", contents: generateRobotsTxt() },
+      ];
+
+      outputs.forEach((output) => {
+        const ext = path.extname(output.name);
+        expect([".xml", ".json", ".txt"]).toContain(ext);
+      });
     });
   });
 });

@@ -157,53 +157,47 @@ function getSeriesNavigation(currentSlug: string) {
 }
 
 /**
- * Builds a JSON-LD `TechArticle` object describing the provided article for SEO and structured-data consumption.
+ * Create a JSON-LD object describing the article as a schema.org `TechArticle`.
  *
- * @param article - The article data to represent in JSON-LD.
- * @param currentIndex - The 1-based position of this article within its CreativeWorkSeries.
- * @param total - The total number of items in the series.
- * @returns A Schema.org `TechArticle` JSON-LD object containing identifiers, headline, description, publish/modified dates, author and publisher details, mainEntityOfPage, article section and keywords, word count, series membership (position and total), proficiency level, and language.
+ * @param article - Article data used to populate headline, description, section, keywords, content, and identifiers
+ * @param currentIndex - 1-based position of this article within its series
+ * @param total - Total number of articles in the series
+ * @returns A plain object containing JSON-LD for a `TechArticle`
  */
 function getArticleSchema(article: Article, currentIndex: number, total: number) {
-  const articleUrl = `${SITE_URL}/blog/${article.slug}`;
   const publishDate = parseArticleDate(article.date).toISOString();
 
   return {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    '@id': articleUrl,
     headline: article.title,
     description: article.description,
+    articleSection: article.category,
+    keywords: article.seoKeywords?.join(', '),
+    articleBody: article.content.slice(0, 1000),
+    url: `${SITE_URL}/blog/${article.slug}`,
     datePublished: publishDate,
     dateModified: publishDate,
     author: {
       '@type': 'Person',
-      '@id': `${SITE_URL}/#person`,
       name: AUTHOR_NAME,
       url: SITE_URL,
-      jobTitle: 'Cloud Database Support Engineer',
     },
     publisher: {
       '@type': 'Person',
-      '@id': `${SITE_URL}/#person`,
       name: AUTHOR_NAME,
       url: SITE_URL,
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': articleUrl,
+      '@id': `${SITE_URL}/blog/${article.slug}`,
     },
-    articleSection: article.category,
-    keywords: article.seoKeywords?.join(', ') || article.category,
-    wordCount: article.content.split(/\s+/).length,
     isPartOf: {
-      '@type': 'CreativeWorkSeries',
+      '@type': 'Series',
       name: 'Distributed Systems Series',
       position: currentIndex,
       numberOfItems: total,
     },
-    proficiencyLevel: 'Expert',
-    inLanguage: 'en-US',
   };
 }
 
