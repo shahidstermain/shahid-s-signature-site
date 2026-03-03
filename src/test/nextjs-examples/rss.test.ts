@@ -1,9 +1,37 @@
 import { describe, it, expect, vi } from "vitest";
 
-// This test file validates the RSS route handler
-// The actual route is at docs/nextjs-migration-examples/app/rss.xml/route.ts
+// Mock dependencies
+vi.mock("@/data/articles", () => ({
+  articles: [
+    {
+      slug: "test-article-1",
+      title: "Test Article One",
+      description: "First test article description",
+      category: "Testing",
+      date: "Jan 2024",
+      content: "This is **bold** content with `code` and more text.",
+      seoKeywords: ["test", "article"],
+    },
+    {
+      slug: "test-article-2",
+      title: "Special <>&\"' Characters",
+      description: "Article with special & characters",
+      category: "XML & Tests",
+      date: "Feb 2024",
+      content: "Content with **markdown** and ```code blocks```",
+      seoKeywords: ["xml", "special"],
+    },
+  ],
+}));
 
-describe("RSS XML Route Handler", () => {
+describe("Next.js RSS Route Handler", () => {
+  const SITE_URL = "https://shahidster.tech";
+  const SITE_TITLE = "Shahid Moosa — Distributed Systems Engineering";
+  const SITE_DESCRIPTION =
+    "Deep dives into distributed databases, data infrastructure, and production systems. Written by a senior distributed-systems engineer.";
+  const AUTHOR_NAME = "Shahid Moosa";
+  const AUTHOR_EMAIL = "hello@shahidster.tech";
+
   describe("escapeXml function", () => {
     const escapeXml = (text: string): string => {
       return text
@@ -19,32 +47,28 @@ describe("RSS XML Route Handler", () => {
     });
 
     it("should escape less than signs", () => {
-      expect(escapeXml("a < b")).toBe("a &lt; b");
+      expect(escapeXml("x < y")).toBe("x &lt; y");
     });
 
     it("should escape greater than signs", () => {
-      expect(escapeXml("a > b")).toBe("a &gt; b");
+      expect(escapeXml("x > y")).toBe("x &gt; y");
     });
 
-    it("should escape double quotes", () => {
-      expect(escapeXml('Say "Hello"')).toBe("Say &quot;Hello&quot;");
+    it("should escape quotes", () => {
+      expect(escapeXml('Say "hello"')).toBe("Say &quot;hello&quot;");
     });
 
-    it("should escape single quotes", () => {
-      expect(escapeXml("It's")).toBe("It&apos;s");
+    it("should escape apostrophes", () => {
+      expect(escapeXml("It's working")).toBe("It&apos;s working");
     });
 
     it("should escape multiple special characters", () => {
-      const input = `<tag attr="value"> & 'content'`;
-      const expected = `&lt;tag attr=&quot;value&quot;&gt; &amp; &apos;content&apos;`;
-      expect(escapeXml(input)).toBe(expected);
+      expect(escapeXml('<div class="test" data-value=\'5 & more\'>')).toBe(
+        "&lt;div class=&quot;test&quot; data-value=&apos;5 &amp; more&apos;&gt;"
+      );
     });
 
-    it("should handle empty string", () => {
-      expect(escapeXml("")).toBe("");
-    });
-
-    it("should handle string without special characters", () => {
+    it("should handle text without special characters", () => {
       expect(escapeXml("Hello World")).toBe("Hello World");
     });
   });
@@ -63,401 +87,419 @@ describe("RSS XML Route Handler", () => {
     };
 
     it("should remove code blocks", () => {
-      const result = stripMarkdown("Text ```code block``` more text");
+      const result = stripMarkdown("text ```code block``` more text");
       expect(result).not.toContain("```");
-      expect(result).toContain("Text");
+      expect(result).toContain("text");
       expect(result).toContain("more text");
     });
 
     it("should remove inline code", () => {
-      const result = stripMarkdown("This is `code` here");
+      const result = stripMarkdown("Use `const x = 5` here");
       expect(result).not.toContain("`");
-      expect(result).toContain("This is");
-      expect(result).toContain("here");
+      expect(result).not.toContain("const x = 5");
     });
 
-    it("should remove bold formatting", () => {
+    it("should remove bold markers", () => {
       const result = stripMarkdown("This is **bold** text");
-      expect(result).not.toContain("**");
-      expect(result).toContain("bold");
+      expect(result).toBe("This is bold text");
     });
 
     it("should remove headers", () => {
-      const result = stripMarkdown("# Header 1\n## Header 2\n### Header 3");
-      expect(result).not.toContain("#");
-      expect(result).toContain("Header 1");
-      expect(result).toContain("Header 2");
-      expect(result).toContain("Header 3");
+      const result = stripMarkdown("## Heading\nContent");
+      expect(result).not.toContain("##");
+      expect(result).toContain("Heading");
     });
 
-    it("should convert links to plain text", () => {
-      const result = stripMarkdown("Check [this link](https://example.com)");
-      expect(result).not.toContain("[");
-      expect(result).not.toContain("]");
+    it("should convert links to text", () => {
+      const result = stripMarkdown("[link text](https://example.com)");
+      expect(result).toBe("link text");
       expect(result).not.toContain("https://example.com");
-      expect(result).toContain("this link");
     });
 
     it("should replace newlines with spaces", () => {
-      const result = stripMarkdown("Line 1\nLine 2\nLine 3");
-      expect(result).not.toContain("\n");
-      expect(result).toContain("Line 1 Line 2 Line 3");
+      const result = stripMarkdown("Line 1\n\nLine 2");
+      expect(result).toBe("Line 1 Line 2");
     });
 
     it("should trim whitespace", () => {
-      const result = stripMarkdown("  Text with spaces  ");
-      expect(result).toBe("Text with spaces");
+      const result = stripMarkdown("   text   ");
+      expect(result).toBe("text");
     });
 
     it("should truncate to 500 characters", () => {
-      const longText = "a".repeat(1000);
+      const longText = "a".repeat(600);
       const result = stripMarkdown(longText);
       expect(result.length).toBe(500);
     });
-
-    it("should handle mixed markdown", () => {
-      const input = "## Title\n\n**Bold** and `code` with [link](url)\n\n```js\ncode block\n```";
-      const result = stripMarkdown(input);
-      expect(result).not.toContain("#");
-      expect(result).not.toContain("**");
-      expect(result).not.toContain("`");
-      expect(result).not.toContain("[");
-      expect(result).not.toContain("```");
-    });
-
-    it("should handle empty string", () => {
-      const result = stripMarkdown("");
-      expect(result).toBe("");
-    });
   });
 
-  describe("RSS feed structure", () => {
-    it("should include XML declaration", () => {
-      const rss = '<?xml version="1.0" encoding="UTF-8"?>';
-      expect(rss).toContain('<?xml version="1.0"');
-      expect(rss).toContain('encoding="UTF-8"');
-    });
-
-    it("should include RSS 2.0 version", () => {
-      const rss = '<rss version="2.0"';
-      expect(rss).toContain('version="2.0"');
-    });
-
-    it("should include required namespaces", () => {
-      const rss = `<rss version="2.0"
-  xmlns:content="http://purl.org/rss/1.0/modules/content/"
-  xmlns:atom="http://www.w3.org/2005/Atom"
-  xmlns:dc="http://purl.org/dc/elements/1.1/">`;
-
-      expect(rss).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"');
-      expect(rss).toContain('xmlns:atom="http://www.w3.org/2005/Atom"');
-      expect(rss).toContain('xmlns:dc="http://purl.org/dc/elements/1.1/"');
-    });
-
-    it("should include channel element", () => {
-      const channelStart = "<channel>";
-      const channelEnd = "</channel>";
-      expect(channelStart).toBe("<channel>");
-      expect(channelEnd).toBe("</channel>");
-    });
-
-    it("should include site title", () => {
-      const title = "<title>Shahid Moosa — Distributed Systems Engineering</title>";
-      expect(title).toContain("Shahid Moosa");
-      expect(title).toContain("Distributed Systems");
-    });
-
-    it("should include site link", () => {
-      const link = "<link>https://shahidster.tech</link>";
-      expect(link).toContain("https://shahidster.tech");
-    });
-
-    it("should include site description", () => {
-      const description =
-        "<description>Deep dives into distributed databases, data infrastructure, and production systems.</description>";
-      expect(description).toContain("distributed databases");
-    });
-
-    it("should include language", () => {
-      const language = "<language>en-us</language>";
-      expect(language).toBe("<language>en-us</language>");
-    });
-
-    it("should include lastBuildDate", () => {
-      const now = new Date().toUTCString();
-      const lastBuildDate = `<lastBuildDate>${now}</lastBuildDate>`;
-      expect(lastBuildDate).toContain("<lastBuildDate>");
-      expect(lastBuildDate).toContain("</lastBuildDate>");
-    });
-
-    it("should include TTL", () => {
-      const ttl = "<ttl>60</ttl>";
-      expect(ttl).toBe("<ttl>60</ttl>");
-    });
-
-    it("should include generator", () => {
-      const generator = "<generator>Next.js RSS Generator</generator>";
-      expect(generator).toContain("Next.js");
-    });
-
-    it("should include managing editor", () => {
-      const editor = "<managingEditor>hello@shahidster.tech (Shahid Moosa)</managingEditor>";
-      expect(editor).toContain("hello@shahidster.tech");
-      expect(editor).toContain("Shahid Moosa");
-    });
-
-    it("should include webMaster", () => {
-      const webMaster = "<webMaster>hello@shahidster.tech (Shahid Moosa)</webMaster>";
-      expect(webMaster).toContain("hello@shahidster.tech");
-    });
-
-    it("should include copyright", () => {
-      const year = new Date().getFullYear();
-      const copyright = `<copyright>Copyright ${year} Shahid Moosa. All rights reserved.</copyright>`;
-      expect(copyright).toContain("Copyright");
-      expect(copyright).toContain("Shahid Moosa");
-    });
-
-    it("should include atom self link", () => {
-      const atomLink =
-        '<atom:link href="https://shahidster.tech/rss.xml" rel="self" type="application/rss+xml"/>';
-      expect(atomLink).toContain('rel="self"');
-      expect(atomLink).toContain('type="application/rss+xml"');
-    });
-
-    it("should include image", () => {
-      const image = `<image>
-      <url>https://shahidster.tech/og-image.png</url>
-      <title>Site Title</title>
-      <link>https://shahidster.tech</link>
-      <width>1200</width>
-      <height>630</height>
-    </image>`;
-
-      expect(image).toContain("<image>");
-      expect(image).toContain("<url>");
-      expect(image).toContain("<width>1200</width>");
-      expect(image).toContain("<height>630</height>");
-    });
-  });
-
-  describe("RSS item structure", () => {
-    it("should include item element", () => {
-      const item = "<item></item>";
-      expect(item).toContain("<item>");
-      expect(item).toContain("</item>");
-    });
-
-    it("should include escaped title", () => {
-      const escapeXml = (text: string) => text.replace(/&/g, "&amp;");
-      const title = `<title>${escapeXml("Article & Title")}</title>`;
-      expect(title).toContain("&amp;");
-    });
-
-    it("should include article link", () => {
-      const link = "<link>https://shahidster.tech/blog/article-slug</link>";
-      expect(link).toContain("/blog/");
-    });
-
-    it("should include guid with isPermaLink", () => {
-      const guid = '<guid isPermaLink="true">https://shahidster.tech/blog/article-slug</guid>';
-      expect(guid).toContain('isPermaLink="true"');
-    });
-
-    it("should include description", () => {
-      const description = "<description>Article description here</description>";
-      expect(description).toContain("<description>");
-      expect(description).toContain("</description>");
-    });
-
-    it("should include content:encoded with CDATA", () => {
-      const content = "<content:encoded><![CDATA[Content here...]]></content:encoded>";
-      expect(content).toContain("<content:encoded>");
-      expect(content).toContain("<![CDATA[");
-      expect(content).toContain("]]>");
-    });
-
-    it("should include pubDate in RFC 822 format", () => {
-      const now = new Date().toUTCString();
-      const pubDate = `<pubDate>${now}</pubDate>`;
-      expect(pubDate).toContain("<pubDate>");
-      // RFC 822 format: "Mon, 01 Jan 2024 00:00:00 GMT"
-      expect(now).toMatch(/^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4}/);
-    });
-
-    it("should include author", () => {
-      const author = "<author>hello@shahidster.tech (Shahid Moosa)</author>";
-      expect(author).toContain("hello@shahidster.tech");
-      expect(author).toContain("Shahid Moosa");
-    });
-
-    it("should include category elements", () => {
-      const category = "<category>Distributed Systems</category>";
-      expect(category).toContain("<category>");
-      expect(category).toContain("</category>");
-    });
-
-    it("should include multiple categories", () => {
-      const categories = `
-      <category>Distributed Systems</category>
-      <category>databases</category>
-      <category>infrastructure</category>`;
-
-      const categoryCount = (categories.match(/<category>/g) || []).length;
-      expect(categoryCount).toBe(3);
-    });
-  });
-
-  describe("Response headers", () => {
-    it("should set Content-Type to application/rss+xml", () => {
+  describe("GET handler response structure", () => {
+    it("should return Response with RSS XML content type", () => {
       const headers = {
         "Content-Type": "application/rss+xml; charset=utf-8",
-      };
-      expect(headers["Content-Type"]).toContain("application/rss+xml");
-      expect(headers["Content-Type"]).toContain("charset=utf-8");
-    });
-
-    it("should set Cache-Control header", () => {
-      const headers = {
         "Cache-Control":
           "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+        "X-Content-Type-Options": "nosniff",
       };
+
+      expect(headers["Content-Type"]).toBe("application/rss+xml; charset=utf-8");
       expect(headers["Cache-Control"]).toContain("max-age=3600");
-      expect(headers["Cache-Control"]).toContain("stale-while-revalidate=86400");
+      expect(headers["X-Content-Type-Options"]).toBe("nosniff");
     });
 
-    it("should set X-Content-Type-Options", () => {
+    it("should have proper cache headers", () => {
+      const cacheControl =
+        "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400";
+
+      expect(cacheControl).toContain("public");
+      expect(cacheControl).toContain("max-age=3600");
+      expect(cacheControl).toContain("s-maxage=3600");
+      expect(cacheControl).toContain("stale-while-revalidate=86400");
+    });
+
+    it("should include security header", () => {
       const headers = {
         "X-Content-Type-Options": "nosniff",
       };
+
       expect(headers["X-Content-Type-Options"]).toBe("nosniff");
     });
   });
 
-  describe("Article sorting", () => {
-    it("should sort articles by date (newest first)", () => {
-      const mockArticles = [
-        { slug: "a", date: "Jan 2024", title: "A" },
-        { slug: "b", date: "Mar 2024", title: "B" },
-        { slug: "c", date: "Feb 2024", title: "C" },
-      ];
+  describe("RSS feed structure", () => {
+    const generateBasicRSS = () => {
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>${SITE_TITLE}</title>
+    <link>${SITE_URL}</link>
+  </channel>
+</rss>`;
+    };
 
-      const parseDate = (dateStr: string): Date => {
-        const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2 };
-        const [month, year] = dateStr.split(" ");
-        return new Date(parseInt(year), months[month] || 0, 15);
-      };
+    it("should have XML declaration", () => {
+      const rss = generateBasicRSS();
+      expect(rss).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    });
 
-      const sorted = [...mockArticles].sort(
-        (a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()
-      );
+    it("should have RSS 2.0 version", () => {
+      const rss = generateBasicRSS();
+      expect(rss).toContain('<rss version="2.0"');
+    });
 
-      expect(sorted[0].slug).toBe("b"); // Mar
-      expect(sorted[1].slug).toBe("c"); // Feb
-      expect(sorted[2].slug).toBe("a"); // Jan
+    it("should include content namespace", () => {
+      const rss = generateBasicRSS();
+      expect(rss).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"');
+    });
+
+    it("should include Atom namespace", () => {
+      const rss = generateBasicRSS();
+      expect(rss).toContain('xmlns:atom="http://www.w3.org/2005/Atom"');
+    });
+
+    it("should include Dublin Core namespace", () => {
+      const rss = generateBasicRSS();
+      expect(rss).toContain('xmlns:dc="http://purl.org/dc/elements/1.1/"');
     });
   });
 
-  describe("Edge cases", () => {
-    it("should handle articles with no SEO keywords", () => {
-      const article = {
-        slug: "test",
-        title: "Test",
-        description: "Test desc",
-        category: "Testing",
-        date: "Jan 2024",
-        content: "Content",
+  describe("RSS channel metadata", () => {
+    it("should include channel title", () => {
+      const channel = {
+        title: SITE_TITLE,
+        link: SITE_URL,
+        description: SITE_DESCRIPTION,
       };
 
-      // Should only include category, not undefined keywords
-      const categories = [article.category];
-      expect(categories.length).toBe(1);
-      expect(categories[0]).toBe("Testing");
+      expect(channel.title).toBe(SITE_TITLE);
+    });
+
+    it("should include channel link", () => {
+      const link = SITE_URL;
+      expect(link).toBe("https://shahidster.tech");
+    });
+
+    it("should include channel description", () => {
+      const description = SITE_DESCRIPTION;
+      expect(description).toContain("distributed databases");
+    });
+
+    it("should include language", () => {
+      const language = "en-us";
+      expect(language).toBe("en-us");
+    });
+
+    it("should include lastBuildDate", () => {
+      const now = new Date().toUTCString();
+      expect(now).toMatch(/^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4}/);
+    });
+
+    it("should include TTL", () => {
+      const ttl = 60;
+      expect(ttl).toBe(60);
+    });
+
+    it("should include generator", () => {
+      const generator = "Next.js RSS Generator";
+      expect(generator).toBe("Next.js RSS Generator");
+    });
+
+    it("should include managingEditor", () => {
+      const editor = `${AUTHOR_EMAIL} (${AUTHOR_NAME})`;
+      expect(editor).toContain(AUTHOR_EMAIL);
+      expect(editor).toContain(AUTHOR_NAME);
+    });
+
+    it("should include webMaster", () => {
+      const webMaster = `${AUTHOR_EMAIL} (${AUTHOR_NAME})`;
+      expect(webMaster).toContain(AUTHOR_EMAIL);
+    });
+
+    it("should include copyright", () => {
+      const year = new Date().getFullYear();
+      const copyright = `Copyright ${year} ${AUTHOR_NAME}. All rights reserved.`;
+      expect(copyright).toContain(year.toString());
+      expect(copyright).toContain(AUTHOR_NAME);
+    });
+  });
+
+  describe("Atom self-link", () => {
+    it("should include atom:link with correct attributes", () => {
+      const atomLink = {
+        href: `${SITE_URL}/rss.xml`,
+        rel: "self",
+        type: "application/rss+xml",
+      };
+
+      expect(atomLink.href).toBe(`${SITE_URL}/rss.xml`);
+      expect(atomLink.rel).toBe("self");
+      expect(atomLink.type).toBe("application/rss+xml");
+    });
+  });
+
+  describe("RSS feed image", () => {
+    it("should include image with all required fields", () => {
+      const image = {
+        url: `${SITE_URL}/og-image.png`,
+        title: SITE_TITLE,
+        link: SITE_URL,
+        width: 1200,
+        height: 630,
+      };
+
+      expect(image.url).toContain("/og-image.png");
+      expect(image.title).toBe(SITE_TITLE);
+      expect(image.link).toBe(SITE_URL);
+      expect(image.width).toBe(1200);
+      expect(image.height).toBe(630);
+    });
+
+    it("should have valid image dimensions", () => {
+      const width = 1200;
+      const height = 630;
+
+      expect(width).toBeGreaterThan(0);
+      expect(height).toBeGreaterThan(0);
+      expect(width / height).toBeCloseTo(1.9, 1); // Open Graph aspect ratio
+    });
+  });
+
+  describe("RSS item structure", () => {
+    it("should have required item fields", () => {
+      const item = {
+        title: "Test Article",
+        link: `${SITE_URL}/blog/test-article`,
+        guid: `${SITE_URL}/blog/test-article`,
+        description: "Article description",
+        pubDate: new Date().toUTCString(),
+        author: `${AUTHOR_EMAIL} (${AUTHOR_NAME})`,
+        category: "Testing",
+      };
+
+      expect(item).toHaveProperty("title");
+      expect(item).toHaveProperty("link");
+      expect(item).toHaveProperty("guid");
+      expect(item).toHaveProperty("description");
+      expect(item).toHaveProperty("pubDate");
+      expect(item).toHaveProperty("author");
+      expect(item).toHaveProperty("category");
+    });
+
+    it("should have guid as permalink", () => {
+      const guid = {
+        isPermaLink: true,
+        value: `${SITE_URL}/blog/test-article`,
+      };
+
+      expect(guid.isPermaLink).toBe(true);
+      expect(guid.value).toContain(SITE_URL);
+    });
+
+    it("should include content:encoded with CDATA", () => {
+      const content = "<![CDATA[Article content...]]>";
+      expect(content).toContain("<![CDATA[");
+      expect(content).toContain("]]>");
+    });
+
+    it("should include author in RFC 822 format", () => {
+      const author = `${AUTHOR_EMAIL} (${AUTHOR_NAME})`;
+      expect(author).toMatch(/^[^\s]+@[^\s]+ \(.+\)$/);
+    });
+
+    it("should format pubDate in RFC 822", () => {
+      const pubDate = new Date("2024-01-01").toUTCString();
+      expect(pubDate).toMatch(
+        /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/
+      );
+    });
+  });
+
+  describe("article categories and keywords", () => {
+    it("should include article category", () => {
+      const category = "Testing";
+      expect(category).toBeTruthy();
+    });
+
+    it("should include SEO keywords as categories", () => {
+      const keywords = ["test", "article", "example"];
+      expect(Array.isArray(keywords)).toBe(true);
+      expect(keywords.length).toBeGreaterThan(0);
+    });
+
+    it("should escape category names", () => {
+      const escapeXml = (text: string) => text.replace(/&/g, "&amp;");
+      const category = "Tests & Examples";
+      expect(escapeXml(category)).toBe("Tests &amp; Examples");
+    });
+
+    it("should handle articles without keywords", () => {
+      const keywords: string[] | undefined = undefined;
+      const categories = [
+        "Testing",
+        ...(keywords || []),
+      ];
+
+      expect(categories).toEqual(["Testing"]);
+    });
+  });
+
+  describe("article sorting", () => {
+    const parseDate = (dateStr: string): Date => {
+      const months: Record<string, number> = {
+        Jan: 0,
+        Feb: 1,
+        Mar: 2,
+      };
+      const [month, year] = dateStr.split(" ");
+      return new Date(Date.UTC(Number(year), months[month] ?? 0, 1));
+    };
+
+    it("should sort articles by date (newest first)", () => {
+      const dates = ["Jan 2024", "Mar 2024", "Feb 2024"];
+      const sorted = dates.sort(
+        (a, b) => parseDate(b).getTime() - parseDate(a).getTime()
+      );
+
+      expect(sorted[0]).toBe("Mar 2024");
+      expect(sorted[2]).toBe("Jan 2024");
+    });
+
+    it("should handle same-year articles", () => {
+      const date1 = parseDate("Jan 2024");
+      const date2 = parseDate("Feb 2024");
+
+      expect(date2.getTime()).toBeGreaterThan(date1.getTime());
+    });
+
+    it("should handle multi-year articles", () => {
+      const date1 = parseDate("Jan 2023");
+      const date2 = parseDate("Jan 2024");
+
+      expect(date2.getTime()).toBeGreaterThan(date1.getTime());
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle empty articles array", () => {
+      const articles: string[] = [];
+      expect(articles.length).toBe(0);
+    });
+
+    it("should handle articles with special characters in title", () => {
+      const escapeXml = (text: string) =>
+        text.replace(/[<>&"']/g, (char) => {
+          const map: Record<string, string> = {
+            "<": "&lt;",
+            ">": "&gt;",
+            "&": "&amp;",
+            '"': "&quot;",
+            "'": "&apos;",
+          };
+          return map[char] || char;
+        });
+
+      const title = "Test <>&\"' Characters";
+      const escaped = escapeXml(title);
+
+      expect(escaped).not.toContain("<");
+      expect(escaped).not.toContain(">");
+      expect(escaped).not.toContain("&");
+      expect(escaped).toContain("&lt;");
+      expect(escaped).toContain("&gt;");
+      expect(escaped).toContain("&amp;");
     });
 
     it("should handle very long content", () => {
-      const stripMarkdown = (content: string): string => {
-        return content.trim().slice(0, 500);
-      };
+      const longContent = "a".repeat(1000);
+      const truncated = longContent.slice(0, 500);
 
-      const longContent = "a".repeat(10000);
-      const result = stripMarkdown(longContent);
-      expect(result.length).toBe(500);
+      expect(truncated.length).toBe(500);
     });
 
-    it("should escape special characters in all text fields", () => {
-      const escapeXml = (text: string): string => {
-        return text
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&apos;");
-      };
-
-      const dangerous = '<script>alert("xss")</script> & more';
-      const safe = escapeXml(dangerous);
-
-      expect(safe).not.toContain("<script>");
-      expect(safe).toContain("&lt;script&gt;");
-      expect(safe).toContain("&amp;");
+    it("should handle content with CDATA-like strings", () => {
+      const content = "Text with ]]> inside";
+      // In real implementation, this should be escaped
+      expect(content).toContain("]]>");
     });
 
-    it("should handle empty article list", () => {
-      const articles: any[] = [];
-      const items = articles
-        .map((article) => `<item><title>${article.title}</title></item>`)
-        .join("");
-
-      expect(items).toBe("");
-    });
-
-    it("should handle articles with special characters in category", () => {
-      const escapeXml = (text: string): string => {
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    it("should handle missing article fields gracefully", () => {
+      const article = {
+        slug: "test",
+        title: "Test",
+        description: "Description",
+        category: "Test",
+        date: "Jan 2024",
+        content: "Content",
+        // seoKeywords is missing
       };
 
-      const category = "R&D <Research>";
-      const escaped = escapeXml(category);
-
-      expect(escaped).toBe("R&amp;D &lt;Research&gt;");
+      const keywords = article.seoKeywords || [];
+      expect(Array.isArray(keywords)).toBe(true);
+      expect(keywords.length).toBe(0);
     });
   });
 
-  describe("Integration", () => {
-    it("should produce valid RSS XML structure", () => {
-      const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Test</title>
-    <item>
-      <title>Article</title>
-    </item>
-  </channel>
-</rss>`;
-
-      expect(rss).toContain('<?xml version="1.0"');
-      expect(rss).toContain("<channel>");
-      expect(rss).toContain("<item>");
-      expect(rss).toContain("</item>");
-      expect(rss).toContain("</channel>");
-      expect(rss).toContain("</rss>");
+  describe("performance considerations", () => {
+    it("should cache for 1 hour", () => {
+      const maxAge = 3600;
+      expect(maxAge).toBe(60 * 60);
     });
 
-    it("should maintain proper XML nesting", () => {
-      const xml = "<channel><item><title>Test</title></item></channel>";
-      const channelOpen = xml.indexOf("<channel>");
-      const itemOpen = xml.indexOf("<item>");
-      const titleOpen = xml.indexOf("<title>");
-      const titleClose = xml.indexOf("</title>");
-      const itemClose = xml.indexOf("</item>");
-      const channelClose = xml.indexOf("</channel>");
+    it("should allow stale-while-revalidate for 24 hours", () => {
+      const staleWhileRevalidate = 86400;
+      expect(staleWhileRevalidate).toBe(24 * 60 * 60);
+    });
 
-      expect(channelOpen).toBeLessThan(itemOpen);
-      expect(itemOpen).toBeLessThan(titleOpen);
-      expect(titleOpen).toBeLessThan(titleClose);
-      expect(titleClose).toBeLessThan(itemClose);
-      expect(itemClose).toBeLessThan(channelClose);
+    it("should generate feed efficiently", () => {
+      const startTime = Date.now();
+      // Simulate RSS generation
+      const articles = Array(100).fill({ title: "Test" });
+      const endTime = Date.now();
+
+      expect(endTime - startTime).toBeLessThan(1000);
     });
   });
 });

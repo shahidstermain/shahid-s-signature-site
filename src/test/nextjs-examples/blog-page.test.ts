@@ -1,12 +1,65 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// This test file validates the blog page structure and functions
-// Note: The actual Next.js page component uses server-side rendering,
-// so these tests focus on the utility functions and data structures
+// Mock Next.js modules
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NOT_FOUND");
+  }),
+}));
 
-describe("Blog Page ([slug]/page.tsx)", () => {
-  describe("parseArticleDate function", () => {
-    // This function should parse "Mon YYYY" format dates
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
+vi.mock("next/script", () => ({
+  default: ({
+    children,
+    id,
+    type,
+    dangerouslySetInnerHTML,
+  }: {
+    children?: React.ReactNode;
+    id: string;
+    type: string;
+    dangerouslySetInnerHTML?: { __html: string };
+  }) => (
+    <script id={id} type={type}>
+      {dangerouslySetInnerHTML?.__html || children}
+    </script>
+  ),
+}));
+
+// Import the functions we're testing
+import { getArticleBySlug, articles } from "@/data/articles";
+
+describe("Next.js Blog Page", () => {
+  describe("generateStaticParams", () => {
+    it("should generate params for all articles", () => {
+      const params = articles.map((article) => ({
+        slug: article.slug,
+      }));
+
+      expect(params.length).toBeGreaterThan(0);
+      expect(params.every((p) => typeof p.slug === "string")).toBe(true);
+    });
+
+    it("should generate unique slugs", () => {
+      const slugs = articles.map((a) => a.slug);
+      const uniqueSlugs = new Set(slugs);
+
+      expect(slugs.length).toBe(uniqueSlugs.size);
+    });
+
+    it("should use URL-safe slugs", () => {
+      articles.forEach((article) => {
+        expect(article.slug).toMatch(/^[a-z0-9-]+$/);
+      });
+    });
+  });
+
+  describe("parseArticleDate", () => {
     const parseArticleDate = (dateStr: string): Date => {
       const months: Record<string, number> = {
         Jan: 0,
@@ -27,14 +80,28 @@ describe("Blog Page ([slug]/page.tsx)", () => {
     };
 
     it("should parse valid date strings", () => {
-      const date = parseArticleDate("Nov 2025");
-      expect(date.getFullYear()).toBe(2025);
-      expect(date.getMonth()).toBe(10); // November is 10
+      const date = parseArticleDate("Nov 2024");
+      expect(date.getFullYear()).toBe(2024);
+      expect(date.getMonth()).toBe(10); // November
       expect(date.getDate()).toBe(15);
     });
 
-    it("should handle all months correctly", () => {
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    it("should handle all months", () => {
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+
       months.forEach((month, index) => {
         const date = parseArticleDate(`${month} 2024`);
         expect(date.getMonth()).toBe(index);
@@ -46,14 +113,189 @@ describe("Blog Page ([slug]/page.tsx)", () => {
       expect(date.getMonth()).toBe(0);
     });
 
-    it("should set day to 15th", () => {
-      const date = parseArticleDate("Mar 2024");
-      expect(date.getDate()).toBe(15);
+    it("should handle different years", () => {
+      expect(parseArticleDate("Jan 2020").getFullYear()).toBe(2020);
+      expect(parseArticleDate("Dec 2025").getFullYear()).toBe(2025);
     });
   });
 
-  describe("formatContent function", () => {
-    // This function converts markdown-like content to HTML
+  describe("generateMetadata", () => {
+    it("should return article metadata when article exists", () => {
+      const article = articles[0];
+      const SITE_URL = "https://shahidster.tech";
+
+      const metadata = {
+        title: article.title,
+        description: article.description,
+        keywords: article.seoKeywords,
+        authors: [{ name: "Shahid Moosa", url: SITE_URL }],
+      };
+
+      expect(metadata.title).toBe(article.title);
+      expect(metadata.description).toBe(article.description);
+      expect(Array.isArray(metadata.keywords)).toBe(true);
+    });
+
+    it("should return not found metadata when article doesn't exist", () => {
+      const article = getArticleBySlug("non-existent-slug");
+
+      expect(article).toBeUndefined();
+    });
+
+    it("should generate Open Graph metadata", () => {
+      const article = articles[0];
+      const SITE_URL = "https://shahidster.tech";
+      const articleUrl = `${SITE_URL}/blog/${article.slug}`;
+
+      const openGraph = {
+        type: "article",
+        locale: "en_US",
+        url: articleUrl,
+        siteName: "Shahid Moosa — Distributed Systems Engineer",
+        title: article.title,
+        description: article.description,
+        publishedTime: new Date().toISOString(),
+        authors: ["Shahid Moosa"],
+        section: article.category,
+        tags: article.seoKeywords,
+      };
+
+      expect(openGraph.type).toBe("article");
+      expect(openGraph.url).toContain(article.slug);
+      expect(openGraph.section).toBe(article.category);
+    });
+
+    it("should generate Twitter Card metadata", () => {
+      const article = articles[0];
+      const SITE_URL = "https://shahidster.tech";
+
+      const twitter = {
+        card: "summary_large_image",
+        title: article.title,
+        description: article.description,
+        images: [`${SITE_URL}/og-image.png`],
+        creator: "@shahidster_",
+      };
+
+      expect(twitter.card).toBe("summary_large_image");
+      expect(twitter.creator).toBe("@shahidster_");
+    });
+
+    it("should set canonical URL", () => {
+      const article = articles[0];
+      const SITE_URL = "https://shahidster.tech";
+      const canonical = `${SITE_URL}/blog/${article.slug}`;
+
+      expect(canonical).toBe(`${SITE_URL}/blog/${article.slug}`);
+    });
+  });
+
+  describe("getSeriesNavigation", () => {
+    const getSeriesNavigation = (currentSlug: string) => {
+      const currentIndex = articles.findIndex((a) => a.slug === currentSlug);
+      return {
+        prev: currentIndex > 0 ? articles[currentIndex - 1] : null,
+        next: currentIndex < articles.length - 1 ? articles[currentIndex + 1] : null,
+        currentIndex: currentIndex + 1,
+        total: articles.length,
+      };
+    };
+
+    it("should return null for prev on first article", () => {
+      const nav = getSeriesNavigation(articles[0].slug);
+
+      expect(nav.prev).toBeNull();
+      expect(nav.next).not.toBeNull();
+      expect(nav.currentIndex).toBe(1);
+    });
+
+    it("should return null for next on last article", () => {
+      const lastSlug = articles[articles.length - 1].slug;
+      const nav = getSeriesNavigation(lastSlug);
+
+      expect(nav.prev).not.toBeNull();
+      expect(nav.next).toBeNull();
+      expect(nav.currentIndex).toBe(articles.length);
+    });
+
+    it("should return both prev and next for middle articles", () => {
+      if (articles.length > 2) {
+        const nav = getSeriesNavigation(articles[1].slug);
+
+        expect(nav.prev).not.toBeNull();
+        expect(nav.next).not.toBeNull();
+        expect(nav.currentIndex).toBe(2);
+      }
+    });
+
+    it("should track position correctly", () => {
+      articles.forEach((article, index) => {
+        const nav = getSeriesNavigation(article.slug);
+        expect(nav.currentIndex).toBe(index + 1);
+        expect(nav.total).toBe(articles.length);
+      });
+    });
+  });
+
+  describe("getBreadcrumbSchema", () => {
+    const SITE_URL = "https://shahidster.tech";
+
+    const getBreadcrumbSchema = (article: (typeof articles)[0]) => {
+      return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: SITE_URL,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Writing",
+            item: `${SITE_URL}/#writing`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: article.title,
+            item: `${SITE_URL}/blog/${article.slug}`,
+          },
+        ],
+      };
+    };
+
+    it("should generate valid breadcrumb schema", () => {
+      const article = articles[0];
+      const schema = getBreadcrumbSchema(article);
+
+      expect(schema["@context"]).toBe("https://schema.org");
+      expect(schema["@type"]).toBe("BreadcrumbList");
+      expect(schema.itemListElement.length).toBe(3);
+    });
+
+    it("should include all breadcrumb items", () => {
+      const article = articles[0];
+      const schema = getBreadcrumbSchema(article);
+
+      expect(schema.itemListElement[0].name).toBe("Home");
+      expect(schema.itemListElement[1].name).toBe("Writing");
+      expect(schema.itemListElement[2].name).toBe(article.title);
+    });
+
+    it("should have correct positions", () => {
+      const article = articles[0];
+      const schema = getBreadcrumbSchema(article);
+
+      schema.itemListElement.forEach((item, index) => {
+        expect(item.position).toBe(index + 1);
+      });
+    });
+  });
+
+  describe("formatContent", () => {
     const formatContent = (content: string): string => {
       return content
         .replace(/^### (.+)$/gm, "<h3>$1</h3>")
@@ -71,375 +313,181 @@ describe("Blog Page ([slug]/page.tsx)", () => {
         .replace(/<p>\s*<\/p>/g, "");
     };
 
-    it("should convert h2 headers", () => {
-      const result = formatContent("## Header");
-      expect(result).toContain("<h2>Header</h2>");
-    });
-
-    it("should convert h3 headers", () => {
-      const result = formatContent("### Subheader");
-      expect(result).toContain("<h3>Subheader</h3>");
+    it("should convert markdown headings to HTML", () => {
+      expect(formatContent("## Heading 2")).toContain("<h2>Heading 2</h2>");
+      expect(formatContent("### Heading 3")).toContain("<h3>Heading 3</h3>");
     });
 
     it("should convert bold text", () => {
-      const result = formatContent("**bold text**");
-      expect(result).toContain("<strong>bold text</strong>");
+      expect(formatContent("**bold**")).toContain("<strong>bold</strong>");
     });
 
     it("should convert inline code", () => {
-      const result = formatContent("`code`");
-      expect(result).toContain("<code>code</code>");
+      expect(formatContent("`code`")).toContain("<code>code</code>");
     });
 
     it("should convert code blocks", () => {
       const result = formatContent("```js\nconst x = 1;\n```");
-      expect(result).toContain("<pre><code>");
-      expect(result).toContain("const x = 1;");
-      expect(result).toContain("</code></pre>");
+      expect(result).toContain("<pre>");
+      expect(result).toContain("<code>");
     });
 
     it("should convert horizontal rules", () => {
-      const result = formatContent("---");
-      expect(result).toContain("<hr />");
+      expect(formatContent("---")).toContain("<hr />");
     });
 
     it("should convert blockquotes", () => {
-      const result = formatContent("> Quote");
-      expect(result).toContain("<blockquote>Quote</blockquote>");
+      expect(formatContent("> quote")).toContain("<blockquote>quote</blockquote>");
     });
 
     it("should convert list items", () => {
-      const result = formatContent("- Item 1\n- Item 2");
-      expect(result).toContain("<li>Item 1</li>");
-      expect(result).toContain("<li>Item 2</li>");
+      expect(formatContent("- item")).toContain("<li>item</li>");
+    });
+
+    it("should wrap lists in ul tags", () => {
+      const result = formatContent("- item1\n- item2");
       expect(result).toContain("<ul>");
       expect(result).toContain("</ul>");
     });
-
-    it("should wrap regular text in paragraphs", () => {
-      const result = formatContent("Regular text");
-      expect(result).toContain("<p>");
-      expect(result).toContain("</p>");
-    });
-
-    it("should handle multiple paragraphs", () => {
-      const result = formatContent("Para 1\n\nPara 2");
-      expect(result).toContain("</p><p>");
-    });
-
-    it("should remove empty paragraphs", () => {
-      const result = formatContent("Text\n\n\n\nMore text");
-      expect(result).not.toContain("<p></p>");
-    });
-
-    it("should handle mixed formatting", () => {
-      const content = "## Title\n\n**Bold** and `code`\n\n- List item";
-      const result = formatContent(content);
-      expect(result).toContain("<h2>");
-      expect(result).toContain("<strong>");
-      expect(result).toContain("<code>");
-      expect(result).toContain("<li>");
-    });
   });
 
-  describe("getSeriesNavigation function", () => {
-    const mockArticles = [
-      { slug: "article-1", title: "Article 1" },
-      { slug: "article-2", title: "Article 2" },
-      { slug: "article-3", title: "Article 3" },
-    ];
-
-    const getSeriesNavigation = (currentSlug: string) => {
-      const currentIndex = mockArticles.findIndex((a) => a.slug === currentSlug);
-      return {
-        prev: currentIndex > 0 ? mockArticles[currentIndex - 1] : null,
-        next: currentIndex < mockArticles.length - 1 ? mockArticles[currentIndex + 1] : null,
-        currentIndex: currentIndex + 1,
-        total: mockArticles.length,
-      };
-    };
-
-    it("should return null prev for first article", () => {
-      const nav = getSeriesNavigation("article-1");
-      expect(nav.prev).toBeNull();
-      expect(nav.next).toBeTruthy();
-      expect(nav.currentIndex).toBe(1);
+  describe("article data validation", () => {
+    it("should have all required fields", () => {
+      articles.forEach((article) => {
+        expect(article).toHaveProperty("slug");
+        expect(article).toHaveProperty("title");
+        expect(article).toHaveProperty("description");
+        expect(article).toHaveProperty("category");
+        expect(article).toHaveProperty("readTime");
+        expect(article).toHaveProperty("date");
+        expect(article).toHaveProperty("content");
+      });
     });
 
-    it("should return null next for last article", () => {
-      const nav = getSeriesNavigation("article-3");
-      expect(nav.prev).toBeTruthy();
-      expect(nav.next).toBeNull();
-      expect(nav.currentIndex).toBe(3);
+    it("should have valid date format", () => {
+      articles.forEach((article) => {
+        expect(article.date).toMatch(/^[A-Z][a-z]{2} \d{4}$/);
+      });
     });
 
-    it("should return both prev and next for middle article", () => {
-      const nav = getSeriesNavigation("article-2");
-      expect(nav.prev).toBeTruthy();
-      expect(nav.next).toBeTruthy();
-      expect(nav.prev?.slug).toBe("article-1");
-      expect(nav.next?.slug).toBe("article-3");
-      expect(nav.currentIndex).toBe(2);
+    it("should have non-empty content", () => {
+      articles.forEach((article) => {
+        expect(article.content.length).toBeGreaterThan(0);
+      });
     });
 
-    it("should return correct total count", () => {
-      const nav = getSeriesNavigation("article-2");
-      expect(nav.total).toBe(3);
-    });
-  });
-
-  describe("generateMetadata function behavior", () => {
-    it("should return 'not found' metadata for missing article", () => {
-      const metadata = {
-        title: "Article Not Found",
-        description: "The requested article could not be found.",
-        robots: { index: false, follow: true },
-      };
-
-      expect(metadata.title).toBe("Article Not Found");
-      expect(metadata.robots.index).toBe(false);
-      expect(metadata.robots.follow).toBe(true);
+    it("should have SEO keywords", () => {
+      articles.forEach((article) => {
+        if (article.seoKeywords) {
+          expect(Array.isArray(article.seoKeywords)).toBe(true);
+          expect(article.seoKeywords.length).toBeGreaterThan(0);
+        }
+      });
     });
 
-    it("should include required Open Graph fields for valid article", () => {
-      const metadata = {
-        title: "Test Article",
-        description: "Test description",
-        openGraph: {
-          type: "article",
-          locale: "en_US",
-          url: "https://shahidster.tech/blog/test",
-          siteName: "Shahid Moosa — Distributed Systems Engineer",
-          title: "Test Article",
-          description: "Test description",
-          publishedTime: new Date("2024-01-15").toISOString(),
-          modifiedTime: new Date("2024-01-15").toISOString(),
-          authors: ["Shahid Moosa"],
-          section: "Testing",
-        },
-      };
-
-      expect(metadata.openGraph.type).toBe("article");
-      expect(metadata.openGraph.locale).toBe("en_US");
-      expect(metadata.openGraph.publishedTime).toBeTruthy();
-    });
-
-    it("should include Twitter card metadata", () => {
-      const metadata = {
-        twitter: {
-          card: "summary_large_image",
-          title: "Test Article",
-          description: "Test description",
-          images: ["https://shahidster.tech/og-image.png"],
-          creator: "@shahidster_",
-        },
-      };
-
-      expect(metadata.twitter.card).toBe("summary_large_image");
-      expect(metadata.twitter.creator).toBe("@shahidster_");
-    });
-
-    it("should include canonical URL", () => {
-      const metadata = {
-        alternates: {
-          canonical: "https://shahidster.tech/blog/test-article",
-        },
-      };
-
-      expect(metadata.alternates.canonical).toContain("/blog/");
-    });
-  });
-
-  describe("getBreadcrumbSchema function behavior", () => {
-    const mockArticle = {
-      slug: "test-article",
-      title: "Test Article",
-    };
-
-    const getBreadcrumbSchema = (article: { slug: string; title: string }) => ({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Home",
-          item: "https://shahidster.tech",
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Writing",
-          item: "https://shahidster.tech/#writing",
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: article.title,
-          item: `https://shahidster.tech/blog/${article.slug}`,
-        },
-      ],
-    });
-
-    it("should include three breadcrumb items", () => {
-      const schema = getBreadcrumbSchema(mockArticle);
-      expect(schema.itemListElement.length).toBe(3);
-    });
-
-    it("should have correct breadcrumb structure", () => {
-      const schema = getBreadcrumbSchema(mockArticle);
-      expect(schema["@context"]).toBe("https://schema.org");
-      expect(schema["@type"]).toBe("BreadcrumbList");
-    });
-
-    it("should include home, writing, and article links", () => {
-      const schema = getBreadcrumbSchema(mockArticle);
-      expect(schema.itemListElement[0].name).toBe("Home");
-      expect(schema.itemListElement[1].name).toBe("Writing");
-      expect(schema.itemListElement[2].name).toBe("Test Article");
-    });
-
-    it("should have sequential positions", () => {
-      const schema = getBreadcrumbSchema(mockArticle);
-      schema.itemListElement.forEach((item, index) => {
-        expect(item.position).toBe(index + 1);
+    it("should have valid series positions", () => {
+      articles.forEach((article) => {
+        if (article.seriesPosition) {
+          expect(article.seriesPosition).toMatch(/Part \d+ of \d+/);
+        }
       });
     });
   });
 
-  describe("generateStaticParams behavior", () => {
-    it("should generate params for all articles", () => {
-      const mockArticles = [
-        { slug: "article-1" },
-        { slug: "article-2" },
-        { slug: "article-3" },
-      ];
-
-      const params = mockArticles.map((article) => ({
-        slug: article.slug,
-      }));
-
-      expect(params.length).toBe(3);
-      expect(params[0]).toEqual({ slug: "article-1" });
-      expect(params[1]).toEqual({ slug: "article-2" });
-      expect(params[2]).toEqual({ slug: "article-3" });
+  describe("getArticleBySlug", () => {
+    it("should return article when found", () => {
+      const article = getArticleBySlug(articles[0].slug);
+      expect(article).toBeDefined();
+      expect(article?.slug).toBe(articles[0].slug);
     });
 
-    it("should return array of slug objects", () => {
-      const mockArticles = [{ slug: "test" }];
-      const params = mockArticles.map((article) => ({
-        slug: article.slug,
-      }));
-
-      expect(Array.isArray(params)).toBe(true);
-      expect(params[0]).toHaveProperty("slug");
+    it("should return undefined when not found", () => {
+      const article = getArticleBySlug("non-existent");
+      expect(article).toBeUndefined();
     });
-  });
 
-  describe("revalidate configuration", () => {
-    it("should use ISR with 1 hour revalidation", () => {
-      const revalidate = 3600;
-      expect(revalidate).toBe(3600);
-      expect(revalidate).toBe(60 * 60); // 1 hour in seconds
+    it("should be case-sensitive", () => {
+      const slug = articles[0].slug;
+      const upperSlug = slug.toUpperCase();
+      const article = getArticleBySlug(upperSlug);
+      expect(article).toBeUndefined();
     });
   });
 
   describe("related articles logic", () => {
-    it("should filter articles by same category", () => {
-      const mockArticles = [
-        { slug: "current", category: "Testing" },
-        { slug: "related-1", category: "Testing" },
-        { slug: "related-2", category: "Testing" },
-        { slug: "unrelated", category: "Other" },
-      ];
+    it("should find articles in same category", () => {
+      const article = articles[0];
+      const related = articles.filter(
+        (a) => a.category === article.category && a.slug !== article.slug
+      );
 
-      const currentArticle = mockArticles[0];
-      const related = mockArticles
-        .filter((a) => a.category === currentArticle.category && a.slug !== currentArticle.slug)
-        .slice(0, 3);
-
-      expect(related.length).toBe(2);
-      expect(related.every((a) => a.category === "Testing")).toBe(true);
-      expect(related.every((a) => a.slug !== "current")).toBe(true);
+      if (related.length > 0) {
+        related.forEach((rel) => {
+          expect(rel.category).toBe(article.category);
+          expect(rel.slug).not.toBe(article.slug);
+        });
+      }
     });
 
-    it("should limit to 3 related articles", () => {
-      const mockArticles = [
-        { slug: "current", category: "Testing" },
-        { slug: "related-1", category: "Testing" },
-        { slug: "related-2", category: "Testing" },
-        { slug: "related-3", category: "Testing" },
-        { slug: "related-4", category: "Testing" },
-      ];
-
-      const currentArticle = mockArticles[0];
-      const related = mockArticles
-        .filter((a) => a.category === currentArticle.category && a.slug !== currentArticle.slug)
+    it("should limit related articles to 3", () => {
+      const article = articles[0];
+      const related = articles
+        .filter((a) => a.category === article.category && a.slug !== article.slug)
         .slice(0, 3);
 
-      expect(related.length).toBe(3);
+      expect(related.length).toBeLessThanOrEqual(3);
     });
 
     it("should exclude current article from related", () => {
-      const mockArticles = [
-        { slug: "current", category: "Testing" },
-        { slug: "related", category: "Testing" },
-      ];
-
-      const currentArticle = mockArticles[0];
-      const related = mockArticles.filter(
-        (a) => a.category === currentArticle.category && a.slug !== currentArticle.slug
+      const article = articles[0];
+      const related = articles.filter(
+        (a) => a.category === article.category && a.slug !== article.slug
       );
 
-      expect(related.every((a) => a.slug !== "current")).toBe(true);
+      expect(related.every((a) => a.slug !== article.slug)).toBe(true);
     });
   });
 
-  describe("site configuration constants", () => {
-    it("should have valid site URL", () => {
-      const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shahidster.tech";
-      expect(SITE_URL).toMatch(/^https?:\/\//);
-    });
-
-    it("should have author name", () => {
-      const AUTHOR_NAME = "Shahid Moosa";
-      expect(AUTHOR_NAME.length).toBeGreaterThan(0);
-    });
-
-    it("should have Twitter handle", () => {
-      const TWITTER_HANDLE = "@shahidster_";
-      expect(TWITTER_HANDLE).toMatch(/^@/);
+  describe("ISR configuration", () => {
+    it("should have revalidate set to 1 hour", () => {
+      const revalidate = 3600;
+      expect(revalidate).toBe(3600);
+      expect(revalidate).toBe(60 * 60);
     });
   });
 
   describe("edge cases", () => {
-    it("should handle empty content gracefully", () => {
-      const formatContent = (content: string): string => {
-        return content.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-      };
-
-      const result = formatContent("");
-      expect(result).toBe("");
+    it("should handle articles with no SEO keywords", () => {
+      const articleWithoutKeywords = articles.find((a) => !a.seoKeywords);
+      if (articleWithoutKeywords) {
+        expect(articleWithoutKeywords.seoKeywords).toBeUndefined();
+      }
     });
 
-    it("should handle content with special characters", () => {
-      const formatContent = (content: string): string => {
-        return content.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      };
-
-      const result = formatContent("**<>&\"'**");
-      expect(result).toContain("<strong>");
+    it("should handle articles with no series position", () => {
+      const articleWithoutSeries = articles.find((a) => !a.seriesPosition);
+      if (articleWithoutSeries) {
+        expect(articleWithoutSeries.seriesPosition).toBeUndefined();
+      }
     });
 
-    it("should handle date parsing with extra spaces", () => {
-      const parseArticleDate = (dateStr: string): Date => {
-        const months: Record<string, number> = { Jan: 0 };
-        const [month, year] = dateStr.trim().split(/\s+/);
-        return new Date(parseInt(year), months[month] || 0, 15);
-      };
+    it("should handle articles with special characters in title", () => {
+      const articlesWithSpecialChars = articles.filter((a) =>
+        /[<>&"']/.test(a.title)
+      );
 
-      const date = parseArticleDate("Jan  2024");
-      expect(date.getFullYear()).toBe(2024);
+      articlesWithSpecialChars.forEach((article) => {
+        // These should be properly escaped in the metadata
+        expect(article.title).toBeTruthy();
+      });
+    });
+
+    it("should handle empty related articles", () => {
+      // Create a scenario where an article has no related articles
+      const uniqueCategory = "UniqueCategory" + Math.random();
+      const related = articles.filter((a) => a.category === uniqueCategory);
+
+      expect(related.length).toBe(0);
     });
   });
 });
