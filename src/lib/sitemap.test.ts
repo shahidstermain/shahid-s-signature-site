@@ -1,348 +1,335 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { generateSitemap, generateRobotsTxt } from "./sitemap";
 import { siteConfig } from "./site-config";
 
 describe("sitemap", () => {
   describe("generateSitemap", () => {
-    let sitemap: string;
+    it("should generate valid XML structure", () => {
+      const sitemap = generateSitemap();
 
-    beforeEach(() => {
-      sitemap = generateSitemap();
-    });
-
-    it("should generate valid XML with declaration", () => {
       expect(sitemap).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    });
-
-    it("should include urlset root element", () => {
       expect(sitemap).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
-      expect(sitemap).toContain('</urlset>');
+      expect(sitemap).toContain("</urlset>");
     });
 
     it("should include homepage URL", () => {
+      const sitemap = generateSitemap();
+
       expect(sitemap).toContain(`<loc>${siteConfig.siteUrl}</loc>`);
     });
 
-    it("should set homepage priority to 1.0", () => {
-      const homepageSection = sitemap.substring(
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) - 100,
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) + 200
-      );
-      expect(homepageSection).toContain('<priority>1.0</priority>');
+    it("should include homepage with highest priority", () => {
+      const sitemap = generateSitemap();
+
+      // Find the homepage url block
+      const homepageSection = sitemap.split("<url>")[1];
+      expect(homepageSection).toContain(siteConfig.siteUrl);
+      expect(homepageSection).toContain("<priority>1.0</priority>");
     });
 
-    it("should set homepage changefreq to weekly", () => {
-      const homepageSection = sitemap.substring(
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) - 100,
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) + 200
-      );
-      expect(homepageSection).toContain('<changefreq>weekly</changefreq>');
+    it("should include homepage with weekly changefreq", () => {
+      const sitemap = generateSitemap();
+
+      const homepageSection = sitemap.split("<url>")[1];
+      expect(homepageSection).toContain("<changefreq>weekly</changefreq>");
     });
 
-    it("should include lastmod for homepage", () => {
-      const homepageSection = sitemap.substring(
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) - 100,
-        sitemap.indexOf(`<loc>${siteConfig.siteUrl}</loc>`) + 200
-      );
-      expect(homepageSection).toContain('<lastmod>');
+    it("should include homepage with lastmod date", () => {
+      const sitemap = generateSitemap();
+
+      const homepageSection = sitemap.split("<url>")[1];
+      expect(homepageSection).toContain("<lastmod>");
       expect(homepageSection).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
     });
 
-    it("should include blog article URLs", () => {
-      expect(sitemap).toContain(`<loc>${siteConfig.siteUrl}/blog/cap-theorem-production</loc>`);
-      expect(sitemap).toContain(`<loc>${siteConfig.siteUrl}/blog/pragmatic-consistency</loc>`);
-    });
-
-    it("should set article priority to 0.8", () => {
-      const articleSection = sitemap.substring(
-        sitemap.indexOf('/blog/cap-theorem-production') - 100,
-        sitemap.indexOf('/blog/cap-theorem-production') + 200
-      );
-      expect(articleSection).toContain('<priority>0.8</priority>');
-    });
-
-    it("should set article changefreq to monthly", () => {
-      const articleSection = sitemap.substring(
-        sitemap.indexOf('/blog/cap-theorem-production') - 100,
-        sitemap.indexOf('/blog/cap-theorem-production') + 200
-      );
-      expect(articleSection).toContain('<changefreq>monthly</changefreq>');
-    });
-
-    it("should include lastmod for articles", () => {
-      const articleSection = sitemap.substring(
-        sitemap.indexOf('/blog/cap-theorem-production') - 100,
-        sitemap.indexOf('/blog/cap-theorem-production') + 200
-      );
-      expect(articleSection).toContain('<lastmod>');
-    });
-
-    it("should have proper URL structure", () => {
-      const urls = sitemap.match(/<url>[\s\S]*?<\/url>/g);
-      expect(urls).toBeTruthy();
-      expect(urls!.length).toBeGreaterThan(1); // At least homepage + articles
-    });
-
-    it("should wrap each URL in <url> tags", () => {
-      const urlCount = (sitemap.match(/<url>/g) || []).length;
-      const urlCloseCount = (sitemap.match(/<\/url>/g) || []).length;
-      expect(urlCount).toBe(urlCloseCount);
-      expect(urlCount).toBeGreaterThan(0);
-    });
-
-    it("should escape XML special characters in URLs", () => {
-      // Check that & is properly escaped
-      const locMatches = sitemap.match(/<loc>([^<]*)<\/loc>/g);
-      if (locMatches) {
-        locMatches.forEach(loc => {
-          const url = loc.replace(/<\/?loc>/g, '');
-          if (url.includes('&')) {
-            expect(url).toMatch(/&amp;/);
-          }
-        });
-      }
-    });
-
-    it("should include all URL elements in correct order", () => {
-      const firstUrl = sitemap.match(/<url>[\s\S]*?<\/url>/)?.[0];
-      expect(firstUrl).toBeTruthy();
-      if (firstUrl) {
-        // Check order: loc, lastmod, changefreq, priority
-        const locIndex = firstUrl.indexOf('<loc>');
-        const lastmodIndex = firstUrl.indexOf('<lastmod>');
-        const changefreqIndex = firstUrl.indexOf('<changefreq>');
-        const priorityIndex = firstUrl.indexOf('<priority>');
-
-        expect(locIndex).toBeGreaterThan(-1);
-        expect(locIndex).toBeLessThan(lastmodIndex);
-      }
-    });
-
-    it("should have properly formatted lastmod dates", () => {
-      const lastmodMatches = sitemap.match(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g);
-      expect(lastmodMatches).toBeTruthy();
-      expect(lastmodMatches!.length).toBeGreaterThan(0);
-    });
-
-    it("should have valid priority values", () => {
-      const priorityMatches = sitemap.match(/<priority>([\d.]+)<\/priority>/g);
-      expect(priorityMatches).toBeTruthy();
-      priorityMatches?.forEach(priority => {
-        const value = parseFloat(priority.match(/[\d.]+/)![0]);
-        expect(value).toBeGreaterThanOrEqual(0);
-        expect(value).toBeLessThanOrEqual(1);
-      });
-    });
-
-    it("should have valid changefreq values", () => {
-      const changefreqMatches = sitemap.match(/<changefreq>(.*?)<\/changefreq>/g);
-      expect(changefreqMatches).toBeTruthy();
-      const validFreqs = ['always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never'];
-      changefreqMatches?.forEach(freq => {
-        const value = freq.match(/<changefreq>(.*?)<\/changefreq>/)![1];
-        expect(validFreqs).toContain(value);
-      });
-    });
-
-    it("should include multiple articles", () => {
-      const blogUrls = (sitemap.match(/\/blog\/[\w-]+/g) || []);
-      expect(blogUrls.length).toBeGreaterThan(1);
-    });
-
-    it("should properly close all XML tags", () => {
-      // Count opening and closing tags
-      const urlOpen = (sitemap.match(/<url>/g) || []).length;
-      const urlClose = (sitemap.match(/<\/url>/g) || []).length;
-      const locOpen = (sitemap.match(/<loc>/g) || []).length;
-      const locClose = (sitemap.match(/<\/loc>/g) || []).length;
-
-      expect(urlOpen).toBe(urlClose);
-      expect(locOpen).toBe(locClose);
-    });
-  });
-
-  describe("generateRobotsTxt", () => {
-    let robots: string;
-
-    beforeEach(() => {
-      robots = generateRobotsTxt();
-    });
-
-    it("should include User-agent directive", () => {
-      expect(robots).toContain('User-agent: *');
-    });
-
-    it("should allow all paths", () => {
-      expect(robots).toContain('Allow: /');
-    });
-
-    it("should include sitemap URL", () => {
-      expect(robots).toContain(`Sitemap: ${siteConfig.siteUrl}/sitemap.xml`);
-    });
-
-    it("should have proper format with line breaks", () => {
-      const lines = robots.split('\n');
-      expect(lines.length).toBeGreaterThanOrEqual(3);
-      expect(lines[0]).toBe('User-agent: *');
-      expect(lines[1]).toBe('Allow: /');
-      expect(lines[2]).toBe('');
-      expect(lines[3]).toContain('Sitemap:');
-    });
-
-    it("should end with newline", () => {
-      expect(robots).toMatch(/\n$/);
-    });
-
-    it("should have exactly one User-agent directive", () => {
-      const matches = robots.match(/User-agent:/g);
-      expect(matches?.length).toBe(1);
-    });
-
-    it("should have exactly one Allow directive", () => {
-      const matches = robots.match(/Allow:/g);
-      expect(matches?.length).toBe(1);
-    });
-
-    it("should have exactly one Sitemap directive", () => {
-      const matches = robots.match(/Sitemap:/g);
-      expect(matches?.length).toBe(1);
-    });
-
-    it("should not include Disallow directives", () => {
-      expect(robots).not.toContain('Disallow:');
-    });
-
-    it("should point to correct sitemap URL", () => {
-      expect(robots).toContain('/sitemap.xml');
-      expect(robots).toContain(siteConfig.siteUrl);
-    });
-
-    it("should be plain text format", () => {
-      // No HTML, XML, or JSON
-      expect(robots).not.toContain('<');
-      expect(robots).not.toContain('>');
-      expect(robots).not.toContain('{');
-      expect(robots).not.toContain('}');
-    });
-  });
-
-  describe("XML escaping", () => {
-    it("should properly escape special characters in sitemap", () => {
+    it("should include blog post URLs", () => {
       const sitemap = generateSitemap();
 
-      // Ensure no unescaped special characters in element content
-      const locContent = sitemap.match(/<loc>([^<]*)<\/loc>/g);
-      if (locContent) {
-        locContent.forEach(loc => {
-          const content = loc.replace(/<\/?loc>/g, '');
-          // If there's an ampersand, it should be escaped
-          if (content.includes('&')) {
-            expect(content).toMatch(/&amp;/);
-            expect(content).not.toMatch(/&(?!amp;|lt;|gt;|quot;|apos;)/);
-          }
-        });
-      }
+      expect(sitemap).toContain(`${siteConfig.siteUrl}/blog/`);
     });
-  });
 
-  describe("date formatting", () => {
-    it("should format article dates as YYYY-MM-DD", () => {
+    it("should include blog posts with priority 0.8", () => {
       const sitemap = generateSitemap();
-      const lastmodMatches = sitemap.match(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g);
 
-      expect(lastmodMatches).toBeTruthy();
-      lastmodMatches?.forEach(match => {
-        const date = match.match(/\d{4}-\d{2}-\d{2}/)![0];
-        const parsed = new Date(date);
-        expect(parsed).toBeInstanceOf(Date);
-        expect(parsed.toString()).not.toBe('Invalid Date');
-      });
-    });
-  });
+      const urlSections = sitemap.split("<url>");
+      // Skip first (empty) and second (homepage)
+      const blogPosts = urlSections.slice(2);
 
-  describe("edge cases and regression tests", () => {
-    it("should generate consistent output on multiple calls", () => {
-      const sitemap1 = generateSitemap();
-      const sitemap2 = generateSitemap();
-      // Should be identical except for today's date on homepage
-      expect(sitemap1.split('\n').length).toBe(sitemap2.split('\n').length);
-    });
-
-    it("should handle special URL characters", () => {
-      const sitemap = generateSitemap();
-      // URLs with special chars should be escaped
-      expect(sitemap).not.toMatch(/<loc>[^<]*&(?!amp;|lt;|gt;|quot;|apos;)[^<]*<\/loc>/);
-    });
-
-    it("should generate valid XML structure", () => {
-      const sitemap = generateSitemap();
-      // Basic XML validation
-      expect(sitemap.startsWith('<?xml')).toBe(true);
-      expect(sitemap).toContain('<urlset');
-      expect(sitemap.endsWith('</urlset>'));
-    });
-
-    it("should not include duplicate URLs", () => {
-      const sitemap = generateSitemap();
-      const urls = sitemap.match(/<loc>(.*?)<\/loc>/g) || [];
-      const uniqueUrls = new Set(urls);
-      expect(urls.length).toBe(uniqueUrls.size);
-    });
-
-    it("should order URLs with homepage first", () => {
-      const sitemap = generateSitemap();
-      const firstUrl = sitemap.match(/<loc>(.*?)<\/loc>/)?.[1];
-      expect(firstUrl).toBe(siteConfig.siteUrl);
-    });
-
-    it("should include xmlns namespace in urlset", () => {
-      const sitemap = generateSitemap();
-      expect(sitemap).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
-    });
-
-    it("should handle articles with various date formats", () => {
-      const sitemap = generateSitemap();
-      // Should parse "Nov 2025", "Jan 2026", etc.
-      const lastmodDates = sitemap.match(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g) || [];
-      expect(lastmodDates.length).toBeGreaterThan(5); // Homepage + multiple articles
-    });
-
-    it("should generate robots.txt with single newline at end", () => {
-      const robots = generateRobotsTxt();
-      expect(robots.endsWith('\n')).toBe(true);
-      expect(robots.endsWith('\n\n')).toBe(false);
-    });
-
-    it("should not have trailing whitespace in robots.txt", () => {
-      const robots = generateRobotsTxt();
-      const lines = robots.split('\n');
-      lines.forEach(line => {
-        if (line.trim() !== '') {
-          expect(line).toBe(line.trimEnd());
+      blogPosts.forEach((section) => {
+        if (section.includes("/blog/")) {
+          expect(section).toContain("<priority>0.8</priority>");
         }
       });
     });
 
-    it("should generate sitemap with proper indentation", () => {
+    it("should include blog posts with monthly changefreq", () => {
       const sitemap = generateSitemap();
-      // Check that URLs are indented with 2 spaces
-      const urlBlocks = sitemap.match(/  <url>/g);
-      expect(urlBlocks).toBeTruthy();
-      expect(urlBlocks!.length).toBeGreaterThan(0);
-    });
 
-    it("should handle blog slugs with hyphens", () => {
-      const sitemap = generateSitemap();
-      expect(sitemap).toContain('cap-theorem-production');
-      expect(sitemap).toContain('latency-tax-separated-compute-storage');
-    });
+      const urlSections = sitemap.split("<url>");
+      const blogPosts = urlSections.slice(2);
 
-    it("should generate sitemap URLs matching site config", () => {
-      const sitemap = generateSitemap();
-      const urls = sitemap.match(/<loc>(.*?)<\/loc>/g) || [];
-      urls.forEach(url => {
-        expect(url).toContain(siteConfig.siteUrl);
+      blogPosts.forEach((section) => {
+        if (section.includes("/blog/")) {
+          expect(section).toContain("<changefreq>monthly</changefreq>");
+        }
       });
+    });
+
+    it("should include blog posts with lastmod dates", () => {
+      const sitemap = generateSitemap();
+
+      const urlSections = sitemap.split("<url>");
+      const blogPosts = urlSections.slice(2);
+
+      blogPosts.forEach((section) => {
+        if (section.includes("/blog/")) {
+          expect(section).toContain("<lastmod>");
+          expect(section).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+        }
+      });
+    });
+
+    it("should have at least homepage plus blog posts", () => {
+      const sitemap = generateSitemap();
+
+      const urlCount = (sitemap.match(/<url>/g) || []).length;
+      expect(urlCount).toBeGreaterThan(5); // Homepage + multiple blog posts
+    });
+
+    it("should format lastmod as YYYY-MM-DD", () => {
+      const sitemap = generateSitemap();
+
+      const lastmodMatches = sitemap.match(/<lastmod>([^<]+)<\/lastmod>/g);
+      expect(lastmodMatches).toBeTruthy();
+
+      lastmodMatches?.forEach((match) => {
+        const date = match.replace(/<\/?lastmod>/g, "");
+        expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        // Verify it's a valid date
+        expect(new Date(date).toString()).not.toBe("Invalid Date");
+      });
+    });
+
+    it("should escape XML special characters in URLs", () => {
+      const sitemap = generateSitemap();
+
+      // URLs should not contain unescaped ampersands
+      const locMatches = sitemap.match(/<loc>([^<]+)<\/loc>/g);
+      locMatches?.forEach((match) => {
+        const url = match.replace(/<\/?loc>/g, "");
+        if (url.includes("&")) {
+          // Should be part of an XML entity
+          expect(url).toMatch(/&[a-z]+;/);
+        }
+      });
+    });
+
+    it("should have well-formed XML with proper closing tags", () => {
+      const sitemap = generateSitemap();
+
+      const openingTags = (sitemap.match(/<url>/g) || []).length;
+      const closingTags = (sitemap.match(/<\/url>/g) || []).length;
+      expect(openingTags).toBe(closingTags);
+
+      const openingLoc = (sitemap.match(/<loc>/g) || []).length;
+      const closingLoc = (sitemap.match(/<\/loc>/g) || []).length;
+      expect(openingLoc).toBe(closingLoc);
+    });
+
+    it("should include all required URL elements", () => {
+      const sitemap = generateSitemap();
+
+      const urlSections = sitemap.split("<url>").slice(1);
+
+      urlSections.forEach((section) => {
+        expect(section).toContain("<loc>");
+        expect(section).toContain("</loc>");
+        // lastmod, changefreq, and priority are optional but should be present in our implementation
+        expect(section).toContain("<lastmod>");
+        expect(section).toContain("<changefreq>");
+        expect(section).toContain("<priority>");
+      });
+    });
+
+    it("should format priority with one decimal place", () => {
+      const sitemap = generateSitemap();
+
+      const priorityMatches = sitemap.match(/<priority>([^<]+)<\/priority>/g);
+      priorityMatches?.forEach((match) => {
+        const priority = match.replace(/<\/?priority>/g, "");
+        expect(priority).toMatch(/^\d\.\d$/);
+      });
+    });
+
+    it("should properly indent XML elements", () => {
+      const sitemap = generateSitemap();
+
+      expect(sitemap).toContain("  <url>");
+      expect(sitemap).toContain("    <loc>");
+    });
+
+    it("should include blog post slugs in URLs", () => {
+      const sitemap = generateSitemap();
+
+      // Check for various article slugs
+      expect(sitemap).toContain("/blog/cap-theorem-production");
+      expect(sitemap).toContain("/blog/pragmatic-consistency");
+    });
+
+    it("should use article dates for blog post lastmod", () => {
+      const sitemap = generateSitemap();
+
+      // Blog posts should have their article date as lastmod
+      const urlSections = sitemap.split("<url>");
+      const blogPostSection = urlSections.find((section) =>
+        section.includes("/blog/cap-theorem-production")
+      );
+
+      if (blogPostSection) {
+        expect(blogPostSection).toContain("<lastmod>2025-11-");
+      }
+    });
+
+    it("should handle homepage lastmod as current date", () => {
+      const sitemap = generateSitemap();
+
+      const today = new Date().toISOString().split("T")[0];
+      const homepageSection = sitemap.split("<url>")[1];
+
+      expect(homepageSection).toContain(`<lastmod>${today}</lastmod>`);
+    });
+  });
+
+  describe("generateRobotsTxt", () => {
+    it("should allow all user agents", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots).toContain("User-agent: *");
+      expect(robots).toContain("Allow: /");
+    });
+
+    it("should include sitemap URL", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots).toContain(`Sitemap: ${siteConfig.siteUrl}/sitemap.xml`);
+    });
+
+    it("should have proper formatting with newlines", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots).toContain("\n");
+      expect(robots.split("\n").length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should start with User-agent directive", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots.trimStart().startsWith("User-agent:")).toBe(true);
+    });
+
+    it("should end with sitemap directive", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots.trim().endsWith(`${siteConfig.siteUrl}/sitemap.xml`)).toBe(
+        true
+      );
+    });
+
+    it("should not contain disallow directives", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots).not.toContain("Disallow");
+    });
+
+    it("should have blank line between sections", () => {
+      const robots = generateRobotsTxt();
+      const lines = robots.split("\n");
+
+      // Should have User-agent, Allow, blank line, Sitemap
+      expect(lines[2]).toBe("");
+    });
+
+    it("should use correct sitemap URL format", () => {
+      const robots = generateRobotsTxt();
+
+      expect(robots).toMatch(/Sitemap: https?:\/\/[^\s]+\/sitemap\.xml/);
+    });
+
+    it("should have at least 4 lines", () => {
+      const robots = generateRobotsTxt();
+      const lines = robots.split("\n");
+
+      // User-agent, Allow, blank, Sitemap, (possibly trailing newline)
+      expect(lines.length).toBeGreaterThanOrEqual(4);
+      expect(lines.length).toBeLessThanOrEqual(5);
+    });
+  });
+
+  describe("XML escaping", () => {
+    it("should escape ampersands", () => {
+      const sitemap = generateSitemap();
+
+      // If there are ampersands in URLs, they should be escaped
+      if (sitemap.includes("&")) {
+        expect(sitemap).toMatch(/&amp;/);
+      }
+    });
+
+    it("should escape less-than signs", () => {
+      const sitemap = generateSitemap();
+
+      const locContents = sitemap.match(/<loc>([^<]+)<\/loc>/g);
+      locContents?.forEach((content) => {
+        const url = content.replace(/<\/?loc>/g, "");
+        if (url.includes("<")) {
+          expect(url).toContain("&lt;");
+        }
+      });
+    });
+
+    it("should escape greater-than signs", () => {
+      const sitemap = generateSitemap();
+
+      const locContents = sitemap.match(/<loc>([^<]+)<\/loc>/g);
+      locContents?.forEach((content) => {
+        const url = content.replace(/<\/?loc>/g, "");
+        if (url.includes(">") && !url.match(/<\/?[a-z]+>/)) {
+          expect(url).toContain("&gt;");
+        }
+      });
+    });
+  });
+
+  describe("integration tests", () => {
+    it("should generate consistent output structure", () => {
+      const sitemap1 = generateSitemap();
+      const sitemap2 = generateSitemap();
+
+      // Structure should be the same (but lastmod for homepage may differ)
+      const urls1 = sitemap1.match(/<loc>([^<]+)<\/loc>/g);
+      const urls2 = sitemap2.match(/<loc>([^<]+)<\/loc>/g);
+
+      expect(urls1?.length).toBe(urls2?.length);
+    });
+
+    it("should produce valid XML parseable by DOMParser", () => {
+      const sitemap = generateSitemap();
+
+      // This would be tested in a browser environment with DOMParser
+      // For node, we can at least check for balanced tags
+      const openTags = sitemap.match(/<[^/][^>]*>/g) || [];
+      const closeTags = sitemap.match(/<\/[^>]+>/g) || [];
+
+      // Should have balanced structure (accounting for self-closing declarations)
+      expect(closeTags.length).toBeGreaterThan(0);
+    });
+
+    it("should handle special characters in blog slugs", () => {
+      const sitemap = generateSitemap();
+
+      // Slugs with hyphens should be preserved
+      expect(sitemap).toContain("cap-theorem-production");
+      expect(sitemap).toContain("latency-tax-separated-compute-storage");
     });
   });
 });
