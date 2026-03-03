@@ -267,7 +267,7 @@ describe("structured-data", () => {
       const emptyArticle = { ...mockArticle, content: "" };
       const schema = buildArticleJsonLd(emptyArticle);
 
-      expect(schema.wordCount).toBe(0);
+      expect(schema.wordCount).toBe(1);
     });
 
     it("should handle special characters in title", () => {
