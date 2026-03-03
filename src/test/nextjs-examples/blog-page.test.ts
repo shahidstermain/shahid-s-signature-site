@@ -1,35 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Next.js modules
-vi.mock("next/navigation", () => ({
-  notFound: vi.fn(() => {
-    throw new Error("NOT_FOUND");
+vi.mock(
+  "next/navigation",
+  () => ({
+    notFound: vi.fn(() => {
+      throw new Error("NOT_FOUND");
+    }),
   }),
-}));
+  { virtual: true },
+);
 
-vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
-}));
+vi.mock(
+  "next/link",
+  () => ({
+    default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+      <a href={href}>{children}</a>
+    ),
+  }),
+  { virtual: true },
+);
 
-vi.mock("next/script", () => ({
-  default: ({
-    children,
-    id,
-    type,
-    dangerouslySetInnerHTML,
-  }: {
-    children?: React.ReactNode;
-    id: string;
-    type: string;
-    dangerouslySetInnerHTML?: { __html: string };
-  }) => (
-    <script id={id} type={type}>
-      {dangerouslySetInnerHTML?.__html || children}
-    </script>
-  ),
-}));
+vi.mock(
+  "next/script",
+  () => ({
+    default: ({
+      children,
+      id,
+      type,
+      dangerouslySetInnerHTML,
+    }: {
+      children?: React.ReactNode;
+      id: string;
+      type: string;
+      dangerouslySetInnerHTML?: { __html: string };
+    }) => (
+      <script id={id} type={type}>
+        {dangerouslySetInnerHTML?.__html || children}
+      </script>
+    ),
+  }),
+  { virtual: true },
+);
 
 // Import the functions we're testing
 import { getArticleBySlug, articles } from "@/data/articles";
