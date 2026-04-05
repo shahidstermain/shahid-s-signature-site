@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
-import lighthouseConfig from "../../../lighthouserc.json";
+import * as fs from "fs";
 
+const lighthouseConfig = JSON.parse(
+  fs.readFileSync(new URL("../../../lighthouserc.json", import.meta.url), "utf8"),
+);
 describe("lighthouserc.json Configuration", () => {
   describe("Basic Structure", () => {
     it("should have CI configuration", () => {
