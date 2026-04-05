@@ -11,6 +11,11 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}", "scripts/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "next/navigation": path.resolve(__dirname, "./src/test/__stubs__/next-navigation.ts"),
+      "next/link": path.resolve(__dirname, "./src/test/__stubs__/next-link.tsx"),
+      "next/script": path.resolve(__dirname, "./src/test/__stubs__/next-script.tsx"),
+    },
   },
 });

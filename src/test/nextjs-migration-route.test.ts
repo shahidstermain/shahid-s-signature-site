@@ -234,18 +234,25 @@ describe('GET /rss.xml - article ordering', () => {
 describe('GET /rss.xml - markdown stripping in content:encoded', () => {
   it('strips markdown headers from content', async () => {
     const body = await getBody();
-    // The content:encoded for article-one should not have "## Intro"
-    const cdataStart = body.indexOf('<![CDATA[');
-    const cdataEnd = body.indexOf(']]>');
-    const cdata = body.slice(cdataStart, cdataEnd);
+    // article-one has Markdown headers; find its item section first
+    const articleOneStart = body.indexOf('/blog/article-one');
+    const articleOneEnd = body.indexOf('</item>', articleOneStart);
+    const articleOneSection = body.slice(articleOneStart, articleOneEnd);
+    const cdataStart = articleOneSection.indexOf('<![CDATA[');
+    const cdataEnd = articleOneSection.indexOf(']]>');
+    const cdata = articleOneSection.slice(cdataStart, cdataEnd);
     expect(cdata).not.toContain('## ');
   });
 
   it('strips bold markers but keeps the text', async () => {
     const body = await getBody();
-    const cdataStart = body.indexOf('<![CDATA[');
-    const cdataEnd = body.indexOf(']]>');
-    const cdata = body.slice(cdataStart, cdataEnd);
+    // article-one has **bold** content; find its item section first
+    const articleOneStart = body.indexOf('/blog/article-one');
+    const articleOneEnd = body.indexOf('</item>', articleOneStart);
+    const articleOneSection = body.slice(articleOneStart, articleOneEnd);
+    const cdataStart = articleOneSection.indexOf('<![CDATA[');
+    const cdataEnd = articleOneSection.indexOf(']]>');
+    const cdata = articleOneSection.slice(cdataStart, cdataEnd);
     expect(cdata).not.toContain('**bold**');
     expect(cdata).toContain('bold');
   });

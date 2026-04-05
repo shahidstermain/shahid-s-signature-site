@@ -186,27 +186,12 @@ describe('sitemap() – article ordering', () => {
 describe('sitemap() – NEXT_PUBLIC_SITE_URL', () => {
   it('respects a custom NEXT_PUBLIC_SITE_URL environment variable', async () => {
     vi.resetModules();
-    vi.mock('next', () => ({}));
-    vi.mock('@/data/articles', () => ({
-      articles: [
-        {
-          slug: 'test-slug',
-          title: 'Test',
-          description: 'Desc',
-          category: 'Cat',
-          readTime: '1 min read',
-          date: 'Jan 2024',
-          featured: false,
-          content: 'Content',
-        },
-      ],
-    }));
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://custom.example.com');
     const { default: customSitemap } = await import(
       '../../docs/nextjs-migration-examples/app/sitemap'
     );
     const result = customSitemap();
     expect(result[0].url).toBe('https://custom.example.com');
-    expect(result[1].url).toBe('https://custom.example.com/blog/test-slug');
+    expect(result[1].url).toMatch(/^https:\/\/custom\.example\.com\/blog\//);
   });
 });

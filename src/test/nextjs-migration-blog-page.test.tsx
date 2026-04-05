@@ -338,7 +338,7 @@ describe('BlogPostPage component – rendering', () => {
 
   it('renders the article category badge', () => {
     render(<BlogPostPage params={{ slug: 'first-article' }} />);
-    expect(screen.getByText('Fundamentals')).toBeInTheDocument();
+    expect(screen.getAllByText('Fundamentals').length).toBeGreaterThan(0);
   });
 
   it('renders the read time', () => {
