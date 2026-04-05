@@ -148,7 +148,6 @@ describe("firebase.json Configuration", () => {
     it("should redirect /index.html to root", () => {
       const indexRedirect = firebaseConfig.hosting.redirects.find(
         (r: FirebaseRedirect) => r.source === "/index.html"
-        (r) => r.source === "/index.html"
       );
       expect(indexRedirect).toBeDefined();
       expect(indexRedirect?.destination).toBe("/");
