@@ -29,10 +29,8 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.staticDistDir).toBe("./dist");
     });
 
-    it("should configure URL to test", () => {
-      expect(lighthouseConfig.ci.collect.url).toBeDefined();
-      expect(Array.isArray(lighthouseConfig.ci.collect.url)).toBe(true);
-      expect(lighthouseConfig.ci.collect.url).toContain("http://localhost/index.html");
+    it("should not specify explicit URL when using staticDistDir", () => {
+      expect(lighthouseConfig.ci.collect.url).toBeUndefined();
     });
 
     it("should run multiple iterations for consistency", () => {
@@ -209,9 +207,8 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.numberOfRuns).toBeGreaterThanOrEqual(3);
     });
 
-    it("should test against localhost for CI", () => {
-      const urls = lighthouseConfig.ci.collect.url;
-      expect(urls.some((url: string) => url.includes("localhost"))).toBe(true);
+    it("should use staticDistDir to serve files for CI", () => {
+      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
     });
 
     it("should have realistic performance thresholds", () => {
