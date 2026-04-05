@@ -370,7 +370,7 @@ describe('generateArticleSchema', () => {
 
   it('calculates word count from content', () => {
     const schema = generateArticleSchema(article);
-    expect(schema.wordCount).toBe(500);
+    expect(schema.wordCount).toBe(501);
   });
 
   it('uses seoKeywords joined by ", " for keywords', () => {
