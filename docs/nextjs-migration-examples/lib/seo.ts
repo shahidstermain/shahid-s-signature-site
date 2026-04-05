@@ -42,7 +42,9 @@ export const SITE_CONFIG = {
  * @returns The canonical absolute URL for the given path
  */
 export function getCanonicalUrl(path: string = ''): string {
-  const cleanPath = path === '/' ? '' : path.replace(/\/$/, '');
+  if (!path || path === '/') return SITE_CONFIG.url;
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  const cleanPath = withLeadingSlash.replace(/\/$/, '');
   return `${SITE_CONFIG.url}${cleanPath}`;
 }
 
@@ -230,7 +232,7 @@ export function generateArticleSchema(article: {
 }, seriesInfo?: { currentIndex: number; total: number }) {
   const articleUrl = getCanonicalUrl(`/blog/${article.slug}`);
   const publishDate = parseArticleDateToISO(article.date);
-  const wordCount = article.content.split(/\s+/).length;
+  const wordCount = article.content.trim().split(/\s+/).filter(Boolean).length;
 
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -397,7 +399,7 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
  * @returns A string in the form `X min read` where `X` is the estimated minutes.
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
-  const wordCount = content.split(/\s+/).length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
   return `${minutes} min read`;
 }

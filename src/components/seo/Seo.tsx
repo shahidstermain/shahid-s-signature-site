@@ -20,6 +20,18 @@ const normalizeTitle = (title?: string) => {
   return siteConfig.titleTemplate.replace("%s", title);
 };
 
+/**
+ * Serialize a value to JSON with HTML-unsafe characters Unicode-escaped so
+ * that the result can be safely embedded in a <script> element without
+ * creating XSS vectors.
+ */
+const safeJsonStringify = (value: unknown): string =>
+  JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/'/g, "\\u0027");
+
 export const Seo = ({
   title,
   description,
@@ -39,48 +51,50 @@ export const Seo = ({
   const jsonLdItems = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
 
   return (
-    <Helmet>
-      <title>{resolvedTitle}</title>
-      <meta name="description" content={resolvedDescription} />
-      <meta name="author" content={siteConfig.author.name} />
-      {keywords?.length ? (
-        <meta name="keywords" content={keywords.join(", ")} />
-      ) : null}
-      <meta
-        name="robots"
-        content={
-          noindex
-            ? "noindex, nofollow"
-            : "index, follow, max-image-preview:large"
-        }
-      />
+    <>
+      <Helmet>
+        <title>{resolvedTitle}</title>
+        <meta name="description" content={resolvedDescription} />
+        <meta name="author" content={siteConfig.author.name} />
+        {keywords?.length ? (
+          <meta name="keywords" content={keywords.join(", ")} />
+        ) : null}
+        <meta
+          name="robots"
+          content={
+            noindex
+              ? "noindex, nofollow"
+              : "index, follow, max-image-preview:large"
+          }
+        />
 
-      <link rel="canonical" href={canonicalUrl} />
+        <link rel="canonical" href={canonicalUrl} />
 
-      <meta property="og:title" content={resolvedTitle} />
-      <meta property="og:description" content={resolvedDescription} />
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:image" content={metaImage} />
-      <meta property="og:site_name" content={siteConfig.name} />
-      <meta property="og:locale" content={siteConfig.locale} />
+        <meta property="og:title" content={resolvedTitle} />
+        <meta property="og:description" content={resolvedDescription} />
+        <meta property="og:type" content={type} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={metaImage} />
+        <meta property="og:site_name" content={siteConfig.name} />
+        <meta property="og:locale" content={siteConfig.locale} />
 
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content={siteConfig.twitterHandle} />
-      <meta name="twitter:creator" content={siteConfig.twitterHandle} />
-      <meta name="twitter:title" content={resolvedTitle} />
-      <meta name="twitter:description" content={resolvedDescription} />
-      <meta name="twitter:image" content={metaImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content={siteConfig.twitterHandle} />
+        <meta name="twitter:creator" content={siteConfig.twitterHandle} />
+        <meta name="twitter:title" content={resolvedTitle} />
+        <meta name="twitter:description" content={resolvedDescription} />
+        <meta name="twitter:image" content={metaImage} />
 
-      {type === "article" && publishedTime ? (
-        <meta property="article:published_time" content={publishedTime} />
-      ) : null}
-      {type === "article" && modifiedTime ? (
-        <meta property="article:modified_time" content={modifiedTime} />
-      ) : null}
-      {type === "article" ? (
-        <meta property="article:author" content={siteConfig.author.name} />
-      ) : null}
+        {type === "article" && publishedTime ? (
+          <meta property="article:published_time" content={publishedTime} />
+        ) : null}
+        {type === "article" && modifiedTime ? (
+          <meta property="article:modified_time" content={modifiedTime} />
+        ) : null}
+        {type === "article" ? (
+          <meta property="article:author" content={siteConfig.author.name} />
+        ) : null}
+      </Helmet>
 
       {jsonLdItems.map((item, index) => {
         const typeKey =
@@ -91,12 +105,12 @@ export const Seo = ({
         return (
           <script
             // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+            dangerouslySetInnerHTML={{ __html: safeJsonStringify(item) }}
             key={`jsonld-${typeKey}-${index}`}
             type="application/ld+json"
           />
         );
       })}
-    </Helmet>
+    </>
   );
 };
