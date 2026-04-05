@@ -174,7 +174,7 @@ function getArticleSchema(article: Article, currentIndex: number, total: number)
     headline: article.title,
     description: article.description,
     articleSection: article.category,
-    keywords: article.seoKeywords,
+    keywords: article.seoKeywords?.join(', ') || article.category,
     datePublished: publishDate,
     dateModified: publishDate,
     author: {
