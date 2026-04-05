@@ -88,7 +88,7 @@ describe('robots() – production env with non-canonical domain', () => {
 // Production environment with canonical domain
 // ---------------------------------------------------------------------------
 describe('robots() – production env with canonical domain', () => {
-  let robots: ReturnType<typeof vi.fn>;
+  let robots: typeof import('../../docs/nextjs-migration-examples/app/robots').default;
 
   beforeEach(async () => {
     robots = await loadRobots(
