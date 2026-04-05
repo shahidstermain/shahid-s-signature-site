@@ -667,16 +667,27 @@ describe('trackPageView', () => {
 
   it('calls window.gtag with config command when available', () => {
     const mockGtag = vi.fn();
-    vi.stubGlobal('window', { ...window, gtag: mockGtag });
-    trackPageView('/blog/test', 'Test Title');
-    expect(mockGtag).toHaveBeenCalledWith(
-      'config',
-      expect.anything(),
-      expect.objectContaining({
-        page_path: '/blog/test',
-        page_title: 'Test Title',
-      })
-    );
+    const previousGaId = process.env.NEXT_PUBLIC_GA_ID;
+    process.env.NEXT_PUBLIC_GA_ID = 'G-TEST123456';
+
+    try {
+      vi.stubGlobal('window', { ...window, gtag: mockGtag });
+      trackPageView('/blog/test', 'Test Title');
+      expect(mockGtag).toHaveBeenCalledWith(
+        'config',
+        'G-TEST123456',
+        expect.objectContaining({
+          page_path: '/blog/test',
+          page_title: 'Test Title',
+        })
+      );
+    } finally {
+      if (previousGaId === undefined) {
+        delete process.env.NEXT_PUBLIC_GA_ID;
+      } else {
+        process.env.NEXT_PUBLIC_GA_ID = previousGaId;
+      }
+    }
   });
 });
 
