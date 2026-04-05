@@ -398,6 +398,6 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
   const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  const minutes = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
   return `${minutes} min read`;
 }
