@@ -7,8 +7,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Mock 'next' so the MetadataRoute type import does not fail at runtime
-vi.mock('next', () => ({}));
+// Mock 'next' so the MetadataRoute import used by the module under test resolves
+vi.mock('next', () => ({
+  MetadataRoute: {},
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers to reload the module with different env vars
