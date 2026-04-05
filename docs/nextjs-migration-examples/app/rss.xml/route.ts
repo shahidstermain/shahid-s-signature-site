@@ -38,21 +38,26 @@ function escapeXml(text: string): string {
 }
 
 /**
- * Parse a date string in the "Mon YYYY" format into a Date representing the 15th of that month.
+ * Parse a date string in the "Mon YYYY" format into a UTC Date representing the 15th of that month.
  *
- * Accepts three-letter English month abbreviations (e.g., "Jan", "Feb", "Mar"). If the month is unrecognized,
- * January is used. The resulting Date uses the parsed year and the 15th day of the month.
+ * Accepts three-letter English month abbreviations (e.g., "Jan", "Feb", "Mar"). If the input is
+ * malformed or the month is unrecognized, the current date is returned as a fallback.
  *
  * @param dateStr - Date string in the form "Mon YYYY" (for example, "Nov 2025")
- * @returns A Date set to the 15th day of the parsed month and year
+ * @returns A UTC Date set to the 15th day of the parsed month and year, or the current date on failure
  */
 function parseDate(dateStr: string): Date {
   const months: Record<string, number> = {
     Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
     Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
   };
-  const [month, year] = dateStr.split(' ');
-  return new Date(parseInt(year), months[month] || 0, 15);
+  const parts = dateStr.split(' ');
+  if (parts.length !== 2) return new Date();
+  const [month, year] = parts;
+  const monthIndex = months[month];
+  const yearNumber = parseInt(year, 10);
+  if (monthIndex === undefined || isNaN(yearNumber)) return new Date();
+  return new Date(Date.UTC(yearNumber, monthIndex, 15));
 }
 
 /**

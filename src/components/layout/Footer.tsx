@@ -12,7 +12,7 @@ export const Footer = () => {
           </div>
           <div className="flex items-center gap-4">
             <a
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               href="/rss.xml"
             >
               RSS

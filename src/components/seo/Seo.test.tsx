@@ -444,9 +444,9 @@ describe("Seo component", () => {
   it("should handle special characters in all props", async () => {
     renderWithHelmet(
       <Seo
-        title="Test <>&\"'"
-        description="Description <>&\"'"
-        keywords={["keyword<>&\"'"]}
+        title={'Test <>&"\''}
+        description={'Description <>&"\''}
+        keywords={['keyword<>&"\'']}
       />
     );
 
