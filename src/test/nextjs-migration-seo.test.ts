@@ -68,9 +68,9 @@ describe('getCanonicalUrl', () => {
   });
 
   it('handles paths without a leading slash', () => {
-    // No leading slash – still concatenated directly
+    // No leading slash – normalized to a valid canonical URL
     expect(getCanonicalUrl('blog/post')).toBe(
-      'https://shahidster.techblog/post'
+      'https://shahidster.tech/blog/post'
     );
   });
 
