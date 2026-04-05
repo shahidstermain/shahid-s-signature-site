@@ -1,6 +1,27 @@
 import { describe, it, expect } from "vitest";
 import firebaseConfig from "../../../firebase.json";
 
+interface FirebaseHeaderEntry {
+  key: string;
+  value: string;
+}
+
+interface FirebaseHeaderGroup {
+  source: string;
+  headers: FirebaseHeaderEntry[];
+}
+
+interface FirebaseRedirect {
+  source: string;
+  destination: string;
+  type: number;
+}
+
+interface FirebaseRewrite {
+  source: string;
+  destination: string;
+}
+
 describe("firebase.json Configuration", () => {
   describe("Basic Structure", () => {
     it("should have hosting configuration", () => {
@@ -45,21 +66,21 @@ describe("firebase.json Configuration", () => {
 
     it("should configure cache headers for JS and CSS", () => {
       const jsHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source.includes(".@(js|css)")
+        (h: FirebaseHeaderGroup) => h.source.includes(".@(js|css)")
       );
       expect(jsHeaders).toBeDefined();
-      const cacheControl = jsHeaders?.headers.find((h) => h.key === "Cache-Control");
+      const cacheControl = jsHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Cache-Control");
       expect(cacheControl?.value).toContain("max-age=31536000");
     });
 
     it("should configure security headers for HTML", () => {
       const htmlHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source === "**/*.html"
+        (h: FirebaseHeaderGroup) => h.source === "**/*.html"
       );
       expect(htmlHeaders).toBeDefined();
 
       const headers = htmlHeaders?.headers;
-      const securityHeaders = headers?.map((h) => h.key);
+      const securityHeaders = headers?.map((h: FirebaseHeaderEntry) => h.key);
 
       expect(securityHeaders).toContain("X-Content-Type-Options");
       expect(securityHeaders).toContain("X-Frame-Options");
@@ -70,34 +91,39 @@ describe("firebase.json Configuration", () => {
 
     it("should set X-Frame-Options to DENY for HTML", () => {
       const htmlHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source === "**/*.html"
+        (h: FirebaseHeaderGroup) => h.source === "**/*.html"
       );
-      const xFrameOptions = htmlHeaders?.headers.find((h) => h.key === "X-Frame-Options");
+      const xFrameOptions = htmlHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "X-Frame-Options");
       expect(xFrameOptions?.value).toBe("DENY");
     });
 
     it("should configure sitemap.xml headers", () => {
       const sitemapHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source === "/sitemap.xml"
+        (h: FirebaseHeaderGroup) => h.source === "/sitemap.xml"
       );
       expect(sitemapHeaders).toBeDefined();
 
-      const contentType = sitemapHeaders?.headers.find((h) => h.key === "Content-Type");
+      const contentType = sitemapHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Content-Type");
       expect(contentType?.value).toContain("application/xml");
     });
 
     it("should configure RSS feed headers", () => {
       const rssHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source === "/rss.xml"
+        (h: FirebaseHeaderGroup) => h.source === "/rss.xml"
       );
       expect(rssHeaders).toBeDefined();
 
-      const contentType = rssHeaders?.headers.find((h) => h.key === "Content-Type");
+      const contentType = rssHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Content-Type");
       expect(contentType?.value).toContain("application/rss+xml");
     });
 
     it("should configure robots.txt headers", () => {
       const robotsHeaders = firebaseConfig.hosting.headers.find(
+        (h: FirebaseHeaderGroup) => h.source === "/robots.txt"
+      );
+      expect(robotsHeaders).toBeDefined();
+
+      const contentType = robotsHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Content-Type");
         (h) => h.source === "/robots.txt"
       );
       expect(robotsHeaders).toBeDefined();
@@ -124,6 +150,7 @@ describe("firebase.json Configuration", () => {
 
     it("should redirect /index.html to root", () => {
       const indexRedirect = firebaseConfig.hosting.redirects.find(
+        (r: FirebaseRedirect) => r.source === "/index.html"
         (r) => r.source === "/index.html"
       );
       expect(indexRedirect).toBeDefined();
