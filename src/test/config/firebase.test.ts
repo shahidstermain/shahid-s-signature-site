@@ -123,12 +123,9 @@ describe("firebase.json Configuration", () => {
       );
       expect(robotsHeaders).toBeDefined();
 
-      const contentType = robotsHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Content-Type");
-        (h) => h.source === "/robots.txt"
+      const contentType = robotsHeaders?.headers.find(
+        (h: FirebaseHeaderEntry) => h.key === "Content-Type"
       );
-      expect(robotsHeaders).toBeDefined();
-
-      const contentType = robotsHeaders?.headers.find((h) => h.key === "Content-Type");
       expect(contentType?.value).toContain("text/plain");
     });
   });
