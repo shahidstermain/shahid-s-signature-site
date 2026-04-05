@@ -7,8 +7,10 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-// Mock 'next' so MetadataRoute type import does not fail at runtime
-vi.mock('next', () => ({}));
+// Mock 'next' with the named exports expected by the sitemap module
+vi.mock('next', () => ({
+  MetadataRoute: {},
+}));
 
 // ---------------------------------------------------------------------------
 // Mock @/data/articles with controlled test data
