@@ -51,7 +51,7 @@ function parseDate(dateStr: string): Date {
   const [month, year] = dateStr.split(' ');
   const monthIndex = months[month] ?? 0;
   const yearNumber = parseInt(year, 10);
-  return new Date(yearNumber, monthIndex, 15);
+  return new Date(Date.UTC(yearNumber, monthIndex, 15));
 }
 /**
  * Converts Markdown or HTML into a plain-text excerpt suitable for summaries.
