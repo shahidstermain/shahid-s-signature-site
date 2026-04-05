@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'fs';
-import path from 'path';
+import * as path from 'path';
 
 interface FirebaseHeader {
   source: string;
