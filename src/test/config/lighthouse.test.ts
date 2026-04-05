@@ -186,7 +186,7 @@ describe("lighthouserc.json Configuration", () => {
 
     it("should use warn level for most metrics (non-blocking)", () => {
       const assertions = lighthouseConfig.ci.assert.assertions;
-      const warnCount = Object.values(assertions as Record<string, unknown[]>).filter(
+      const warnCount = (Object.values(assertions) as [string, ...unknown[]][]).filter(
         (a) => a[0] === "warn"
       ).length;
       // Most should be warnings to not block builds
@@ -195,7 +195,7 @@ describe("lighthouserc.json Configuration", () => {
 
     it("should only fail on critical SEO issues", () => {
       const assertions = lighthouseConfig.ci.assert.assertions;
-      const errorAssertions = Object.entries(assertions as Record<string, unknown[]>).filter(
+      const errorAssertions = (Object.entries(assertions) as [string, [string, ...unknown[]]][]).filter(
         ([, value]) => value[0] === "error"
       );
       // Only SEO should be error level

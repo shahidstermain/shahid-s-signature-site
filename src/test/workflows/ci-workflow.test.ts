@@ -26,7 +26,7 @@ function parseYaml(content: string): ParsedYaml {
       currentKey = "branches";
       result.branches = [];
     } else if (currentKey === "branches" && trimmed.startsWith("- ")) {
-      result.branches.push(trimmed.substring(2).trim());
+      result.branches!.push(trimmed.substring(2).trim());
     }
   }
 

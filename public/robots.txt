@@ -5,7 +5,6 @@
 User-agent: Googlebot
 Allow: /
 Disallow: /api/
-Disallow: /_next/
 
 # Google Image Crawler
 User-agent: Googlebot-Image
@@ -15,7 +14,6 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 Disallow: /api/
-Disallow: /_next/
 
 # Twitter/X Card Crawler
 User-agent: Twitterbot
@@ -42,7 +40,6 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
-Disallow: /_next/
 Disallow: /private/
 
 # Sitemap location
