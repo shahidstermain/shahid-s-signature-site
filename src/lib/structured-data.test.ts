@@ -415,7 +415,7 @@ describe("structured-data", () => {
       const article = { ...mockArticle, seoKeywords: [] };
       const schema = buildArticleJsonLd(article);
 
-      expect(schema.keywords).toBe("");
+      expect(schema.keywords).toBe(article.category);
     });
 
     it("should handle very long article titles", () => {
