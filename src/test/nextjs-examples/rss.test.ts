@@ -446,10 +446,13 @@ describe("Next.js RSS Route Handler", () => {
 
       expect(escaped).not.toContain("<");
       expect(escaped).not.toContain(">");
-      expect(escaped).not.toContain("&");
+      expect(escaped).not.toContain('"');
+      expect(escaped).not.toContain("'");
       expect(escaped).toContain("&lt;");
       expect(escaped).toContain("&gt;");
       expect(escaped).toContain("&amp;");
+      expect(escaped).toContain("&quot;");
+      expect(escaped).toContain("&apos;");
     });
 
     it("should handle very long content", () => {
