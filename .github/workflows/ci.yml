@@ -103,4 +103,5 @@ jobs:
         with:
           uploadArtifacts: true
           temporaryPublicStorage: true
+          configPath: '.lighthouserc.json'
         continue-on-error: true
