@@ -53,7 +53,7 @@ firebase deploy      # Deploy to Firebase Hosting
 
 ## Coding Conventions
 
-- **Language**: TypeScript everywhere. Enable strict mode.
+- **Language**: TypeScript everywhere. Follow the current repository TypeScript configuration; the project is not currently using strict mode, so do not assume strict-only checks are enabled unless the TS configs are updated.
 - **Components**: Functional components with hooks only. No class components.
 - **Exports**: Named exports for components; default export only for route-level page components.
 - **Styling**: Use Tailwind CSS utility classes. Use `cn()` from `src/lib/utils.ts` (wraps `clsx` + `tailwind-merge`) to conditionally merge classes.
