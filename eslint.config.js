@@ -27,7 +27,7 @@ export default tseslint.config(
     files: [
       "**/*.test.{ts,tsx}",
       "**/*.spec.{ts,tsx}",
-      "scripts/**/*.{ts,tsx}",
+      "scripts/**/*.test.{ts,tsx}",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
