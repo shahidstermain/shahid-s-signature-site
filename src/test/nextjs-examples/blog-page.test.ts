@@ -420,7 +420,7 @@ describe('Blog Page Utility Functions', () => {
       const input = 'Text\n\n\n\nMore text';
       const result = formatContent(input);
       expect(result).not.toContain('<p></p>');
-      expect(result).not.toContain('<p>\s*</p>');
+      expect(result).not.toMatch(/<p>\s*<\/p>/);
     });
 
     it('should handle complex mixed content', () => {

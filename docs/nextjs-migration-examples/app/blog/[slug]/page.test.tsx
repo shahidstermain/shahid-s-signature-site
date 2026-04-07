@@ -372,6 +372,7 @@ describe('Blog Post Page - getSeriesNavigation', () => {
 describe('Blog Post Page - revalidation', () => {
   it('should export revalidate constant', () => {
     // The revalidate export ensures ISR behavior
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const module = require('./page');
     expect(module.revalidate).toBe(3600);
   });

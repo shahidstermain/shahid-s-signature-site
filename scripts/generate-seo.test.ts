@@ -209,7 +209,7 @@ describe("generate-seo script", () => {
       const { generateRobotsTxt } = await import("../src/lib/sitemap");
       const content = generateRobotsTxt();
 
-      expect(content).toMatch(/^[^\<\{]*$/); // No XML or JSON
+      expect(content).toMatch(/^[^<{]*$/); // No XML or JSON
       expect(content).toContain('User-agent:');
     });
   });
