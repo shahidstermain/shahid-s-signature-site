@@ -397,6 +397,7 @@ describe("sitemap", () => {
       const sitemap = generateSitemap();
 
       // Should not contain control characters
+      // eslint-disable-next-line no-control-regex
       expect(sitemap).not.toMatch(/[\x00-\x08\x0B\x0C\x0E-\x1F]/);
     });
 

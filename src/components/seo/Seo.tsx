@@ -104,7 +104,6 @@ export const Seo = ({
 
         return (
           <script
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: safeJsonStringify(item) }}
             key={`jsonld-${typeKey}-${index}`}
             type="application/ld+json"
