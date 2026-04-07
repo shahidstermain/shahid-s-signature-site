@@ -65,7 +65,7 @@ firebase deploy      # Deploy to Firebase Hosting
 ## SEO & Security
 
 - Embed JSON-LD structured data as a `<script>` tag **outside** of `react-helmet-async` (Helmet does not inject `dangerouslySetInnerHTML` scripts in jsdom).
-- **Always** use `safeJsonStringify` (defined in `src/components/seo/Seo.tsx`) when interpolating JSON into `<script>` tags to prevent XSS via Unicode-escaping of `<`, `>`, `&`, and `'`.
+- When working in `src/components/seo/Seo.tsx`, use the local `safeJsonStringify` helper when interpolating JSON into `<script>` tags to prevent XSS via Unicode-escaping of `<`, `>`, `&`, and `'`. If another module also needs this behavior, first extract/export the helper to a shared utility instead of referencing `Seo.tsx` as though it were project-wide.
 
 ## Testing
 
