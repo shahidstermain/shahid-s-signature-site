@@ -4,53 +4,9 @@ import { describe, it, expect } from "vitest";
 
 describe("robots.txt Configuration", () => {
   describe("robots.txt format", () => {
-    it("should include User-agent directive", () => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://shahidster.tech/sitemap.xml\n";
-
-      expect(robots).toContain("User-agent:");
-    });
-
-    it("should allow all user agents", () => {
-      const robots = "User-agent: *\nAllow: /";
-
-      expect(robots).toContain("User-agent: *");
-      expect(robots).toContain("Allow: /");
-    });
-
-    it("should include sitemap reference", () => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://shahidster.tech/sitemap.xml\n";
-
-      expect(robots).toContain("Sitemap:");
-      expect(robots).toContain("sitemap.xml");
-    });
-
-    it("should use absolute URL for sitemap", () => {
-      const sitemapUrl = "https://shahidster.tech/sitemap.xml";
-
-      expect(sitemapUrl).toMatch(/^https?:\/\//);
-      expect(sitemapUrl).toContain("sitemap.xml");
-    });
-
-    it("should have proper line breaks", () => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://shahidster.tech/sitemap.xml\n";
-      const lines = robots.split("\n");
-
-      expect(lines.length).toBeGreaterThanOrEqual(4);
-    });
-
-    it("should end with newline", () => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://shahidster.tech/sitemap.xml\n";
-
-      expect(robots.endsWith("\n")).toBe(true);
-    });
-
-    it("should have blank line before sitemap", () => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://shahidster.tech/sitemap.xml\n";
-      const lines = robots.split("\n");
-
-      const sitemapIndex = lines.findIndex((line) => line.startsWith("Sitemap:"));
-      expect(lines[sitemapIndex - 1]).toBe("");
-    });
+    it.todo(
+      "should validate the real robots.txt generator or route output instead of asserting against hardcoded test literals",
+    );
   });
 
   describe("Crawling directives", () => {
