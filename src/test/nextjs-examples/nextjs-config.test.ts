@@ -235,7 +235,7 @@ describe("Next.js Configuration", () => {
 
   describe("Webpack configuration", () => {
     it("should support custom webpack config", () => {
-      const webpack = (config: any) => {
+      const webpack = (config: Record<string, unknown>) => {
         return config;
       };
 
@@ -244,9 +244,9 @@ describe("Next.js Configuration", () => {
 
     it("should support webpack aliases", () => {
       const config = {
-        webpack: (config: any) => {
-          config.resolve.alias = {
-            ...config.resolve.alias,
+        webpack: (config: Record<string, unknown>) => {
+          (config.resolve as Record<string, unknown>).alias = {
+            ...((config.resolve as Record<string, unknown>).alias as Record<string, unknown>),
             "@": "/src",
           };
           return config;
@@ -258,8 +258,8 @@ describe("Next.js Configuration", () => {
 
     it("should support module rules", () => {
       const config = {
-        webpack: (config: any) => {
-          config.module.rules.push({
+        webpack: (config: Record<string, unknown>) => {
+          (config.module as { rules: unknown[] }).rules.push({
             test: /\.svg$/,
             use: ["@svgr/webpack"],
           });

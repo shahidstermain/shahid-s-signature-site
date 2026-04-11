@@ -217,8 +217,8 @@ describe("generate-seo script", () => {
     );
 
     // Verify all calls used utf8 encoding
-    const calls = (writeFile as any).mock.calls;
-    calls.forEach((call: any[]) => {
+    const calls = vi.mocked(writeFile).mock.calls;
+    calls.forEach((call: Parameters<typeof writeFile>) => {
       expect(call[2]).toBe("utf8");
     });
   });
@@ -255,7 +255,7 @@ describe("generate-seo script", () => {
     const { generateRSSFeed } = await import("../src/lib/rss");
 
     // Mock writeFile to throw an error
-    (writeFile as any).mockRejectedValueOnce(new Error("Write failed"));
+    vi.mocked(writeFile).mockRejectedValueOnce(new Error("Write failed"));
 
     const content = generateRSSFeed();
     const filePath = path.join(process.cwd(), "public", "rss.xml");
@@ -331,7 +331,7 @@ describe("generate-seo script", () => {
         )
       );
 
-      const calls = (writeFile as any).mock.calls;
+      const calls = vi.mocked(writeFile).mock.calls;
       expect(calls[0][0]).toContain("sitemap.xml");
       expect(calls[1][0]).toContain("rss.xml");
       expect(calls[2][0]).toContain("feed.json");
