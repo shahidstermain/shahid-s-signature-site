@@ -19,26 +19,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test
-
-      - name: Build project
-        run: npm run build
-        env:
-          NODE_ENV: production
-
       - name: Check Firebase credentials
         id: firebase-check
         run: |
@@ -51,6 +31,30 @@ jobs:
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
+      - name: Setup Node.js
+        if: steps.firebase-check.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Run linting
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run lint
+
+      - name: Run tests
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run test
+
+      - name: Build project
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run build
+        env:
+          NODE_ENV: production
       - name: Deploy Preview to Firebase Hosting
         if: steps.firebase-check.outputs.configured == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
