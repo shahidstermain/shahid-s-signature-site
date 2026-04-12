@@ -10,7 +10,7 @@ A quick-reference checklist for implementing SEO in Next.js + Firebase Hosting p
 
 - [ ] **HTTPS enabled** - All pages served over HTTPS
 - [ ] **Mobile-responsive** - Passes Google Mobile-Friendly Test
-- [ ] **Fast loading** - LCP < 2.5s, FID < 100ms, CLS < 0.1
+- [ ] **Fast loading** - LCP < 2.5s, INP < 200ms, CLS < 0.1
 - [ ] **No mixed content** - All resources loaded over HTTPS
 - [ ] **Proper status codes** - 200 for content, 301 for redirects, 404 for missing
 
