@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
+import * as path from "path";
 
 const lighthouseConfig = JSON.parse(
-  fs.readFileSync(new URL("../../../lighthouserc.json", import.meta.url), "utf8"),
+  fs.readFileSync(path.resolve(process.cwd(), "lighthouserc.json"), "utf8"),
 );
 describe("lighthouserc.json Configuration", () => {
   describe("Basic Structure", () => {
