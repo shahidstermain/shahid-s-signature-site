@@ -218,19 +218,17 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         
         {/* Structured Data: Person Schema */}
-        <Script
+        <script
           id="person-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-          strategy="afterInteractive"
         />
         
         {/* Structured Data: WebSite Schema */}
-        <Script
+        <script
           id="website-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-          strategy="afterInteractive"
         />
 
         {/* Google Analytics 4 (production only) */}
