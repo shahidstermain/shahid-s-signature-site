@@ -330,12 +330,16 @@ export function generateFAQSchema(faqs: Array<{ question: string; answer: string
  * @param title - Optional page title to send as `page_title`
  */
 export function trackPageView(url: string, title?: string) {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('config', process.env.NEXT_PUBLIC_GA_ID!, {
-      page_path: url,
-      page_title: title,
-    });
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
+  if (typeof window === 'undefined' || !window.gtag || !gaId) {
+    return;
   }
+
+  window.gtag('config', gaId, {
+    page_path: url,
+    page_title: title,
+  });
 }
 
 /**
