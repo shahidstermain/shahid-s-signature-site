@@ -41,13 +41,7 @@ function stripHtml(content: string): string {
  * @returns A string containing the complete RSS 2.0 XML document for the blog, where each article is represented as an `<item>` including title, link, guid, description, content:encoded, pubDate, and category elements.
  */
 export function generateRSSFeed(): string {
-  const now = articles.length
-    ? new Date(
-        Math.max(
-          ...articles.map((article) => parseArticleDate(article.date).getTime())
-        )
-      ).toUTCString()
-    : new Date().toUTCString();
+  const now = new Date().toUTCString();
   
   const items = [...articles]
     .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
