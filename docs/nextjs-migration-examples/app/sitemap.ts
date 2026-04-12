@@ -61,7 +61,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog posts - sorted by date (newest first)
   const blogPosts: MetadataRoute.Sitemap = articles
     .map((article) => ({
-      url: `${SITE_URL}/blog/${article.slug}`,
+      url: `${SITE_URL}/blog/${encodeURIComponent(article.slug)}`,
       lastModified: parseArticleDate(article.date),
       changeFrequency: 'monthly' as const,
       priority: article.featured ? 0.9 : 0.8,
