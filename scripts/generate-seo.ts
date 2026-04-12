@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateRSSFeed, generateJSONFeed } from "../src/lib/rss";
@@ -8,6 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const publicDir = path.join(rootDir, "public");
+
+await mkdir(publicDir, { recursive: true });
 
 const outputs = [
   { name: "sitemap.xml", contents: generateSitemap() },

@@ -33,15 +33,25 @@ export const buildCanonicalUrl = (path?: string): string => {
 };
 
 export const parseArticleDate = (dateStr: string): Date => {
-  const [month, year] = dateStr.split(" ");
-  const monthIndex = MONTHS[month] ?? 0;
-  const yearNumber = Number.parseInt(year ?? "", 10);
+  const trimmed = dateStr.trim();
+  const parts = trimmed.split(" ");
+
+  if (parts.length < 2) {
+    return new Date();
+  }
+
+  const [month, yearStr] = parts;
+  const yearNumber = Number.parseInt(yearStr, 10);
 
   if (Number.isNaN(yearNumber)) {
     return new Date();
   }
 
-  return new Date(Date.UTC(yearNumber, monthIndex, 1));
+  const monthIndex = MONTHS[month];
+  // Fall back to January (0) for unrecognized month names
+  const validMonthIndex = monthIndex !== undefined ? monthIndex : 0;
+
+  return new Date(Date.UTC(yearNumber, validMonthIndex, 1));
 };
 
 export const formatArticleDateIso = (dateStr: string): string =>
