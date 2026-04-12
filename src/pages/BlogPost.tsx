@@ -11,14 +11,17 @@ import { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/lib/structured-data
 import { formatArticleDateIso } from "@/lib/seo-utils";
 
 /**
- * Determine the previous and next articles within the series for a given article slug.
+ * Determine the previous and next articles in publication order for a given article slug.
  *
- * @param currentSlug - The slug of the current article to locate in the series.
+ * This function operates over the full `articles` collection, using its existing sort
+ * order (typically publication order) to find the adjacent entries for the given slug.
+ *
+ * @param currentSlug - The slug of the current article to locate in the ordered list.
  * @returns An object containing:
- *  - `prev`: the previous article in series or `null` if none or the slug is not found,
- *  - `next`: the next article in series or `null` if none or the slug is not found,
- *  - `currentIndex`: the 1-based position of the current article in the series (0 if the slug is not found),
- *  - `total`: the total number of articles in the series.
+ *  - `prev`: the previous article in publication order, or `null` if none or the slug is not found,
+ *  - `next`: the next article in publication order, or `null` if none or the slug is not found,
+ *  - `currentIndex`: the 1-based position of the current article in the `articles` list; `0` indicates that the slug was not found,
+ *  - `total`: the total number of articles in the `articles` list.
  */
 function getSeriesNavigation(currentSlug: string): { prev: Article | null; next: Article | null; currentIndex: number; total: number } {
   const currentIndex = articles.findIndex(a => a.slug === currentSlug);

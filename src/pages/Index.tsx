@@ -13,9 +13,9 @@ import { Seo } from "@/components/seo/Seo";
 import { siteConfig } from "@/lib/site-config";
 import { buildPersonJsonLd, buildWebsiteJsonLd } from "@/lib/structured-data";
 
-const Index = () => {
-  const jsonLd = [buildWebsiteJsonLd(), buildPersonJsonLd()];
+const jsonLd = [buildWebsiteJsonLd(), buildPersonJsonLd()];
 
+const Index = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <Seo

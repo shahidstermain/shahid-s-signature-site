@@ -42,7 +42,7 @@ function stripHtml(content: string): string {
  */
 export function generateRSSFeed(): string {
   const now = new Date().toUTCString();
-
+  
   const items = [...articles]
     .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
     .map(article => {
@@ -58,7 +58,7 @@ export function generateRSSFeed(): string {
       <content:encoded><![CDATA[${description}...]]></content:encoded>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
-      ${article.seoKeywords?.map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ') || ''}
+      ${(article.seoKeywords ?? []).map(kw => `<category>${escapeXml(kw)}</category>`).join('\n      ')}
     </item>`;
     })
     .join('');
