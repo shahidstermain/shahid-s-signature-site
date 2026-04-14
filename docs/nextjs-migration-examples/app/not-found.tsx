@@ -10,6 +10,7 @@
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/not-found
  */
 
+import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Home, BookOpen } from 'lucide-react';
@@ -83,16 +84,15 @@ export default function NotFound() {
             </p>
             <div className="flex flex-wrap justify-center gap-3 text-sm">
               {popularArticles.map((article, index) => (
-                <>
-                  {index > 0 && <span key={`sep-${article.slug}`} className="text-muted-foreground">•</span>}
+                <React.Fragment key={article.slug}>
+                  {index > 0 && <span className="text-muted-foreground">•</span>}
                   <Link
-                    key={article.slug}
                     href={`/blog/${article.slug}`}
                     className="text-primary hover:underline"
                   >
                     {article.title}
                   </Link>
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
