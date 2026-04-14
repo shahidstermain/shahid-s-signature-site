@@ -61,7 +61,7 @@ function parseArticleDate(dateStr: string): Date {
     Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
   };
   const [month, year] = dateStr.split(' ');
-  return new Date(parseInt(year), months[month] || 0, 15);
+  return new Date(Date.UTC(parseInt(year), months[month] || 0, 15));
 }
 
 /**

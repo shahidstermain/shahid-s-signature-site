@@ -31,7 +31,7 @@ function parseArticleDate(dateStr: string): Date {
   if (parts.length === 2) {
     const month = months[parts[0]] || 0;
     const year = parseInt(parts[1]);
-    return new Date(year, month, 15);
+    return new Date(Date.UTC(year, month, 15));
   }
   return new Date();
 }
