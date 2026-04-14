@@ -1,73 +1,76 @@
-# Welcome to your Lovable project
+# Shahid Moosa — Signature Portfolio
 
-## Project info
+The personal engineering portfolio of Shahid Moosa, a Distributed Systems Engineer specializing in cloud databases, high-scale query optimization, and reliable infrastructure.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This site serves as a central hub for my technical writing, resume, and engineering philosophy. It is built with performance, accessibility, and SEO in mind.
 
-## How can I edit this code?
+## 🛠️ Tech Stack
 
-There are several ways of editing your application.
+*   **Frontend**: React 18, TypeScript, Vite
+*   **Styling**: Tailwind CSS, Shadcn UI, Custom Design System
+*   **Animation**: Framer Motion
+*   **Routing**: React Router v6
+*   **Icons**: Lucide React
+*   **Deployment**: Firebase Hosting
 
-**Use Lovable**
+## 🚀 Key Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+*   **Technical Blog**: A custom markdown-based blog engine rendering technical deep dives into distributed systems (CAP theorem, sharding, consistency models).
+*   **SEO & Metadata**: Fully optimized with Open Graph tags, Twitter Cards, JSON-LD structured data, and dynamic sitemap generation.
+*   **RSS Feed**: Automatic RSS feed generation for blog syndication.
+*   **Interactive UI**: Features a "Live Terminal" component and subtle ambient glow effects.
+*   **Responsive Design**: Mobile-first approach with optimized layouts for all screen sizes.
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📂 Project Structure
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+├── assets/        # Static assets (images, logos)
+├── components/    # React components
+│   ├── layout/    # Header, Footer
+│   ├── sections/  # Home page sections (Hero, Writing, etc.)
+│   └── ui/        # Reusable UI primitives (Button, Card, etc.)
+├── data/          # Static content data (articles.ts)
+├── hooks/         # Custom React hooks
+├── lib/           # Utility functions (RSS, Sitemap, Utils)
+├── pages/         # Route components (Index, BlogPost, RSSFeed)
+└── App.tsx        # Main application entry & routing
 ```
 
-**Edit a file directly in GitHub**
+## 📜 Engineering Philosophy
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+*   **Data is the product**: Every query matters. Treating database interactions with the gravity of revenue impact.
+*   **Fast debugging**: Developing intuition for finding root causes in distributed systems quickly.
+*   **Reliability over features**: Prioritizing boring solutions that work over clever ones that fail at 3 AM.
+*   **Knowledge Sharing**: Teaching and documenting to empower other engineers.
 
-**Use GitHub Codespaces**
+## 💻 Development
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Prerequisites
 
-## What technologies are used for this project?
+*   Node.js (v18+)
+*   npm
 
-This project is built with:
+### Commands
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+# Install dependencies
+npm install
 
-## How can I deploy this project?
+# Start development server
+npm run dev
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+# Build for production
+npm run build
 
-## Can I connect a custom domain to my Lovable project?
+# Lint code
+npm run lint
 
-Yes, you can!
+# Deploy to Firebase
+firebase deploy
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📄 License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+All original content (blog posts, personal bio) is © Shahid Moosa.
+Code is provided for educational purposes.

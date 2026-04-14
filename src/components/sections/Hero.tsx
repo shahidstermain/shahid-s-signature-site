@@ -63,7 +63,7 @@ export const Hero = () => {
                   boxShadow: "0 0 20px rgba(170, 140, 255, 0.15)",
                 }}
               >
-                <img src={singlestoreLogo} alt="SingleStore" className="w-6 h-6" />
+                <img src={singlestoreLogo} alt="SingleStore" className="w-6 h-6" loading="lazy" />
                 <span 
                   className="font-semibold text-lg"
                   style={{ color: SINGLESTORE_PURPLE }}
@@ -176,7 +176,7 @@ export const Hero = () => {
                       border: "1px solid rgba(170, 140, 255, 0.3)",
                     }}
                   >
-                    <img src={singlestoreLogo} alt="SingleStore" className="w-full h-full object-contain" />
+                    <img src={singlestoreLogo} alt="SingleStore" className="w-full h-full object-contain" loading="lazy" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -217,7 +217,7 @@ export const Hero = () => {
                   className="w-full h-full object-cover"
                   width={256}
                   height={256}
-                  fetchPriority="high"
+                  fetchpriority="high"
                   decoding="async"
                 />
               </div>

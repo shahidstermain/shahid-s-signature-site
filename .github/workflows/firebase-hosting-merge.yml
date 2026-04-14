@@ -9,7 +9,9 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,4 +42,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           channelId: live
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          # projectId is read from .firebaserc; no secret needed for non-sensitive project ID

@@ -1,73 +1,73 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "**/*.md",
-      "**/*.ts",
-      "**/*.tsx",
-      "src/**",
-      "docs/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "cleanUrls": true,
     "trailingSlash": false,
-
+    "redirects": [
+      { "source": "/rss", "destination": "/rss.xml", "type": 301 },
+      { "source": "/feed", "destination": "/feed.json", "type": 301 },
+      { "source": "/sitemap", "destination": "/sitemap.xml", "type": 301 },
+      { "source": "/index.html", "destination": "/", "type": 301 },
+      { "source": "/home", "destination": "/", "type": 301 },
+      { "source": "/articles", "destination": "/#writing", "type": 301 },
+      { "source": "/articles/**", "destination": "/blog/:splat", "type": 301 },
+      { "source": "/posts", "destination": "/#writing", "type": 301 },
+      { "source": "/posts/**", "destination": "/blog/:splat", "type": 301 }
+    ],
     "headers": [
-      {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|ico|avif)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(woff|woff2|ttf|otf|eot)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
       {
         "source": "**/*.html",
         "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+          { "key": "X-XSS-Protection", "value": "1; mode=block" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+        ]
+      },
+      {
+        "source": "@(jpg|jpeg|gif|png|svg|ico|webp)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }
+        ]
+      },
+      {
+        "source": "@(js|css)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }
+        ]
+      },
+      {
+        "source": "@(woff|woff2|ttf|otf|eot)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=0, must-revalidate"
-          },
+            "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "/favicon.ico",
+        "headers": [
           {
-            "key": "X-Content-Type-Options",
-            "value": "nosniff"
-          },
+            "key": "Cache-Control",
+            "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "/robots.txt",
+        "headers": [
           {
-            "key": "X-Frame-Options",
-            "value": "DENY"
-          },
-          {
-            "key": "X-XSS-Protection",
-            "value": "1; mode=block"
-          },
-          {
-            "key": "Referrer-Policy",
-            "value": "strict-origin-when-cross-origin"
-          },
-          {
-            "key": "Permissions-Policy",
-            "value": "camera=(), microphone=(), geolocation=()"
+            "key": "Cache-Control",
+            "value": "public,max-age=0,s-maxage=3600,stale-while-revalidate=86400"
           }
         ]
       },
@@ -76,7 +76,7 @@
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=3600, s-maxage=3600"
+            "value": "public,max-age=0,s-maxage=3600,stale-while-revalidate=86400"
           },
           {
             "key": "Content-Type",
@@ -89,7 +89,7 @@
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=3600, s-maxage=3600"
+            "value": "public,max-age=0,s-maxage=3600,stale-while-revalidate=86400"
           },
           {
             "key": "Content-Type",
@@ -98,24 +98,11 @@
         ]
       },
       {
-        "source": "/robots.txt",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          },
-          {
-            "key": "Content-Type",
-            "value": "text/plain; charset=utf-8"
-          }
-        ]
-      },
-      {
         "source": "/feed.json",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=3600, s-maxage=3600"
+            "value": "public,max-age=0,s-maxage=3600,stale-while-revalidate=86400"
           },
           {
             "key": "Content-Type",
@@ -124,89 +111,15 @@
         ]
       },
       {
-        "source": "/@(og-image|favicon|apple-touch-icon)*.@(png|ico)",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=604800"
+            "value": "public,max-age=0,s-maxage=600,stale-while-revalidate=86400"
           }
         ]
       }
     ],
-
-    "redirects": [
-      {
-        "source": "/home",
-        "destination": "/",
-        "type": 301
-      },
-      {
-        "source": "/index.html",
-        "destination": "/",
-        "type": 301
-      },
-      {
-        "source": "/index",
-        "destination": "/",
-        "type": 301
-      },
-      {
-        "source": "/articles",
-        "destination": "/#writing",
-        "type": 301
-      },
-      {
-        "source": "/articles/:slug",
-        "destination": "/blog/:slug",
-        "type": 301
-      },
-      {
-        "source": "/posts/:slug",
-        "destination": "/blog/:slug",
-        "type": 301
-      },
-      {
-        "source": "/post/:slug",
-        "destination": "/blog/:slug",
-        "type": 301
-      },
-      {
-        "source": "/writing/:slug",
-        "destination": "/blog/:slug",
-        "type": 301
-      },
-      {
-        "source": "/resume",
-        "destination": "/resume.pdf",
-        "type": 301
-      },
-      {
-        "source": "/cv",
-        "destination": "/resume.pdf",
-        "type": 301
-      },
-      {
-        "source": "/feed",
-        "destination": "/rss.xml",
-        "type": 301
-      },
-      {
-        "source": "/rss",
-        "destination": "/rss.xml",
-        "type": 301
-      },
-      {
-        "source": "/sitemap",
-        "destination": "/sitemap.xml",
-        "type": 301
-      }
-    ],
-
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
   }
 }
