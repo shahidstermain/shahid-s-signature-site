@@ -15,6 +15,10 @@ import Link from 'next/link';
 import { ArrowLeft, Home, BookOpen } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { articles } from '@/data/articles';
+
+// Use the first 3 articles so popular-pages links stay in sync with the data
+const popularArticles = articles.slice(0, 3);
 
 // Metadata for 404 page - don't index error pages
 export const metadata: Metadata = {
@@ -78,26 +82,18 @@ export default function NotFound() {
               Or try these popular pages:
             </p>
             <div className="flex flex-wrap justify-center gap-3 text-sm">
-              <Link
-                href="/blog/cap-theorem-production"
-                className="text-primary hover:underline"
-              >
-                CAP Theorem
-              </Link>
-              <span className="text-muted-foreground">•</span>
-              <Link
-                href="/blog/sharding-strategies-that-work"
-                className="text-primary hover:underline"
-              >
-                Sharding Strategies
-              </Link>
-              <span className="text-muted-foreground">•</span>
-              <Link
-                href="/blog/query-optimization-petabyte-scale"
-                className="text-primary hover:underline"
-              >
-                Query Optimization
-              </Link>
+              {popularArticles.map((article, index) => (
+                <>
+                  {index > 0 && <span key={`sep-${article.slug}`} className="text-muted-foreground">•</span>}
+                  <Link
+                    key={article.slug}
+                    href={`/blog/${article.slug}`}
+                    className="text-primary hover:underline"
+                  >
+                    {article.title}
+                  </Link>
+                </>
+              ))}
             </div>
           </div>
         </div>

@@ -92,14 +92,14 @@ describe("Firebase Hosting Workflows", () => {
       expect(workflowContent).toContain("FIREBASE_PROJECT_ID");
     });
 
-    it("should allow lint to fail without blocking deployment", () => {
+    it("should require linting to pass before deployment", () => {
       const lintSection = workflowContent.split("Run linting")[1].split("Run tests")[0];
-      expect(lintSection).toContain("continue-on-error: true");
+      expect(lintSection).not.toContain("continue-on-error: true");
     });
 
-    it("should allow tests to fail without blocking deployment", () => {
+    it("should require tests to pass before deployment", () => {
       const testSection = workflowContent.split("Run tests")[1].split("Build project")[0];
-      expect(testSection).toContain("continue-on-error: true");
+      expect(testSection).not.toContain("continue-on-error: true");
     });
   });
 

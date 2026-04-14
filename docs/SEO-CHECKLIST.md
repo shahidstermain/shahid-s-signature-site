@@ -109,7 +109,7 @@ A quick-reference checklist for implementing SEO in Next.js + Firebase Hosting p
 - [ ] robots.txt accessible at /robots.txt
 - [ ] RSS feed accessible at /rss.xml
 - [ ] All static files in public directory
-- [ ] Build output in 'out' directory (for static export)
+- [ ] Build output matches hosting config (`dist/` for Vite, `out/` for Next.js static export)
 ```
 
 ---

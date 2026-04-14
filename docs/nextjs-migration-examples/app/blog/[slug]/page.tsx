@@ -60,10 +60,10 @@ export async function generateStaticParams() {
 /**
  * Parse a month-year string (e.g., "Nov 2025") into a Date representing the 15th of that month.
  *
- * If the month token is not recognized, January of the given year is used.
+ * Returns the current date when the month token is unrecognised or the year cannot be parsed.
  *
  * @param dateStr - Month and year in the format `"Mon YYYY"` where `Mon` is a three-letter month abbreviation
- * @returns A Date set to the 15th day of the parsed month and year
+ * @returns A Date set to the 15th day of the parsed month and year, or the current date on invalid input
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -71,10 +71,12 @@ function parseArticleDate(dateStr: string): Date {
     Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
   };
   const [month, year] = dateStr.split(' ');
+  const monthIndex = months[month];
   const parsedYear = Number.parseInt(year, 10);
-  return Number.isNaN(parsedYear)
-    ? new Date()
-    : new Date(Date.UTC(parsedYear, months[month] ?? 0, 15));
+  if (monthIndex === undefined || Number.isNaN(parsedYear)) {
+    return new Date();
+  }
+  return new Date(Date.UTC(parsedYear, monthIndex, 15));
 }
 
 /**

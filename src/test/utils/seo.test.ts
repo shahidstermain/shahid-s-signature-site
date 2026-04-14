@@ -189,6 +189,7 @@ function stripMarkdown(content: string, maxLength: number = 160): string {
 }
 
 function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
+  if (!content.trim()) return '0 min read';
   const wordCount = content.split(/\s+/).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return `${minutes} min read`;
@@ -591,7 +592,7 @@ describe("SEO Utility Functions", () => {
 
     it("should handle empty content", () => {
       const result = calculateReadTime("");
-      expect(result).toMatch(/\d+ min read/);
+      expect(result).toBe("0 min read");
     });
 
     it("should use default 200 words per minute", () => {

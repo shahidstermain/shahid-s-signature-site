@@ -33,10 +33,11 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.staticDistDir).toBe("./dist");
     });
 
-    it("should configure URL to test", () => {
-      expect(lighthouseConfig.ci.collect.url).toBeDefined();
-      expect(Array.isArray(lighthouseConfig.ci.collect.url)).toBe(true);
-      expect(lighthouseConfig.ci.collect.url).toContain("http://localhost/index.html");
+    it("should use staticDistDir for URL discovery", () => {
+      // When staticDistDir is set, LHCI auto-discovers and serves the URLs;
+      // an explicit 'url' override is not needed and can point to the wrong port.
+      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
+      expect(lighthouseConfig.ci.collect.url).toBeUndefined();
     });
 
     it("should run multiple iterations for consistency", () => {
@@ -213,9 +214,9 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.numberOfRuns).toBeGreaterThanOrEqual(3);
     });
 
-    it("should test against localhost for CI", () => {
-      const urls = lighthouseConfig.ci.collect.url;
-      expect(urls.some((url: string) => url.includes("localhost"))).toBe(true);
+    it("should use staticDistDir for local CI testing", () => {
+      // staticDistDir causes LHCI to spin up its own server; no explicit url needed.
+      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
     });
 
     it("should have realistic performance thresholds", () => {

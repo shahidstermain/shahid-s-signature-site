@@ -38,7 +38,9 @@ describe("GitHub Actions CI Workflow", () => {
   let workflowContent: string;
 
   beforeAll(() => {
-    workflowContent = fs.readFileSync(workflowPath, "utf-8");
+    workflowContent = fs.existsSync(workflowPath)
+      ? fs.readFileSync(workflowPath, "utf-8")
+      : "";
   });
 
   describe("Basic Configuration", () => {
