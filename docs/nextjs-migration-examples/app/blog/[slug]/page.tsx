@@ -15,7 +15,6 @@
 import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Script from 'next/script';
 import { ArrowLeft, ArrowRight, Clock, Calendar, BookOpen } from 'lucide-react';
 import { getArticleBySlug, articles, Article } from '@/data/articles';
 import { Header } from '@/components/layout/Header';
@@ -27,6 +26,17 @@ import { ReadingProgressBar } from '@/components/ui/ReadingProgressBar';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 const AUTHOR_NAME = 'Shahid Moosa';
 const TWITTER_HANDLE = '@shahidster_';
+
+/**
+ * Safely serializes an object for use in a JSON-LD <script> tag.
+ * Escapes characters that could break out of an HTML script context.
+ */
+function safeJsonLd(data: object): string {
+  return JSON.stringify(data)
+    .replace(/&/g, '\\u0026')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
+}
 
 // Types
 interface PageProps {
@@ -235,6 +245,19 @@ function getBreadcrumbSchema(article: Article) {
 }
 
 /**
+ * Escapes HTML entities in a string to prevent XSS injection.
+ * Must be applied to untrusted content before injecting into HTML.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/**
  * Converts a lightweight markdown-like string into HTML.
  *
  * Supported syntax: level-2 and level-3 headings (##, ###), bold (`**bold**`),
@@ -245,14 +268,14 @@ function getBreadcrumbSchema(article: Article) {
  * @returns The HTML string produced from `content` with the supported transformations applied
  */
 function formatContent(content: string): string {
-  return content
+  return escapeHtml(content)
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
     .replace(/^---$/gm, '<hr />')
-    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
     .replace(/\n\n/g, '</p><p>')
@@ -291,15 +314,15 @@ export default function BlogPostPage({ params }: PageProps) {
   return (
     <>
       {/* Structured Data */}
-      <Script
+      <script
         id="article-schema"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(articleSchema) }}
       />
-      <Script
+      <script
         id="breadcrumb-schema"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbSchema) }}
       />
 
       <div className="min-h-screen flex flex-col relative">
