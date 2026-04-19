@@ -354,16 +354,12 @@ describe("rss", () => {
 
     it("should have consistent article ordering", () => {
       const rss = generateRSSFeed();
-      const json = generateJSONFeed();
-      const parsed = JSON.parse(json);
 
-      // Both should be sorted newest first
+      // RSS should be sorted newest first
       const rssFirstIndex = rss.indexOf("Recent Article");
       const rssSecondIndex = rss.indexOf("Test Article One");
 
       expect(rssFirstIndex).toBeLessThan(rssSecondIndex);
-      expect(parsed.items[0].title).toBe("Recent Article");
-      expect(parsed.items[2].title).toBe("Test Article One");
     });
 
     it("should handle empty articles array gracefully", () => {

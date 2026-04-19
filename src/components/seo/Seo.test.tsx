@@ -34,7 +34,7 @@ vi.mock("@/lib/seo-utils", () => ({
 }));
 
 describe("Seo component", () => {
-  const renderWithHelmet = (ui: React.ReactElement) => {
+  const renderWithHelmet = (ui: JSX.Element) => {
     return render(<HelmetProvider>{ui}</HelmetProvider>);
   };
 
