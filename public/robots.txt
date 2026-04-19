@@ -1,49 +1,4 @@
-# Robots.txt for shahidster.tech
-# Last updated: January 2026
-
-# Google Search Crawler
-User-agent: Googlebot
-Allow: /
-Disallow: /api/
-
-# Google Image Crawler
-User-agent: Googlebot-Image
-Allow: /
-
-# Bing Crawler
-User-agent: Bingbot
-Allow: /
-Disallow: /api/
-
-# Twitter/X Card Crawler
-User-agent: Twitterbot
-Allow: /
-
-# Facebook Open Graph Crawler
-User-agent: facebookexternalhit
-Allow: /
-
-# LinkedIn Crawler
-User-agent: LinkedInBot
-Allow: /
-
-# Slack Unfurling
-User-agent: Slackbot
-Allow: /
-
-# Discord Crawler
-User-agent: Discordbot
-Allow: /
-
-# Default for all other crawlers
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /private/
 
-# Sitemap location
 Sitemap: https://shahidster.tech/sitemap.xml
-
-# Preferred domain
-Host: shahidster.tech
