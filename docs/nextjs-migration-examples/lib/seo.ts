@@ -237,7 +237,7 @@ export function generateArticleSchema(article: {
 }, seriesInfo?: { currentIndex: number; total: number }) {
   const articleUrl = getCanonicalUrl(`/blog/${article.slug}`);
   const publishDate = parseArticleDateToISO(article.date);
-  const wordCount = article.content.split(/\s+/).length;
+  const wordCount = article.content.trim().split(/\s+/).filter(Boolean).length;
 
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -410,7 +410,7 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
   if (!content.trim()) return '0 min read';
-  const wordCount = content.split(/\s+/).length;
+  const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return `${minutes} min read`;
 }

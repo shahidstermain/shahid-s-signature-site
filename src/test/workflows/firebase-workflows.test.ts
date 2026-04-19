@@ -87,9 +87,10 @@ describe("Firebase Hosting Workflows", () => {
       expect(workflowContent).toContain("FIREBASE_SERVICE_ACCOUNT");
     });
 
-    it("should use Firebase project ID from secrets", () => {
-      expect(workflowContent).toContain("projectId:");
-      expect(workflowContent).toContain("FIREBASE_PROJECT_ID");
+    it("should read Firebase project ID from .firebaserc (not secrets)", () => {
+      // projectId is now read from .firebaserc automatically; no secret needed
+      expect(workflowContent).toContain("projectId is read from .firebaserc");
+      expect(workflowContent).not.toContain("FIREBASE_PROJECT_ID");
     });
 
     it("should require linting to pass before deployment", () => {
@@ -171,11 +172,11 @@ describe("Firebase Hosting Workflows", () => {
       expect(workflowContent).toContain("FirebaseExtended/action-hosting-deploy");
     });
 
-    it("should NOT specify channelId (creates preview channel)", () => {
+    it("should NOT specify channelId (Firebase creates a preview channel)", () => {
       const deploySection = workflowContent.split("Deploy Preview")[1];
       expect(deploySection).not.toContain("channelId: live");
-      // Comment should explain this
-      expect(workflowContent).toContain("preview channel");
+      // Deployment is skipped when Firebase credentials are absent
+      expect(workflowContent).toContain("Skipping Firebase preview deployment");
     });
 
     it("should use GitHub token", () => {
@@ -187,19 +188,17 @@ describe("Firebase Hosting Workflows", () => {
       expect(workflowContent).toContain("FIREBASE_SERVICE_ACCOUNT");
     });
 
-    it("should use Firebase project ID from secrets", () => {
-      expect(workflowContent).toContain("projectId:");
-      expect(workflowContent).toContain("FIREBASE_PROJECT_ID");
+    it("should read Firebase project ID from .firebaserc (not secrets)", () => {
+      // projectId is now read from .firebaserc automatically; no secret needed
+      expect(workflowContent).toContain("projectId is read from .firebaserc");
+      expect(workflowContent).not.toContain("FIREBASE_PROJECT_ID");
     });
 
-    it("should allow lint to fail without blocking preview", () => {
-      const lintSection = workflowContent.split("Run linting")[1].split("Run tests")[0];
-      expect(lintSection).toContain("continue-on-error: true");
-    });
-
-    it("should allow tests to fail without blocking preview", () => {
-      const testSection = workflowContent.split("Run tests")[1].split("Build project")[0];
-      expect(testSection).toContain("continue-on-error: true");
+    it("should gate preview steps on Firebase credentials check", () => {
+      // Steps are conditionally skipped using 'if:' when credentials are absent
+      // rather than using continue-on-error: true
+      expect(workflowContent).toContain("steps.firebase_check.outputs.configured == 'true'");
+      expect(workflowContent).not.toContain("continue-on-error: true");
     });
   });
 
