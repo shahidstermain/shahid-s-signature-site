@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
@@ -34,7 +35,7 @@ vi.mock("@/lib/seo-utils", () => ({
 }));
 
 describe("Seo component", () => {
-  const renderWithHelmet = (ui: JSX.Element) => {
+  const renderWithHelmet = (ui: React.ReactElement) => {
     return render(<HelmetProvider>{ui}</HelmetProvider>);
   };
 
