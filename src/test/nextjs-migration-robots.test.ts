@@ -176,6 +176,6 @@ describe('robots() – production env with canonical domain', () => {
 
   it('includes host set to the site URL', () => {
     const result = robots();
-    expect(result.host).toBe('https://shahidster.tech');
+    expect(result.host).toBe('shahidster.tech');
   });
 });

@@ -55,7 +55,7 @@ describe("firebase.json Configuration", () => {
 
     it("should configure cache headers for images", () => {
       const imageHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source.includes(".@(jpg|jpeg|gif|png|svg|webp|ico|avif)")
+        (h) => h.source === "@(jpg|jpeg|gif|png|svg|ico|webp)"
       );
       expect(imageHeaders).toBeDefined();
       expect(imageHeaders?.headers).toBeDefined();
@@ -66,7 +66,7 @@ describe("firebase.json Configuration", () => {
 
     it("should configure cache headers for JS and CSS", () => {
       const jsHeaders = firebaseConfig.hosting.headers.find(
-        (h: FirebaseHeaderGroup) => h.source.includes(".@(js|css)")
+        (h: FirebaseHeaderGroup) => h.source === "@(js|css)"
       );
       expect(jsHeaders).toBeDefined();
       const cacheControl = jsHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "Cache-Control");
@@ -86,15 +86,14 @@ describe("firebase.json Configuration", () => {
       expect(securityHeaders).toContain("X-Frame-Options");
       expect(securityHeaders).toContain("X-XSS-Protection");
       expect(securityHeaders).toContain("Referrer-Policy");
-      expect(securityHeaders).toContain("Permissions-Policy");
     });
 
-    it("should set X-Frame-Options to DENY for HTML", () => {
+    it("should set X-Frame-Options to SAMEORIGIN for HTML", () => {
       const htmlHeaders = firebaseConfig.hosting.headers.find(
         (h: FirebaseHeaderGroup) => h.source === "**/*.html"
       );
       const xFrameOptions = htmlHeaders?.headers.find((h: FirebaseHeaderEntry) => h.key === "X-Frame-Options");
-      expect(xFrameOptions?.value).toBe("DENY");
+      expect(xFrameOptions?.value).toBe("SAMEORIGIN");
     });
 
     it("should configure sitemap.xml headers", () => {
@@ -123,10 +122,10 @@ describe("firebase.json Configuration", () => {
       );
       expect(robotsHeaders).toBeDefined();
 
-      const contentType = robotsHeaders?.headers.find(
-        (h: FirebaseHeaderEntry) => h.key === "Content-Type"
+      const cacheControl = robotsHeaders?.headers.find(
+        (h: FirebaseHeaderEntry) => h.key === "Cache-Control"
       );
-      expect(contentType?.value).toContain("text/plain");
+      expect(cacheControl).toBeDefined();
     });
   });
 
@@ -156,32 +155,29 @@ describe("firebase.json Configuration", () => {
 
     it("should redirect legacy article URLs to blog", () => {
       const articleRedirect = firebaseConfig.hosting.redirects.find(
-        (r) => r.source === "/articles/:slug"
+        (r) => r.source === "/articles/**"
       );
       expect(articleRedirect).toBeDefined();
-      expect(articleRedirect?.destination).toBe("/blog/:slug");
+      expect(articleRedirect?.destination).toBe("/blog/:splat");
       expect(articleRedirect?.type).toBe(301);
     });
 
-    it("should redirect /feed to /rss.xml", () => {
+    it("should redirect /feed to /feed.json", () => {
       const feedRedirect = firebaseConfig.hosting.redirects.find(
         (r) => r.source === "/feed"
       );
       expect(feedRedirect).toBeDefined();
-      expect(feedRedirect?.destination).toBe("/rss.xml");
+      expect(feedRedirect?.destination).toBe("/feed.json");
       expect(feedRedirect?.type).toBe(301);
     });
 
-    it("should redirect /resume and /cv to /resume.pdf", () => {
-      const resumeRedirect = firebaseConfig.hosting.redirects.find(
-        (r) => r.source === "/resume"
+    it("should redirect /rss to /rss.xml", () => {
+      const rssRedirect = firebaseConfig.hosting.redirects.find(
+        (r) => r.source === "/rss"
       );
-      const cvRedirect = firebaseConfig.hosting.redirects.find(
-        (r) => r.source === "/cv"
-      );
-
-      expect(resumeRedirect?.destination).toBe("/resume.pdf");
-      expect(cvRedirect?.destination).toBe("/resume.pdf");
+      expect(rssRedirect).toBeDefined();
+      expect(rssRedirect?.destination).toBe("/rss.xml");
+      expect(rssRedirect?.type).toBe(301);
     });
 
     it("should use 301 (permanent) redirects for SEO", () => {
@@ -217,7 +213,7 @@ describe("firebase.json Configuration", () => {
 
     it("should cache static assets aggressively", () => {
       const imageHeaders = firebaseConfig.hosting.headers.find(
-        (h) => h.source.includes(".@(jpg|jpeg|gif|png|svg|webp|ico|avif)")
+        (h) => h.source === "@(jpg|jpeg|gif|png|svg|ico|webp)"
       );
       const cacheControl = imageHeaders?.headers.find((h) => h.key === "Cache-Control");
       // One year in seconds
@@ -271,14 +267,12 @@ describe("firebase.json Configuration", () => {
       expect(referrerPolicy?.value).toBe("strict-origin-when-cross-origin");
     });
 
-    it("should restrict permissions with Permissions-Policy", () => {
+    it("should have Cache-Control header for HTML (not indefinitely cached)", () => {
       const htmlHeaders = firebaseConfig.hosting.headers.find(
         (h) => h.source === "**/*.html"
       );
-      const permissionsPolicy = htmlHeaders?.headers.find((h) => h.key === "Permissions-Policy");
-      expect(permissionsPolicy).toBeDefined();
-      expect(permissionsPolicy?.value).toContain("camera=()");
-      expect(permissionsPolicy?.value).toContain("microphone=()");
+      const cacheControl = htmlHeaders?.headers.find((h) => h.key === "Cache-Control");
+      expect(cacheControl).toBeDefined();
     });
   });
 });

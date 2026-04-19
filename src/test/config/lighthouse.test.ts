@@ -217,6 +217,8 @@ describe("lighthouserc.json Configuration", () => {
     it("should use staticDistDir for local CI testing", () => {
       // staticDistDir causes LHCI to spin up its own server; no explicit url needed.
       expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
+      expect(lighthouseConfig.ci.collect.url).toBeUndefined();
+      expect(lighthouseConfig.ci.collect.startServerCommand).toBeUndefined();
     });
 
     it("should have realistic performance thresholds", () => {

@@ -123,7 +123,7 @@ describe("index.html SEO Configuration", () => {
 
     it("should have OG description", () => {
       expect(htmlContent).toContain('<meta property="og:description"');
-      expect(htmlContent).toContain("databases alive at scale");
+      expect(htmlContent).toContain("petabyte scale");
     });
 
     it("should have OG type as website", () => {
@@ -160,7 +160,7 @@ describe("index.html SEO Configuration", () => {
 
     it("should have Twitter description", () => {
       expect(htmlContent).toContain('<meta name="twitter:description"');
-      expect(htmlContent).toContain("databases alive at scale");
+      expect(htmlContent).toContain("petabyte scale");
     });
 
     it("should have Twitter image", () => {
