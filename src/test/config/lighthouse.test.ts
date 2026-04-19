@@ -207,8 +207,9 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.numberOfRuns).toBeGreaterThanOrEqual(3);
     });
 
-    it("should use staticDistDir to serve files for CI", () => {
-      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
+    it("should not configure url or startServerCommand when using staticDistDir", () => {
+      expect(lighthouseConfig.ci.collect.url).toBeUndefined();
+      expect(lighthouseConfig.ci.collect.startServerCommand).toBeUndefined();
     });
 
     it("should have realistic performance thresholds", () => {
