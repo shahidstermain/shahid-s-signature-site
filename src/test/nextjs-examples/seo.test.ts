@@ -309,7 +309,7 @@ describe("Next.js SEO Implementation", () => {
   describe("Description optimization", () => {
     it("should keep descriptions between 150-160 characters", () => {
       const description =
-        "This is a well-optimized meta description that provides clear information about the page content and stays within the recommended character limit.";
+        "This is a well-optimized meta description that provides clear information about the page content and stays within the recommended character limits for SEO.";
 
       expect(description.length).toBeGreaterThanOrEqual(150);
       expect(description.length).toBeLessThanOrEqual(160);
