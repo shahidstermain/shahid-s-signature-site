@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
@@ -34,7 +35,7 @@ vi.mock("@/lib/seo-utils", () => ({
 }));
 
 describe("Seo component", () => {
-  const renderWithHelmet = (ui: JSX.Element) => {
+  const renderWithHelmet = (ui: React.ReactElement) => {
     return render(<HelmetProvider>{ui}</HelmetProvider>);
   };
 
@@ -147,23 +148,23 @@ describe("Seo component", () => {
       <Seo title="Test Article" description="Test description" path="/blog/test" />
     );
 
-    const ogTitle = document.querySelector('meta[property="og:title"]');
-    const ogDescription = document.querySelector('meta[property="og:description"]');
-    const ogType = document.querySelector('meta[property="og:type"]');
-    const ogUrl = document.querySelector('meta[property="og:url"]');
-    const ogImage = document.querySelector('meta[property="og:image"]');
-    const ogSiteName = document.querySelector('meta[property="og:site_name"]');
     await waitFor(() => {
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const ogDescription = document.querySelector('meta[property="og:description"]');
+      const ogType = document.querySelector('meta[property="og:type"]');
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      const ogImage = document.querySelector('meta[property="og:image"]');
+      const ogSiteName = document.querySelector('meta[property="og:site_name"]');
       const ogLocale = document.querySelector('meta[property="og:locale"]');
 
-    expect(ogTitle?.getAttribute("content")).toBe("Test Article | Shahid Moosa");
+      expect(ogTitle?.getAttribute("content")).toBe("Test Article | Shahid Moosa");
+      expect(ogDescription?.getAttribute("content")).toBe("Test description");
+      expect(ogType?.getAttribute("content")).toBe("website");
+      expect(ogUrl?.getAttribute("content")).toBe("https://shahidster.tech/blog/test");
+      expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
+      expect(ogSiteName?.getAttribute("content")).toBe("Shahid Moosa");
+      expect(ogLocale?.getAttribute("content")).toBe("en_US");
     });
-    expect(ogDescription?.getAttribute("content")).toBe("Test description");
-    expect(ogType?.getAttribute("content")).toBe("website");
-    expect(ogUrl?.getAttribute("content")).toBe("https://shahidster.tech/blog/test");
-    expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/og-image.png");
-    expect(ogSiteName?.getAttribute("content")).toBe("Shahid Moosa");
-    expect(ogLocale?.getAttribute("content")).toBe("en_US");
   });
 
   it("should set Twitter Card meta tags", async () => {
@@ -193,12 +194,8 @@ describe("Seo component", () => {
       const ogImage = document.querySelector('meta[property="og:image"]');
       const twitterImage = document.querySelector('meta[name="twitter:image"]');
 
-      expect(ogImage?.getAttribute("content")).toBe(
-        "https://shahidster.tech/custom-image.png"
-      );
-      expect(twitterImage?.getAttribute("content")).toBe(
-        "https://shahidster.tech/custom-image.png"
-      );
+      expect(ogImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
+      expect(twitterImage?.getAttribute("content")).toBe("https://shahidster.tech/custom-image.png");
     });
   });
 
@@ -280,12 +277,11 @@ describe("Seo component", () => {
 
     await waitFor(() => {
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+      expect(scripts.length).toBe(1);
+      const scriptContent = JSON.parse(scripts[0].textContent || "{}");
+      expect(scriptContent["@type"]).toBe("Person");
+      expect(scriptContent.name).toBe("Shahid Moosa");
     });
-
-    const scriptContent = JSON.parse(scripts[0].textContent || "{}");
-    expect(scriptContent["@type"]).toBe("Person");
-    expect(scriptContent.name).toBe("Shahid Moosa");
   });
 
   it("should render multiple JSON-LD scripts when provided as array", async () => {
@@ -335,9 +331,11 @@ describe("Seo component", () => {
 
     renderWithHelmet(<Seo jsonLd={jsonLd} />);
 
-    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    // Both should render despite same @type (keys should include index)
-    expect(scripts.length).toBe(2);
+    await waitFor(() => {
+      const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+      // Both should render despite same @type (keys should include index)
+      expect(scripts.length).toBe(2);
+    });
   });
 
   it("should handle complex integration test", async () => {
@@ -367,7 +365,9 @@ describe("Seo component", () => {
     );
 
     // Verify all aspects
-    expect(document.title).toBe("Database Engineering Guide | Shahid Moosa");
+    await waitFor(() => {
+      expect(document.title).toBe("Database Engineering Guide | Shahid Moosa");
+    });
 
     await waitFor(() => {
       const description = document.querySelector('meta[name="description"]');
@@ -391,10 +391,9 @@ describe("Seo component", () => {
 
     await waitFor(() => {
       const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+      expect(scripts.length).toBe(1);
+      const scriptContent = JSON.parse(scripts[0].textContent || "{}");
+      expect(scriptContent["@type"]).toBe("BlogPosting");
     });
-
-    const scriptContent = JSON.parse(scripts[0].textContent || "{}");
-    expect(scriptContent["@type"]).toBe("BlogPosting");
   });
 });

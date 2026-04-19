@@ -90,7 +90,9 @@ export function generateRSSFeed(): string {
  * @returns A pretty-printed JSON string (2-space indentation) conforming to JSON Feed 1.1 containing feed metadata and an item for each article. Each item includes id, url, title, summary, plain-text content, ISO 8601 publish date, and tags.
  */
 export function generateJSONFeed(): string {
-  const items = articles.map(article => ({
+  const items = [...articles]
+    .sort((a, b) => parseArticleDate(b.date).getTime() - parseArticleDate(a.date).getTime())
+    .map(article => ({
     id: `${siteConfig.siteUrl}/blog/${article.slug}`,
     url: `${siteConfig.siteUrl}/blog/${article.slug}`,
     title: article.title,

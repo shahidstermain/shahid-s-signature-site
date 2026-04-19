@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Work } from "./Work";
@@ -5,7 +6,7 @@ import { Work } from "./Work";
 // Mock framer-motion to avoid animation issues in tests
 vi.mock("framer-motion", () => ({
   motion: {
-    article: ({ children, ...props }: any) => <article {...props}>{children}</article>,
+    article: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => <article {...props}>{children}</article>,
   },
 }));
 

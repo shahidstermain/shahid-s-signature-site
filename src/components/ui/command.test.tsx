@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
@@ -46,7 +47,7 @@ describe("command components", () => {
 
     it("should forward ref correctly", () => {
       const ref = { current: null };
-      render(<Command ref={ref as any}>Content</Command>);
+      render(<Command ref={ref as unknown as React.RefObject<HTMLElement>}>Content</Command>);
 
       expect(ref.current).toBeTruthy();
     });
@@ -124,7 +125,7 @@ describe("command components", () => {
       const ref = { current: null };
       render(
         <Command>
-          <CommandInput ref={ref as any} placeholder="Search" />
+          <CommandInput ref={ref as unknown as React.RefObject<HTMLElement>} placeholder="Search" />
         </Command>
       );
 
@@ -173,7 +174,7 @@ describe("command components", () => {
       const ref = { current: null };
       render(
         <Command>
-          <CommandList ref={ref as any}>
+          <CommandList ref={ref as unknown as React.RefObject<HTMLElement>}>
             <div>Item</div>
           </CommandList>
         </Command>
@@ -227,7 +228,7 @@ describe("command components", () => {
       render(
         <Command>
           <CommandList>
-            <CommandEmpty ref={ref as any}>Empty</CommandEmpty>
+            <CommandEmpty ref={ref as unknown as React.RefObject<HTMLElement>}>Empty</CommandEmpty>
           </CommandList>
         </Command>
       );
@@ -285,7 +286,7 @@ describe("command components", () => {
       render(
         <Command>
           <CommandList>
-            <CommandGroup ref={ref as any}>
+            <CommandGroup ref={ref as unknown as React.RefObject<HTMLElement>}>
               <div>Item</div>
             </CommandGroup>
           </CommandList>
@@ -332,7 +333,7 @@ describe("command components", () => {
         <Command>
           <CommandList>
             <CommandGroup>
-              <CommandItem ref={ref as any}>Item</CommandItem>
+              <CommandItem ref={ref as unknown as React.RefObject<HTMLElement>}>Item</CommandItem>
             </CommandGroup>
           </CommandList>
         </Command>
@@ -418,7 +419,7 @@ describe("command components", () => {
       render(
         <Command>
           <CommandList>
-            <CommandSeparator ref={ref as any} />
+            <CommandSeparator ref={ref as unknown as React.RefObject<HTMLElement>} />
           </CommandList>
         </Command>
       );
