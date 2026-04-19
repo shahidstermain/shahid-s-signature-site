@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
-import lighthouseConfig from "../../../lighthouserc.json";
+import * as fs from "fs";
+import * as path from "path";
 
+const lighthouseConfig = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), "lighthouserc.json"), "utf8"),
+);
 describe("lighthouserc.json Configuration", () => {
   describe("Basic Structure", () => {
     it("should have CI configuration", () => {
@@ -29,7 +33,10 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.staticDistDir).toBe("./dist");
     });
 
-    it("should not specify explicit URL when using staticDistDir", () => {
+    it("should use staticDistDir for URL discovery", () => {
+      // When staticDistDir is set, LHCI auto-discovers and serves the URLs;
+      // an explicit 'url' override is not needed and can point to the wrong port.
+      expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
       expect(lighthouseConfig.ci.collect.url).toBeUndefined();
     });
 
@@ -207,7 +214,8 @@ describe("lighthouserc.json Configuration", () => {
       expect(lighthouseConfig.ci.collect.numberOfRuns).toBeGreaterThanOrEqual(3);
     });
 
-    it("should use staticDistDir to serve files for CI", () => {
+    it("should use staticDistDir for local CI testing", () => {
+      // staticDistDir causes LHCI to spin up its own server; no explicit url needed.
       expect(lighthouseConfig.ci.collect.staticDistDir).toBeDefined();
     });
 

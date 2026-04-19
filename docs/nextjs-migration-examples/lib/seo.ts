@@ -331,12 +331,15 @@ export function generateFAQSchema(faqs: Array<{ question: string; answer: string
  */
 export function trackPageView(url: string, title?: string) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
-  if (gaId && typeof window !== 'undefined' && window.gtag) {
-    window.gtag('config', gaId, {
-      page_path: url,
-      page_title: title,
-    });
+
+  if (typeof window === 'undefined' || !window.gtag || !gaId) {
+    return;
   }
+
+  window.gtag('config', gaId, {
+    page_path: url,
+    page_title: title,
+  });
 }
 
 /**
@@ -406,6 +409,7 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
  * @returns A string in the form `X min read` where `X` is the estimated minutes (rounded up).
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
+  if (!content.trim()) return '0 min read';
   const wordCount = content.split(/\s+/).length;
   const minutes = Math.ceil(wordCount / wordsPerMinute);
   return `${minutes} min read`;

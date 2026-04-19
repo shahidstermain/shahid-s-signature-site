@@ -31,7 +31,7 @@ function parseArticleDate(dateStr: string): Date {
   if (parts.length === 2) {
     const month = months[parts[0]] || 0;
     const year = parseInt(parts[1]);
-    return new Date(year, month, 15);
+    return new Date(Date.UTC(year, month, 15));
   }
   return new Date();
 }
@@ -61,7 +61,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog posts - sorted by date (newest first)
   const blogPosts: MetadataRoute.Sitemap = articles
     .map((article) => ({
-      url: `${SITE_URL}/blog/${article.slug}`,
+      url: `${SITE_URL}/blog/${encodeURIComponent(article.slug)}`,
       lastModified: parseArticleDate(article.date),
       changeFrequency: 'monthly' as const,
       priority: article.featured ? 0.9 : 0.8,

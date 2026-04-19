@@ -65,7 +65,7 @@ function generateRobots(env: typeof mockEnv) {
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    host: new URL(SITE_URL).host,
   };
 }
 
@@ -79,7 +79,7 @@ describe('Robots.txt Generation', () => {
 
       expect(robots.rules).toBeInstanceOf(Array);
       expect(robots.sitemap).toBe('https://shahidster.tech/sitemap.xml');
-      expect(robots.host).toBe('https://shahidster.tech');
+      expect(robots.host).toBe('shahidster.tech');
     });
 
     it('should include Googlebot rules', () => {
@@ -147,7 +147,7 @@ describe('Robots.txt Generation', () => {
         NEXT_PUBLIC_SITE_URL: 'https://shahidster.tech',
       });
 
-      expect(robots.host).toBe('https://shahidster.tech');
+      expect(robots.host).toBe('shahidster.tech');
     });
   });
 
@@ -313,7 +313,7 @@ describe('Robots.txt Generation', () => {
       });
 
       expect(robots.sitemap).toBe(`${customDomain}/sitemap.xml`);
-      expect(robots.host).toBe(customDomain);
+      expect(robots.host).toBe('custom.shahidster.tech');
     });
 
     it('should handle test environment', () => {

@@ -33,6 +33,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://shahidster.tech';
 const SITE_NAME = 'Shahid Moosa — Cloud Database Engineer';
 const SITE_DESCRIPTION = 'Cloud Database Support Engineer at SingleStore. I debug distributed systems, optimize queries at petabyte scale, and help Fortune 500 teams ship reliable data infrastructure.';
 
+/**
+ * Safely serializes an object for use in a JSON-LD <script> tag.
+ * Escapes characters that could break out of an HTML script context.
+ */
+function safeJsonLd(data: object): string {
+  return JSON.stringify(data)
+    .replace(/&/g, '\\u0026')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
+}
+
 // Viewport configuration (separated from metadata in Next.js 14+)
 export const viewport: Viewport = {
   themeColor: '#0a0b0d',
@@ -112,9 +123,9 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-verification-code',
-    // yandex: 'yandex-verification-code',
-    // bing: 'bing-verification-code',
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+    // yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+    // bing: process.env.NEXT_PUBLIC_BING_VERIFICATION,
   },
   category: 'technology',
   classification: 'Personal Portfolio',
@@ -218,19 +229,17 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         
         {/* Structured Data: Person Schema */}
-        <Script
+        <script
           id="person-schema"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(personSchema) }}
         />
         
         {/* Structured Data: WebSite Schema */}
-        <Script
+        <script
           id="website-schema"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(websiteSchema) }}
         />
 
         {/* Google Analytics 4 (production only) */}
