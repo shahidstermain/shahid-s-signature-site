@@ -6,7 +6,36 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackgroundGlow } from "@/components/ui/BackgroundGlow";
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar";
-import { useEffect } from "react";
+import { MermaidDiagram } from "@/components/blog/MermaidDiagram";
+import { NewsletterForm } from "@/components/course/NewsletterForm";
+import { ProUpsellCard } from "@/components/course/ProUpsellCard";
+import { COURSE_META } from "@/lib/course";
+import { useEffect, useMemo } from "react";
+
+type ContentSegment =
+  | { kind: "text"; value: string }
+  | { kind: "mermaid"; value: string };
+
+function splitMermaidSegments(content: string): ContentSegment[] {
+  const segments: ContentSegment[] = [];
+  const regex = /```mermaid\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ kind: "text", value: content.slice(lastIndex, match.index) });
+    }
+    segments.push({ kind: "mermaid", value: match[1].trim() });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < content.length) {
+    segments.push({ kind: "text", value: content.slice(lastIndex) });
+  }
+
+  return segments;
+}
 
 const SITE_URL = "https://shahidster.tech";
 const AUTHOR_NAME = "Shahid Moosa";
@@ -173,6 +202,11 @@ export default function BlogPost() {
     ? getSeriesNavigation(article.slug) 
     : { prev: null, next: null, currentIndex: 0, total: 0 };
 
+  const contentSegments = useMemo(
+    () => (article ? splitMermaidSegments(article.content) : []),
+    [article]
+  );
+
   // Inject JSON-LD structured data and meta tags into head
   useEffect(() => {
     if (!article) return;
@@ -267,9 +301,9 @@ export default function BlogPost() {
               <div className="flex items-center gap-3">
                 <BookOpen className="w-5 h-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Distributed Systems Series</p>
+                  <p className="text-sm text-muted-foreground">{COURSE_META.name} · Free Course</p>
                   <p className="font-medium text-foreground">
-                    {article.seriesPosition || `Part ${currentIndex} of ${total}`}
+                    Module {currentIndex} of {total}
                   </p>
                 </div>
               </div>
@@ -362,8 +396,18 @@ export default function BlogPost() {
               prose-hr:border-border
               prose-li:text-muted-foreground
             "
-            dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
-          />
+          >
+            {contentSegments.map((segment, idx) =>
+              segment.kind === "mermaid" ? (
+                <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
+              ) : (
+                <div
+                  key={`t-${idx}`}
+                  dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
+                />
+              )
+            )}
+          </motion.div>
 
           {/* Bottom Series Navigation */}
           <motion.div
@@ -441,6 +485,28 @@ export default function BlogPost() {
               </div>
             </motion.section>
           )}
+
+          {/* Newsletter capture */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-12"
+          >
+            <NewsletterForm />
+          </motion.div>
+
+          {/* Pro upsell */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-6"
+          >
+            <ProUpsellCard />
+          </motion.div>
         </article>
       </main>
 

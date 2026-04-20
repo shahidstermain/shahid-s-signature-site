@@ -88,6 +88,12 @@ const urls = [
     changefreq: "weekly",
     priority: 1.0,
   },
+  {
+    loc: `${SITE_URL}/course`,
+    lastmod: new Date().toISOString().split("T")[0],
+    changefreq: "weekly",
+    priority: 0.95,
+  },
   ...articleSlugs.map((slug, index) => ({
     loc: `${SITE_URL}/blog/${slug}`,
     lastmod: parseArticleDate(articleDates[index] || "Jan 2024"),

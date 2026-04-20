@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Section, SectionHeader } from "@/components/ui/Section";
-import { ArrowUpRight, Clock, Calendar } from "lucide-react";
+import { ArrowUpRight, Clock, Calendar, GraduationCap } from "lucide-react";
 import { articles } from "@/data/articles";
+import { COURSE_META } from "@/lib/course";
 
 export const Writing = () => {
   const featuredArticles = articles.filter(a => a.featured);
@@ -11,10 +12,39 @@ export const Writing = () => {
   return (
     <Section id="writing">
       <SectionHeader
-        label="Writing"
-        title="Technical briefs"
-        description="Field notes and learnings from the trenches of cloud database engineering. No fluff, just practical insights."
+        label="Database 201"
+        title="A free course on distributed databases"
+        description={`${COURSE_META.totalModules} modules. Every post below is a standalone lesson — read in any order, free forever.`}
       />
+
+      {/* Course CTA banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+        className="mb-10"
+      >
+        <Link
+          to="/course"
+          className="group flex items-center justify-between gap-4 p-5 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-card/30 hover:border-primary/60 transition-colors"
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-11 h-11 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+              <GraduationCap className="w-5 h-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium group-hover:text-primary transition-colors">
+                View the full {COURSE_META.name} syllabus
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Free email course · optional ${COURSE_META.price} Pro bundle with eBook + SQL labs
+              </div>
+            </div>
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+        </Link>
+      </motion.div>
 
       {/* Featured Articles */}
       <div className="grid md:grid-cols-2 gap-6 mb-8">

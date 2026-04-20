@@ -20,7 +20,7 @@ export const articles: Article[] = [
     readTime: "8 min read",
     date: "Nov 2024",
     featured: false,
-    seriesPosition: "Part 1 of 9",
+    seriesPosition: "Part 1 of 14",
     seoKeywords: ["CAP theorem", "distributed systems", "consistency vs availability", "partition tolerance"],
     content: `
 ## Beyond the Textbook
@@ -160,7 +160,7 @@ CAP isn't a limitation—it's a design tool. Understanding the tradeoffs lets yo
     readTime: "10 min read",
     date: "Oct 2024",
     featured: false,
-    seriesPosition: "Part 2 of 9",
+    seriesPosition: "Part 2 of 14",
     seoKeywords: ["consistency levels", "serializability", "isolation levels", "database scalability"],
     content: `
 ## The Consistency Trap
@@ -313,7 +313,7 @@ This nuanced view of consistency sets the stage for understanding [how data skew
     readTime: "14 min read",
     date: "Sep 2024",
     featured: true,
-    seriesPosition: "Part 3 of 9",
+    seriesPosition: "Part 3 of 14",
     seoKeywords: ["disaggregated storage", "compute storage separation", "NVMe latency", "cache coherency", "HTAP architecture"],
     content: `
 ## The Promise and Reality of Disaggregation
@@ -389,7 +389,7 @@ The key insight: there's no universal "best" architecture. The latency tax is re
     readTime: "13 min read",
     date: "Aug 2024",
     featured: false,
-    seriesPosition: "Part 4 of 9",
+    seriesPosition: "Part 4 of 14",
     seoKeywords: ["data skew", "distributed joins", "shuffle join", "broadcast join", "Spark AQE"],
     content: `
 ## The Silent Performance Killer
@@ -552,7 +552,7 @@ Understanding skew is essential before we tackle [schema evolution](/blog/non-bl
     readTime: "11 min read",
     date: "Jul 2024",
     featured: true,
-    seriesPosition: "Part 5 of 9",
+    seriesPosition: "Part 5 of 14",
     seoKeywords: ["online DDL", "schema migration", "metadata locks", "database migration patterns", "expansion contraction"],
     content: `
 ## The Marketing vs. Reality
@@ -683,7 +683,7 @@ These practices directly inform the [sharding migration patterns](/blog/sharding
     readTime: "12 min read",
     date: "Jun 2024",
     featured: false,
-    seriesPosition: "Part 6 of 9",
+    seriesPosition: "Part 6 of 14",
     seoKeywords: ["HTAP systems", "backpressure", "Kafka ingestion", "flow control", "resource isolation"],
     content: `
 ## The HTAP Promise and Peril
@@ -872,7 +872,7 @@ HTAP systems require active resource management. Kafka provides a buffer, not a 
     readTime: "12 min read",
     date: "May 2024",
     featured: false,
-    seriesPosition: "Part 7 of 9",
+    seriesPosition: "Part 7 of 14",
     seoKeywords: ["query optimization", "execution plans", "covering indexes", "partition pruning", "petabyte scale"],
     content: `
 ## When Queries Go Wrong at Scale
@@ -1051,7 +1051,7 @@ At petabyte scale, query optimization isn't optional—it's survival. Read your 
     readTime: "10 min read",
     date: "Apr 2024",
     featured: false,
-    seriesPosition: "Part 8 of 9",
+    seriesPosition: "Part 8 of 14",
     seoKeywords: ["incident response", "database postmortem", "production debugging", "runbooks", "on-call"],
     content: `
 ## When the Pager Goes Off
@@ -1246,7 +1246,7 @@ This operational knowledge culminates in [choosing the right sharding strategy](
     readTime: "15 min read",
     date: "Mar 2024",
     featured: false,
-    seriesPosition: "Part 9 of 9",
+    seriesPosition: "Part 9 of 14",
     seoKeywords: ["database sharding", "hash sharding", "range sharding", "geo sharding", "resharding migration"],
     content: `
 ## Why Shard?
@@ -1461,6 +1461,378 @@ There's no universal best sharding strategy. Understand your access patterns, me
 ---
 
 *The best shard key is the one you query by most often.*
+    `,
+  },
+  {
+    slug: "singlestore-production-lessons",
+    title: "Lessons Learned Running SingleStore in Production",
+    description: "Real-world lessons from operating SingleStore clusters—from memory sizing and query pitfalls to silent failures and what I'd do differently next time.",
+    category: "Operations",
+    readTime: "11 min read",
+    date: "Apr 2026",
+    featured: true,
+    seriesPosition: "Part 10 of 14",
+    seoKeywords: ["SingleStore", "memory sizing", "columnstore", "replication", "production operations", "database reliability"],
+    content: `
+## Summary
+
+- Memory isn't a tuning knob—it's the system's oxygen.
+- Rowstore and columnstore behave differently under stress.
+- Replication quietly multiplies memory usage.
+- Dashboards, backfills, and ingestion spikes can trigger silent slowdowns.
+- Schema changes are operational events—not casual edits.
+- Failover rehearsals matter more than failover mechanisms.
+
+## Opening
+
+Every production database carries scars you don't see in marketing slides. When I first deployed SingleStore into production, I assumed "memory-optimized" meant "fast by default." What I learned instead is that memory is **a dependency**, not an optimization. If you underestimate it, your cluster will run fine—right up until it doesn't.
+
+This post isn't theory. It's a field log of real-world lessons—what happens when real-time dashboards meet replication math, and what I'd do differently if I were setting up that first cluster again.
+
+This kicks off a new thread on operating SingleStore that builds on the broader [sharding strategies](/blog/sharding-strategies-that-work) and [incident response](/blog/incident-response-database-engineers) patterns from earlier in the series.
+
+## TL;DR
+
+SingleStore performs brilliantly when you respect memory, plan schemas like code deployments, and limit query sprawl. Ignore those, and the database won't crash—it'll just *go quiet* while latency drifts upward.
+
+## The Real-World Story
+
+We sized our cluster optimistically—CPU looked fine, queries felt fast. Then came ingestion bursts and dashboard spikes. Suddenly, \`p95\` latencies crept from 40 ms to 1 s, queries started stalling, and yet no alerts fired.
+
+What happened? Memory pressure. Replication doubled the footprint, and merges in the columnstore competed with ingest buffers.
+
+The result was a system that *appeared* healthy. CPU was low. Alerts were green. But query planners were blocked waiting for memory, and performance degraded silently.
+
+This is the same failure mode we saw with [backpressure in HTAP systems](/blog/defensive-ingestion-backpressure-htap)—the database is obedient until it isn't.
+
+\`\`\`mermaid
+flowchart TD
+    A[Data Ingest] --> B[Rowstore Memory]
+    A --> C[Columnstore Working Set]
+    B --> D[Replication Memory ×2]
+    C --> D
+    D --> E[System Pressure]
+    E --> F{Latency Drift?}
+    F -->|Yes| G[Silent Slowdown]
+    F -->|No| H[Healthy Cluster]
+\`\`\`
+
+### What Engineers Get Wrong
+
+- Treating memory as a tuning parameter rather than a hard boundary.
+- Assuming HA means "no ops"—it doesn't. Failover is never free.
+- Using \`SELECT *\` on wide columnstore tables because "it's just analytics."
+- Allowing unbounded time-range queries on dashboards.
+- Forgetting that schema changes are distributed events—and disruptive.
+
+### What I'd Do Differently Next Time
+
+- **Size memory pessimistically.** If you think you need 1 TB, plan for 1.5 TB.
+- **Cap time ranges by default.** Dashboards shouldn't pull a month of history per click.
+- **Treat schema changes like code deploys.** Review, stage, and schedule. The [non-blocking DDL myth](/blog/non-blocking-ddl-myth) applies doubly to distributed engines.
+- **Practice failovers regularly.** Don't wait for PagerDuty to be your rehearsal.
+
+## Takeaway
+
+SingleStore will tell you the truth—just very quietly at first. Listen for latency drift. It's your earliest warning sign.
+
+Next up: [how SingleStore's execution engine actually moves data](/blog/singlestore-execution-engine)—because once you've survived the memory lesson, the next one is about motion.
+
+---
+
+*The database doesn't lie. It just doesn't shout.*
+    `,
+  },
+  {
+    slug: "singlestore-execution-engine",
+    title: "Understanding the SingleStore Execution Engine",
+    description: "A field guide to SingleStore's execution engine—how aggregators and leaves work, why data movement is expensive, and how to read an execution plan like a detective.",
+    category: "Deep Dive",
+    readTime: "10 min read",
+    date: "Mar 2026",
+    featured: false,
+    seriesPosition: "Part 11 of 14",
+    seoKeywords: ["SingleStore", "execution engine", "shard keys", "query plan", "distributed joins", "data locality"],
+    content: `
+## Summary
+
+- Aggregators plan; leaves execute.
+- Local work is cheap—network movement isn't.
+- Non-colocated joins and global \`GROUP BY\`s trigger hidden data shuffles.
+- Shard keys decide where data lives—and who pays for moving it.
+- The \`EXPLAIN\` plan is your window into data motion.
+- Every broadcast is a cry for help.
+
+## Opening
+
+Most database performance issues don't start in hardware—they start in motion. When you understand how SingleStore's execution engine moves data, you stop guessing and start predicting why certain queries slow down.
+
+Think of the engine like a nervous system: aggregators are the brains, leaves are the muscles. The goal? Keep as much work local to the muscles as possible.
+
+This builds directly on [the memory lessons](/blog/singlestore-production-lessons) from the last post. Memory and motion are the two things SingleStore spends on—and motion is usually the bigger bill.
+
+## TL;DR
+
+Every millisecond of unnecessary data movement costs more than a microsecond of compute. If you want to make SingleStore sing, study how your queries travel.
+
+## The Real-World Story
+
+We had a query that looked harmless—two tables joined by customer ID. Both were "large but fine." Yet latency exploded as soon as data volume doubled.
+
+The culprit? The shard keys didn't align. The join forced a global redistribution, meaning both leaves had to send data all over the cluster.
+
+What looked like a CPU problem was really a network choreography problem. This is the same class of issue we covered in [surviving data skew in distributed joins](/blog/data-skew-distributed-joins)—but here the skew is in the shard-key design, not the data.
+
+\`\`\`mermaid
+flowchart LR
+    A[Aggregator: Brain] -->|Query Plan| B[Leaf Node 1]
+    A -->|Query Plan| C[Leaf Node 2]
+    B -->|Local Work| B1[(Partial Results)]
+    C -->|Local Work| C1[(Partial Results)]
+    B1 -->|Send| A
+    C1 -->|Send| A
+    A --> D[Final Aggregation]
+    D --> E[(Result to Client)]
+    style A fill:#ffedcc,stroke:#ffb300,stroke-width:2px
+    style B fill:#ccf3ff,stroke:#0099ff
+    style C fill:#ccf3ff,stroke:#0099ff
+\`\`\`
+
+### What Engineers Get Wrong
+
+- Believing that distributed means "free parallelism." It's not—it's "paid coordination."
+- Ignoring shard-key design until after schema lock-in.
+- Assuming the optimizer can always push down work.
+- Not reading the \`EXPLAIN\` plan beyond the first few lines.
+
+### What I'd Do Differently Next Time
+
+- **Align shard keys with top queries.** Design from access patterns, not from entity models. This is the SingleStore-specific application of the [sharding strategies](/blog/sharding-strategies-that-work) playbook.
+- **Audit for repartitions.** A single broadcast can ruin a good day.
+- **Use \`EXPLAIN\` early.** Treat it like a debugger, not a postmortem tool.
+- **Favor locality.** It's the currency of performance.
+
+## Takeaway
+
+Distributed execution is like choreography—elegant when aligned, chaotic when improvised.
+
+Once motion is under control, the next trap is thinking every column needs an index. [That's next.](/blog/indexes-everywhere-bad-strategy)
+
+---
+
+*Read the plan. The database is already telling you what it's about to do.*
+    `,
+  },
+  {
+    slug: "indexes-everywhere-bad-strategy",
+    title: "Why Indexes Everywhere Is a Bad Strategy",
+    description: "Indexes look like free speed—until they quietly tax every write, consume memory, and evict the data you actually need.",
+    category: "Performance",
+    readTime: "8 min read",
+    date: "Feb 2026",
+    featured: false,
+    seriesPosition: "Part 12 of 14",
+    seoKeywords: ["SingleStore", "database indexing", "write amplification", "index selectivity", "query performance"],
+    content: `
+## Summary
+
+- Every index adds write cost and memory pressure.
+- Low-selectivity indexes hurt more than they help.
+- Index cost is multiplicative, not linear.
+- Memory used by indexes displaces working data.
+- Smart design beats blanket indexing.
+
+## Opening
+
+Adding indexes feels productive. The dashboard says queries are faster, you deploy, and everyone's happy—until ingest slows down, cache misses spike, and memory alarms start blinking.
+
+Indexes are like coffee: one or two help you focus, ten make your heart race.
+
+This continues the thread from [understanding the execution engine](/blog/singlestore-execution-engine): once you see how the engine moves data, you realize every extra index is another thing it has to keep in sync on every write.
+
+## TL;DR
+
+Each index is a trade-off. Don't build them for comfort; build them for purpose.
+
+## The Real-World Story
+
+We had a write-heavy analytics table with 30 indexes. Each new feature added "just one more." Writes slowed from 5k rows/s to under 1k rows/s.
+
+After trimming to three high-value indexes, write throughput quadrupled and memory stabilized. The queries people actually ran were fine; the rest had been vanity.
+
+The lesson echoed [the memory-as-oxygen finding from Part 10](/blog/singlestore-production-lessons)—indexes were eating the working set we needed for ingest.
+
+\`\`\`mermaid
+graph TD
+    A[Incoming Write] --> B{Index Count}
+    B -->|Low| C[Fast Commit]
+    B -->|High| D[Write Amplification]
+    D --> E[Evicted Cache Pages]
+    E --> F[Slow Reads & Writes]
+\`\`\`
+
+### What Engineers Get Wrong
+
+- Equating "index coverage" with performance.
+- Forgetting that every index must stay consistent on every write.
+- Ignoring selectivity—indexing boolean or low-entropy columns.
+- Blindly trusting ORM auto-indexes.
+
+### What I'd Do Differently Next Time
+
+- **Run an index smell test.** Which query? How often? What cost?
+- **Prefer sort keys / projections** when they align with access patterns.
+- **Measure write amplification.** Don't guess.
+- **Drop rarely used indexes** before adding new ones. Reference the [query optimization patterns](/blog/query-optimization-petabyte-scale) to find the real hot paths.
+
+## Takeaway
+
+Indexes are guardrails, not decorations. Use fewer, smarter, intentional ones.
+
+And before blaming the database for your next slow query, consider: [your database is probably fine](/blog/your-database-is-probably-fine).
+
+---
+
+*The cheapest index is the one you didn't build.*
+    `,
+  },
+  {
+    slug: "your-database-is-probably-fine",
+    title: "Your Database Is Probably Fine",
+    description: "Most outages blamed on the database aren't the database's fault—they're query-shape problems in disguise.",
+    category: "Operations",
+    readTime: "8 min read",
+    date: "Jan 2026",
+    featured: false,
+    seriesPosition: "Part 13 of 14",
+    seoKeywords: ["database performance", "query optimization", "SRE", "SingleStore", "production debugging"],
+    content: `
+## Summary
+
+- Databases take the blame first—usually unfairly.
+- Query shape, not engine choice, causes most pain.
+- \`SELECT *\` and unbounded scans scale catastrophically.
+- Treat queries as production code.
+- Default to limits and time bounds.
+
+## Opening
+
+At 3 a.m., PagerDuty goes off. "Database latency high." You SSH in, stare at dashboards, and curse the database. Five minutes later, you notice a dashboard query pulling six months of history with \`SELECT *\`.
+
+The database wasn't slow—it was obedient.
+
+This is the operational companion to [the indexes post](/blog/indexes-everywhere-bad-strategy) and [the incident response playbook](/blog/incident-response-database-engineers). Both converge on the same point: most "database problems" are application problems wearing a database costume.
+
+## TL;DR
+
+Most "slow database" stories are really "expensive query" stories. Fix the shape, not the engine.
+
+## The Real-World Story
+
+In one incident, a marketing report query scanned an entire columnstore to calculate daily stats. It ran fine at 1 GB, then melted at 100 GB.
+
+Adding a simple \`WHERE date > NOW() - INTERVAL 7 DAY\` dropped runtime from minutes to milliseconds.
+
+No new hardware. No config tuning. Just a time bound. This is the exact scenario [Part 10 warned about](/blog/singlestore-production-lessons) with unbounded dashboard queries.
+
+\`\`\`mermaid
+flowchart TD
+    A[App Query] --> B{Time Range Specified?}
+    B -->|Yes| C[Efficient Plan]
+    B -->|No| D[Full Table Scan]
+    D --> E[High IO + Latency]
+    E --> F[PagerDuty Alert]
+\`\`\`
+
+### What Engineers Get Wrong
+
+- Blaming the database before checking query plans.
+- Assuming scaling hardware fixes logic mistakes.
+- Forgetting that "harmless" queries become monsters at scale.
+
+### What I'd Do Differently Next Time
+
+- **Review every expensive query plan.** Treat them like code reviews.
+- **Enforce sensible defaults.** Limits, time bounds, and projections.
+- **Educate product teams** on the cost of data-shape changes. A new filter on a dashboard is a new query in production.
+
+## Takeaway
+
+Your database is probably fine. Your queries, on the other hand, need boundaries.
+
+And if you're still convinced the answer is "more nodes," read the next post first: [when vertical scaling beats horizontal](/blog/vertical-beats-horizontal-scaling).
+
+---
+
+*Blame the query before you blame the engine.*
+    `,
+  },
+  {
+    slug: "vertical-beats-horizontal-scaling",
+    title: "When Vertical Scaling Beats Horizontal",
+    description: "Horizontal scale sounds heroic—until you realize it adds failure modes, latency, and complexity your workload never needed.",
+    category: "Architecture",
+    readTime: "9 min read",
+    date: "Dec 2025",
+    featured: false,
+    seriesPosition: "Part 14 of 14",
+    seoKeywords: ["vertical scaling", "horizontal scaling", "distributed systems", "architecture decisions", "database capacity planning"],
+    content: `
+## Summary
+
+- Horizontal scale adds coordination and partial-failure risk.
+- Vertical scale improves data locality and simplicity.
+- Many systems never need "infinite" scale.
+- Debug complexity rises with every new node.
+- Always ask: *what breaks first if we just scale up?*
+
+## Opening
+
+Scaling out is fashionable; scaling up is unfashionably effective. Most systems chase sharding before they exhaust a single box. The result is a distributed headache solving a non-distributed problem.
+
+This is the closing chapter of the series—and it ties back to everything before it: [CAP tradeoffs](/blog/cap-theorem-production), [sharding strategies](/blog/sharding-strategies-that-work), [execution engine motion costs](/blog/singlestore-execution-engine). All of those costs disappear when the workload fits on one node.
+
+## TL;DR
+
+Before you shard, ask yourself: *is the bottleneck real—or just an assumption?*
+
+## The Real-World Story
+
+We once split a workload across four nodes to "prepare for growth." Growth never came, but the failure modes did—network partitions, node restarts, sync lag.
+
+Later we consolidated onto one larger instance. Latency halved. Outages disappeared.
+
+The same workload. Fewer moving parts. Better on every axis.
+
+\`\`\`mermaid
+graph LR
+    A[Single Powerful Node] --> B[Low Latency]
+    B --> C[Simple Debugging]
+    D[Distributed Cluster] --> E[Network Hops]
+    E --> F[Higher Latency + Complexity]
+\`\`\`
+
+### What Engineers Get Wrong
+
+- Treating "horizontal" as automatically superior.
+- Ignoring the cost of cross-node hops and coordination—the exact tax quantified in [the latency of separated compute and storage](/blog/latency-tax-separated-compute-storage).
+- Forgetting that debugging distributed systems is not linear work.
+
+### What I'd Do Differently Next Time
+
+- **Benchmark vertical limits first.** Know the ceiling before adding nodes.
+- **Quantify network latency** in your SLA math.
+- **Design for observability** before distribution. You can't debug what you can't see.
+
+## Takeaway
+
+Scale out only when scaling up fails in practice, not in theory.
+
+That closes the series. If there's one thread running through all 14 posts, it's this: respect the limits of distributed systems, and they'll respect you back.
+
+---
+
+*The best distributed system is the one you didn't need to build.*
     `,
   },
 ];
