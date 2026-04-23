@@ -195,6 +195,15 @@ function generateBreadcrumbJsonLd(article: Article): object {
   };
 }
 
+/**
+ * Renders a blog article page (or a not-found view if the slug does not match an article).
+ *
+ * When an article is found, the page includes SEO metadata (structured JSON‑LD, keywords, times, path), a series navigation banner
+ * with previous/next controls, the article header (category, title, description, read time, date), the formatted article content,
+ * bottom series navigation cards, and a related-articles section. When the article is not found, renders a not-found UI with a noindex SEO state and a link back to the articles list.
+ *
+ * @returns The rendered blog post UI for the current route slug, or a not-found view if the article is missing.
+ */
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
@@ -241,8 +250,15 @@ export default function BlogPost() {
   }, [article, currentIndex, total]);
 
   if (!article) {
+    const missingPath = slug ? `/blog/${slug}` : undefined;
     return (
       <div className="min-h-screen flex flex-col">
+        <Seo
+          description="The requested article could not be found."
+          noindex
+          path={missingPath}
+          title="Article not found"
+        />
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -266,9 +282,25 @@ export default function BlogPost() {
   const relatedArticles = articles
     .filter(a => a.category === article.category && a.slug !== article.slug)
     .slice(0, 3);
+  const publishedTime = formatArticleDateIso(article.date);
+  const articlePath = `/blog/${article.slug}`;
+  const jsonLd = [
+    buildArticleJsonLd(article, { currentIndex, total }),
+    buildBreadcrumbJsonLd(article),
+  ];
+  const keywords = getArticleKeywords(article);
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      <Seo
+        description={article.description}
+        jsonLd={jsonLd}
+        keywords={keywords}
+        path={articlePath}
+        publishedTime={publishedTime}
+        title={article.title}
+        type="article"
+      />
       <ReadingProgressBar />
       <BackgroundGlow />
       <Header />
