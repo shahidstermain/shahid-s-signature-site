@@ -6,23 +6,104 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackgroundGlow } from "@/components/ui/BackgroundGlow";
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar";
-import { Seo } from "@/components/seo/Seo";
-import { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/lib/structured-data";
-import { formatArticleDateIso } from "@/lib/seo-utils";
+import { MermaidDiagram } from "@/components/blog/MermaidDiagram";
+import { NewsletterForm } from "@/components/course/NewsletterForm";
+import { ProUpsellCard } from "@/components/course/ProUpsellCard";
+import { COURSE_META } from "@/lib/course";
+import { useEffect, useMemo } from "react";
 
-/**
- * Determine the previous and next articles in publication order for a given article slug.
- *
- * This function operates over the full `articles` collection, using its existing sort
- * order (typically publication order) to find the adjacent entries for the given slug.
- *
- * @param currentSlug - The slug of the current article to locate in the ordered list.
- * @returns An object containing:
- *  - `prev`: the previous article in publication order, or `null` if none or the slug is not found,
- *  - `next`: the next article in publication order, or `null` if none or the slug is not found,
- *  - `currentIndex`: the 1-based position of the current article in the `articles` list; `0` indicates that the slug was not found,
- *  - `total`: the total number of articles in the `articles` list.
- */
+type ContentSegment =
+  | { kind: "text"; value: string }
+  | { kind: "mermaid"; value: string };
+
+function splitMermaidSegments(content: string): ContentSegment[] {
+  const segments: ContentSegment[] = [];
+  const regex = /```mermaid\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ kind: "text", value: content.slice(lastIndex, match.index) });
+    }
+    segments.push({ kind: "mermaid", value: match[1].trim() });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < content.length) {
+    segments.push({ kind: "text", value: content.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
+const SITE_URL = "https://shahidster.tech";
+const AUTHOR_NAME = "Shahid Moosa";
+const TWITTER_HANDLE = "@shahidster_";
+
+// Update document meta tags for social sharing
+function updateMetaTags(article: Article) {
+  const articleUrl = `${SITE_URL}/blog/${article.slug}`;
+  
+  // Helper to set or create meta tag
+  const setMeta = (property: string, content: string, isName = false) => {
+    const selector = isName ? `meta[name="${property}"]` : `meta[property="${property}"]`;
+    let meta = document.querySelector(selector) as HTMLMetaElement;
+    if (!meta) {
+      meta = document.createElement("meta");
+      if (isName) {
+        meta.name = property;
+      } else {
+        meta.setAttribute("property", property);
+      }
+      document.head.appendChild(meta);
+    }
+    meta.content = content;
+  };
+
+  // Update page title
+  document.title = `${article.title} | ${AUTHOR_NAME}`;
+
+  // Open Graph tags
+  setMeta("og:type", "article");
+  setMeta("og:title", article.title);
+  setMeta("og:description", article.description);
+  setMeta("og:url", articleUrl);
+  setMeta("og:site_name", `${AUTHOR_NAME} - Distributed Systems Engineer`);
+  setMeta("og:locale", "en_US");
+  setMeta("og:image", `${SITE_URL}/og-image.png`);
+  setMeta("article:author", AUTHOR_NAME);
+  setMeta("article:published_time", new Date(article.date).toISOString());
+  setMeta("article:section", article.category);
+  setMeta("article:tag", article.seoKeywords?.join(", ") || article.category);
+  
+  // Twitter Card tags
+  setMeta("twitter:card", "summary_large_image", true);
+  setMeta("twitter:site", TWITTER_HANDLE, true);
+  setMeta("twitter:creator", TWITTER_HANDLE, true);
+  setMeta("twitter:title", article.title, true);
+  setMeta("twitter:description", article.description, true);
+  setMeta("twitter:image", `${SITE_URL}/og-image.png`, true);
+  
+  // Keywords
+  if (article.seoKeywords?.length) {
+    setMeta("keywords", article.seoKeywords.join(", "), true);
+  }
+  
+  // Description
+  setMeta("description", article.description, true);
+  
+  // Canonical URL
+  let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    document.head.appendChild(canonical);
+  }
+  canonical.href = articleUrl;
+}
+
+// Get prev/next articles in series order
 function getSeriesNavigation(currentSlug: string): { prev: Article | null; next: Article | null; currentIndex: number; total: number } {
   const currentIndex = articles.findIndex(a => a.slug === currentSlug);
   return {
@@ -33,13 +114,86 @@ function getSeriesNavigation(currentSlug: string): { prev: Article | null; next:
   };
 }
 
-const getArticleKeywords = (article: Article): string[] => {
-  if (article.seoKeywords?.length) {
-    return Array.from(new Set([...article.seoKeywords, article.category]));
-  }
+// Generate JSON-LD structured data for Article schema
+function generateArticleJsonLd(article: Article, currentIndex: number, total: number): object {
+  const siteUrl = "https://shahidster.tech";
+  const articleUrl = `${siteUrl}/blog/${article.slug}`;
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": articleUrl,
+    "headline": article.title,
+    "description": article.description,
+    "datePublished": new Date(article.date).toISOString(),
+    "dateModified": new Date(article.date).toISOString(),
+    "author": {
+      "@type": "Person",
+      "name": "Shahid Moosa",
+      "url": siteUrl,
+      "jobTitle": "Distributed Systems Engineer"
+    },
+    "publisher": {
+      "@type": "Person",
+      "name": "Shahid Moosa",
+      "url": siteUrl
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": articleUrl
+    },
+    "articleSection": article.category,
+    "keywords": article.seoKeywords?.join(", ") || article.category,
+    "wordCount": Math.round(article.content.split(/\s+/).length),
+    "isPartOf": {
+      "@type": "CreativeWorkSeries",
+      "name": "Distributed Systems Series",
+      "position": currentIndex,
+      "numberOfItems": total
+    },
+    "about": {
+      "@type": "Thing",
+      "name": "Distributed Systems"
+    },
+    "inLanguage": "en-US",
+    "image": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/og-image.png`,
+      "width": 1200,
+      "height": 630
+    }
+  };
+}
 
-  return [article.category];
-};
+// Generate BreadcrumbList JSON-LD
+function generateBreadcrumbJsonLd(article: Article): object {
+  const siteUrl = "https://shahidster.tech";
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": siteUrl
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Writing",
+        "item": `${siteUrl}/#writing`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": article.title,
+        "item": `${siteUrl}/blog/${article.slug}`
+      }
+    ]
+  };
+}
 
 /**
  * Renders a blog article page (or a not-found view if the slug does not match an article).
@@ -56,6 +210,44 @@ export default function BlogPost() {
   const { prev, next, currentIndex, total } = article 
     ? getSeriesNavigation(article.slug) 
     : { prev: null, next: null, currentIndex: 0, total: 0 };
+
+  const contentSegments = useMemo(
+    () => (article ? splitMermaidSegments(article.content) : []),
+    [article]
+  );
+
+  // Inject JSON-LD structured data and meta tags into head
+  useEffect(() => {
+    if (!article) return;
+
+    // Update social meta tags
+    updateMetaTags(article);
+
+    // Remove any existing JSON-LD scripts
+    const existingScripts = document.querySelectorAll('script[type="application/ld+json"][data-blog-jsonld]');
+    existingScripts.forEach(script => script.remove());
+
+    // Create Article schema script
+    const articleScript = document.createElement('script');
+    articleScript.type = 'application/ld+json';
+    articleScript.setAttribute('data-blog-jsonld', 'article');
+    articleScript.textContent = JSON.stringify(generateArticleJsonLd(article, currentIndex, total));
+    document.head.appendChild(articleScript);
+
+    // Create BreadcrumbList schema script
+    const breadcrumbScript = document.createElement('script');
+    breadcrumbScript.type = 'application/ld+json';
+    breadcrumbScript.setAttribute('data-blog-jsonld', 'breadcrumb');
+    breadcrumbScript.textContent = JSON.stringify(generateBreadcrumbJsonLd(article));
+    document.head.appendChild(breadcrumbScript);
+
+    // Cleanup on unmount
+    return () => {
+      articleScript.remove();
+      breadcrumbScript.remove();
+      document.title = `${AUTHOR_NAME} - Distributed Systems Engineer`;
+    };
+  }, [article, currentIndex, total]);
 
   if (!article) {
     const missingPath = slug ? `/blog/${slug}` : undefined;
@@ -141,9 +333,9 @@ export default function BlogPost() {
               <div className="flex items-center gap-3">
                 <BookOpen className="w-5 h-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Distributed Systems Series</p>
+                  <p className="text-sm text-muted-foreground">{COURSE_META.name} · Free Course</p>
                   <p className="font-medium text-foreground">
-                    {article.seriesPosition || `Part ${currentIndex} of ${total}`}
+                    Module {currentIndex} of {total}
                   </p>
                 </div>
               </div>
@@ -236,8 +428,18 @@ export default function BlogPost() {
               prose-hr:border-border
               prose-li:text-muted-foreground
             "
-            dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
-          />
+          >
+            {contentSegments.map((segment, idx) =>
+              segment.kind === "mermaid" ? (
+                <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
+              ) : (
+                <div
+                  key={`t-${idx}`}
+                  dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
+                />
+              )
+            )}
+          </motion.div>
 
           {/* Bottom Series Navigation */}
           <motion.div
@@ -315,6 +517,28 @@ export default function BlogPost() {
               </div>
             </motion.section>
           )}
+
+          {/* Newsletter capture */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-12"
+          >
+            <NewsletterForm />
+          </motion.div>
+
+          {/* Pro upsell */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mt-6"
+          >
+            <ProUpsellCard />
+          </motion.div>
         </article>
       </main>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
@@ -13,6 +14,9 @@ const navLinks = [
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +28,10 @@ export const Header = () => {
 
   const scrollToSection = (href: string) => {
     setIsMobileMenuOpen(false);
+    if (!isHome) {
+      navigate(`/${href}`);
+      return;
+    }
     const element = document.querySelector(href);
     element?.scrollIntoView({ behavior: "smooth" });
   };
@@ -62,6 +70,13 @@ export const Header = () => {
                   {link.label}
                 </button>
               ))}
+              <Link
+                to="/course"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+              >
+                Database 201
+              </Link>
               <Button
                 size="sm"
                 onClick={() => scrollToSection("#connect")}
@@ -107,6 +122,13 @@ export const Header = () => {
                     {link.label}
                   </button>
                 ))}
+                <Link
+                  to="/course"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-heading font-medium text-left text-primary hover:text-primary/80 transition-colors"
+                >
+                  Database 201
+                </Link>
                 <Button
                   size="lg"
                   className="mt-4 w-full"

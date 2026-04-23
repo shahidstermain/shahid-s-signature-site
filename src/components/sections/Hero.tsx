@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { ArrowDown, Github, Linkedin, Mail, FileDown, Star, ExternalLink } from "lucide-react";
+import { ArrowDown, Github, Linkedin, Mail, FileDown, Star, ExternalLink, GraduationCap } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LiveTerminal } from "@/components/ui/LiveTerminal";
 import shahidPhoto from "@/assets/shahid-moosa.jpg";
@@ -83,7 +84,18 @@ export const Hero = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 mb-8"
             >
+              <Button
+                size="lg"
+                className="font-medium px-8 h-12 text-base gap-2"
+                asChild
+              >
+                <Link to="/course">
+                  <GraduationCap className="w-4 h-4" />
+                  Start Database 201
+                </Link>
+              </Button>
               <Button 
+                variant="outline" 
                 size="lg" 
                 className="font-medium px-8 h-12 text-base"
                 onClick={() => document.getElementById('connect')?.scrollIntoView({ behavior: 'smooth' })}
@@ -91,7 +103,7 @@ export const Hero = () => {
                 Let's talk
               </Button>
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="lg" 
                 className="font-medium px-8 h-12 text-base"
                 onClick={() => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' })}

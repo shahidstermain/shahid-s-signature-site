@@ -30,7 +30,7 @@ export function generateSitemap(): string {
       loc: `${siteConfig.siteUrl}/blog/${article.slug}`,
       lastmod: formatArticleDateOnly(article.date),
       changefreq: "monthly" as const,
-      priority: 0.8,
+      priority: article.featured || article.slug === "cap-theorem-production" ? 0.9 : 0.8,
     })),
   ];
 

@@ -9,13 +9,40 @@ import { Credentials } from "@/components/sections/Credentials";
 import { Writing } from "@/components/sections/Writing";
 import { Now } from "@/components/sections/Now";
 import { Connect } from "@/components/sections/Connect";
-import { Seo } from "@/components/seo/Seo";
-import { siteConfig } from "@/lib/site-config";
-import { buildPersonJsonLd, buildWebsiteJsonLd } from "@/lib/structured-data";
-
-const jsonLd = [buildWebsiteJsonLd(), buildPersonJsonLd()];
+import { useEffect } from "react";
 
 const Index = () => {
+  useEffect(() => {
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Shahid Moosa",
+      "url": "https://shahidster.tech",
+      "jobTitle": "Cloud Database Support Engineer",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "SingleStore",
+        "url": "https://www.singlestore.com"
+      },
+      "sameAs": [
+        "https://github.com/shahidmoosa",
+        "https://linkedin.com/in/shahidmoosa",
+        "https://twitter.com/shahidster_"
+      ],
+      "description": "Distributed Systems Engineer specializing in cloud databases, high-scale query optimization, and reliable infrastructure.",
+      "image": "https://shahidster.tech/assets/shahid-moosa.jpg"
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background relative">
       <Seo
