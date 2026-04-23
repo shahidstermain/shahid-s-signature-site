@@ -45,6 +45,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
+      <Seo
+        description={siteConfig.description}
+        jsonLd={jsonLd}
+        keywords={siteConfig.keywords}
+        path="/"
+      />
       <BackgroundGlow />
       <Header />
       <main className="relative z-10">
