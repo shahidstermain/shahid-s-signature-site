@@ -7,10 +7,13 @@ import { Footer } from "@/components/layout/Footer";
 import { BackgroundGlow } from "@/components/ui/BackgroundGlow";
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar";
 import { MermaidDiagram } from "@/components/blog/MermaidDiagram";
+import { LockedContent } from "@/components/blog/LockedContent";
 import { NewsletterForm } from "@/components/course/NewsletterForm";
 import { ProUpsellCard } from "@/components/course/ProUpsellCard";
 import { COURSE_META } from "@/lib/course";
-import { useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useMemo, useState } from "react";
 
 type ContentSegment =
   | { kind: "text"; value: string }
@@ -195,16 +198,67 @@ function generateBreadcrumbJsonLd(article: Article): object {
   };
 }
 
+type GatingState =
+  | { status: "loading" }
+  | { status: "free"; content: string }
+  | { status: "unlocked"; content: string }
+  | { status: "locked"; excerpt: string };
+
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
-  const { prev, next, currentIndex, total } = article 
-    ? getSeriesNavigation(article.slug) 
+  const { isSubscribed, session } = useAuth();
+  const { prev, next, currentIndex, total } = article
+    ? getSeriesNavigation(article.slug)
     : { prev: null, next: null, currentIndex: 0, total: 0 };
 
+  const [gating, setGating] = useState<GatingState>({ status: "loading" });
+
+  // Fetch gating decision from the edge function
+  useEffect(() => {
+    if (!article) return;
+    let cancelled = false;
+    setGating({ status: "loading" });
+
+    (async () => {
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const url = `${supabaseUrl}/functions/v1/get-article?slug=${encodeURIComponent(article.slug)}`;
+        const headers: Record<string, string> = {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        };
+        if (session?.access_token) {
+          headers.Authorization = `Bearer ${session.access_token}`;
+        }
+        const res = await fetch(url, { headers });
+        const payload = await res.json();
+        if (cancelled) return;
+
+        if (!payload.is_premium) {
+          setGating({ status: "free", content: article.content });
+        } else if (payload.gated) {
+          setGating({ status: "locked", excerpt: payload.excerpt || "" });
+        } else {
+          setGating({ status: "unlocked", content: payload.content || article.content });
+        }
+      } catch {
+        if (!cancelled) {
+          setGating({ status: "free", content: article.content });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [article, session?.access_token, isSubscribed]);
+
+  const visibleContent =
+    gating.status === "free" || gating.status === "unlocked" ? gating.content : "";
+
   const contentSegments = useMemo(
-    () => (article ? splitMermaidSegments(article.content) : []),
-    [article]
+    () => (visibleContent ? splitMermaidSegments(visibleContent) : []),
+    [visibleContent]
   );
 
   // Inject JSON-LD structured data and meta tags into head
@@ -397,17 +451,35 @@ export default function BlogPost() {
               prose-li:text-muted-foreground
             "
           >
-            {contentSegments.map((segment, idx) =>
-              segment.kind === "mermaid" ? (
-                <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
-              ) : (
-                <div
-                  key={`t-${idx}`}
-                  dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
-                />
-              )
+            {gating.status === "loading" && (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-4 bg-muted/40 rounded w-3/4" />
+                <div className="h-4 bg-muted/40 rounded" />
+                <div className="h-4 bg-muted/40 rounded w-5/6" />
+                <div className="h-4 bg-muted/40 rounded w-2/3" />
+              </div>
             )}
+            {(gating.status === "free" || gating.status === "unlocked") &&
+              contentSegments.map((segment, idx) =>
+                segment.kind === "mermaid" ? (
+                  <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
+                ) : (
+                  <div
+                    key={`t-${idx}`}
+                    dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
+                  />
+                )
+              )}
           </motion.div>
+
+          {gating.status === "locked" && (
+            <div className="mt-2">
+              <LockedContent
+                excerptHtml={formatContent(gating.excerpt)}
+                slug={article.slug}
+              />
+            </div>
+          )}
 
           {/* Bottom Series Navigation */}
           <motion.div

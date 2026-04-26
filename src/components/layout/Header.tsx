@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, Shield, User as UserIcon } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { label: "Philosophy", href: "#philosophy" },
@@ -17,6 +18,7 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const { user, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +79,25 @@ export const Header = () => {
               >
                 Database 201
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  <Shield className="w-3.5 h-3.5" /> Admin
+                </Link>
+              )}
+              {user ? (
+                <Button size="sm" variant="ghost" onClick={() => signOut()}>
+                  <LogOut className="w-4 h-4 mr-1" /> Sign out
+                </Button>
+              ) : (
+                <Button size="sm" variant="ghost" asChild>
+                  <Link to="/auth">
+                    <UserIcon className="w-4 h-4 mr-1" /> Sign in
+                  </Link>
+                </Button>
+              )}
               <Button
                 size="sm"
                 onClick={() => scrollToSection("#connect")}
@@ -129,6 +150,31 @@ export const Header = () => {
                 >
                   Database 201
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-2xl font-heading font-medium text-left text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  >
+                    <Shield className="w-5 h-5" /> Admin
+                  </Link>
+                )}
+                {user ? (
+                  <button
+                    onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
+                    className="text-2xl font-heading font-medium text-left text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  >
+                    <LogOut className="w-5 h-5" /> Sign out
+                  </button>
+                ) : (
+                  <Link
+                    to="/auth"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-2xl font-heading font-medium text-left text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+                  >
+                    <UserIcon className="w-5 h-5" /> Sign in
+                  </Link>
+                )}
                 <Button
                   size="lg"
                   className="mt-4 w-full"
