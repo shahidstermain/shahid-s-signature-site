@@ -451,17 +451,35 @@ export default function BlogPost() {
               prose-li:text-muted-foreground
             "
           >
-            {contentSegments.map((segment, idx) =>
-              segment.kind === "mermaid" ? (
-                <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
-              ) : (
-                <div
-                  key={`t-${idx}`}
-                  dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
-                />
-              )
+            {gating.status === "loading" && (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-4 bg-muted/40 rounded w-3/4" />
+                <div className="h-4 bg-muted/40 rounded" />
+                <div className="h-4 bg-muted/40 rounded w-5/6" />
+                <div className="h-4 bg-muted/40 rounded w-2/3" />
+              </div>
             )}
+            {(gating.status === "free" || gating.status === "unlocked") &&
+              contentSegments.map((segment, idx) =>
+                segment.kind === "mermaid" ? (
+                  <MermaidDiagram key={`m-${idx}`} id={`${article.slug}-${idx}`} code={segment.value} />
+                ) : (
+                  <div
+                    key={`t-${idx}`}
+                    dangerouslySetInnerHTML={{ __html: formatContent(segment.value) }}
+                  />
+                )
+              )}
           </motion.div>
+
+          {gating.status === "locked" && (
+            <div className="mt-2">
+              <LockedContent
+                excerptHtml={formatContent(gating.excerpt)}
+                slug={article.slug}
+              />
+            </div>
+          )}
 
           {/* Bottom Series Navigation */}
           <motion.div
