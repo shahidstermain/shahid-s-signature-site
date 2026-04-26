@@ -7,10 +7,13 @@ import { Footer } from "@/components/layout/Footer";
 import { BackgroundGlow } from "@/components/ui/BackgroundGlow";
 import { ReadingProgressBar } from "@/components/ui/ReadingProgressBar";
 import { MermaidDiagram } from "@/components/blog/MermaidDiagram";
+import { LockedContent } from "@/components/blog/LockedContent";
 import { NewsletterForm } from "@/components/course/NewsletterForm";
 import { ProUpsellCard } from "@/components/course/ProUpsellCard";
 import { COURSE_META } from "@/lib/course";
-import { useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useMemo, useState } from "react";
 
 type ContentSegment =
   | { kind: "text"; value: string }
