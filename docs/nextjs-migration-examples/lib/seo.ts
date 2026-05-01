@@ -34,10 +34,12 @@ export const SITE_CONFIG = {
 } as const;
 
 /**
- * Build a canonical absolute URL for a given path using the site's base URL.
+ * Produces a canonical absolute URL by joining the site base URL with a normalized path.
  *
- * @param path - Path to append to the site base; a single "/" is treated as the root and trailing slashes are removed
- * @returns The canonical absolute URL string
+ * Normalization: a single root path `'/'` becomes the site base, and a trailing slash is removed from the provided path.
+ *
+ * @param path - The path to append to the site URL (e.g., `/blog/post` or `blog/post`). Defaults to empty which yields the site base.
+ * @returns The canonical absolute URL for the given path
  */
 export function getCanonicalUrl(path: string = ''): string {
   const cleanPath = path === '/' ? '' : path.replace(/\/$/, '');
@@ -45,14 +47,10 @@ export function getCanonicalUrl(path: string = ''): string {
 }
 
 /**
- * Convert a short month-year string (e.g., "Nov 2025") into an ISO 8601 datetime string.
+ * Convert a month-year string like "Nov 2025" into an ISO date anchored to the 15th of that month.
  *
- * When `dateStr` matches the pattern "<Mon> <YYYY>" the result is the 15th day of that month
- * at midnight UTC in the form `YYYY-MM-15T00:00:00.000Z`. If `dateStr` is not in the expected
- * two-part format, the current date-time in ISO 8601 format is returned.
- *
- * @param dateStr - A month and year string using a three-letter English month abbreviation and a four-digit year (for example, "Jan 2024")
- * @returns An ISO 8601 datetime string representing the parsed month-year (or the current date-time if parsing fails)
+ * @param dateStr - The month and year in "Mon YYYY" format (e.g., "Nov 2025")
+ * @returns The ISO 8601 date string set to the 15th of the parsed month at 00:00:00.000Z; returns the current date-time in ISO format if parsing fails
  */
 export function parseArticleDateToISO(dateStr: string): string {
   const months: Record<string, string> = {
@@ -70,12 +68,12 @@ export function parseArticleDateToISO(dateStr: string): string {
 }
 
 /**
- * Create a Metadata object populated with site-wide defaults.
+ * Builds page metadata initialized with the site's default values and applies any provided overrides.
  *
- * Merges any provided `overrides` into the default metadata values.
+ * Provided fields replace the corresponding defaults in the generated metadata.
  *
- * @param overrides - Partial metadata fields to override the defaults
- * @returns The resulting Metadata with site defaults and applied overrides
+ * @param overrides - Partial metadata fields to merge into the base; provided values override defaults
+ * @returns A Metadata object populated with site defaults merged with the given `overrides`
  */
 export function generateBaseMetadata(overrides: Partial<Metadata> = {}): Metadata {
   return {
@@ -104,16 +102,10 @@ export function generateBaseMetadata(overrides: Partial<Metadata> = {}): Metadat
 }
 
 /**
- * Builds Metadata for a blog article including Open Graph, Twitter, authors, keywords, and canonical URL.
+ * Builds Next.js metadata tailored for a blog article.
  *
- * @param article - Article data used to construct metadata:
- *   - `title`: article headline
- *   - `description`: short summary for meta and social previews
- *   - `slug`: URL slug (used to form the canonical URL at `/blog/{slug}`)
- *   - `date`: publish date string (e.g., "Nov 2025"); if parsing fails a current-date ISO string will be used
- *   - `category`: article section used for Open Graph `section`
- *   - `seoKeywords` (optional): list of keywords used for metadata `keywords` and Open Graph `tags`
- * @returns A Metadata object configured for the article, including Open Graph (article type, images, published/modified times, section, tags), Twitter card data, authors, keywords, and the canonical URL.
+ * @param article - Article details: `title`, `description`, `slug` (used to form canonical URL), `date` (e.g., "Nov 2025"), `category`, and optional `seoKeywords`
+ * @returns The `Metadata` object for the article, including Open Graph and Twitter card data, authors, keywords, publish/modified timestamps, and canonical alternate URL
  */
 export function generateArticleMetadata(article: {
   title: string;
@@ -166,9 +158,9 @@ export function generateArticleMetadata(article: {
 }
 
 /**
- * Create a JSON-LD Person schema object describing the site's author.
+ * Creates a JSON-LD Person schema for the site author using site configuration.
  *
- * @returns A JSON-LD object conforming to schema.org's `Person` type that represents the site's author, including contact, employer, social links, and areas of expertise.
+ * @returns A `schema.org` Person JSON-LD object populated from `SITE_CONFIG`, including `@id`, `name`, `jobTitle`, `email`, `url`, `worksFor` (Organization), `sameAs` (social profile URLs), and `knowsAbout` (author topical expertise).
  */
 export function generatePersonSchema() {
   return {
@@ -198,9 +190,9 @@ export function generatePersonSchema() {
 }
 
 /**
- * Produce a JSON-LD WebSite schema object for the configured site.
+ * Creates a JSON-LD WebSite schema for the site.
  *
- * @returns A JSON-LD object representing a schema.org `WebSite` for the site, including `@id`, `url`, `name`, `description`, a `publisher` reference, and `inLanguage`.
+ * @returns A JSON-LD `WebSite` object with `@id`, `url`, `name`, `description`, `publisher` reference, and `inLanguage`.
  */
 export function generateWebsiteSchema() {
   return {
@@ -218,18 +210,15 @@ export function generateWebsiteSchema() {
 }
 
 /**
- * Create a JSON-LD TechArticle schema object for an article.
+ * Create a Schema.org `TechArticle` JSON-LD object for a blog article.
  *
- * @param article - Article metadata used to populate the schema:
- *   - `title`, `description`, `slug`, `date`, `category`, `content` are required.
- *   - `seoKeywords` — optional list of keywords to include in the `keywords` property.
- *   - `seriesPosition` — optional position string used when the article is part of a series.
- * @param seriesInfo - Optional series details; when provided the schema includes an `isPartOf`
- *   CreativeWorkSeries with `position` (currentIndex) and `numberOfItems` (total).
- * @returns A JSON-LD object conforming to schema.org's `TechArticle` type containing
- *   headline, description, publication/modification dates, author, publisher, mainEntityOfPage,
- *   articleSection, keywords, wordCount, proficiencyLevel, inLanguage, and optionally `isPartOf`.
- */
+ * The produced object includes canonical identifiers, headline, description,
+ * publish/modified dates, author and publisher references, mainEntityOfPage,
+ * article section, keywords, word count, proficiency level, and language.
+ *
+ * @param article - Article data; `slug` is used to build the canonical article URL and `date` is used as the publish/modified date.
+ * @param seriesInfo - Optional series metadata. Provide `currentIndex` (position in series) and `total` (number of items) to add an `isPartOf` CreativeWorkSeries entry.
+ * @returns A JSON-LD object representing a Schema.org `TechArticle` for the article. If `seriesInfo` is supplied, the object includes `isPartOf` information.
 export function generateArticleSchema(article: {
   title: string;
   description: string;
@@ -287,10 +276,10 @@ export function generateArticleSchema(article: {
 }
 
 /**
- * Create a JSON-LD BreadcrumbList object for structured data.
+ * Builds a JSON-LD BreadcrumbList object for page structured data.
  *
- * @param items - Array of breadcrumb entries; each entry must include a `name` and a `url`
- * @returns An object representing a Schema.org `BreadcrumbList` with `itemListElement` of `ListItem` entries (each containing `position`, `name`, and `item`)
+ * @param items - Array of breadcrumb entries; each entry must have `name` and `url`. The array order determines each item's `position`.
+ * @returns A BreadcrumbList JSON-LD object where `itemListElement` contains `ListItem` entries with `position`, `name`, and `item` (URL).
  */
 export function generateBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
   return {
@@ -306,12 +295,10 @@ export function generateBreadcrumbSchema(items: Array<{ name: string; url: strin
 }
 
 /**
- * Create a JSON-LD FAQPage schema from question/answer pairs.
+ * Create a JSON-LD FAQPage schema from question and answer pairs.
  *
- * Each entry becomes a `Question` with an `acceptedAnswer` `Answer` suitable for embedding as structured data.
- *
- * @param faqs - Array of objects with `question` and `answer` text to include in the FAQ schema
- * @returns An object representing a Schema.org `FAQPage` with `mainEntity` populated by the provided questions and answers
+ * @param faqs - Array of objects each containing `question` and `answer` strings
+ * @returns A JSON-LD object representing a Schema.org `FAQPage` with `Question` and `Answer` entries
  */
 export function generateFAQSchema(faqs: Array<{ question: string; answer: string }>) {
   return {
@@ -329,10 +316,12 @@ export function generateFAQSchema(faqs: Array<{ question: string; answer: string
 }
 
 /**
- * Send a Google Analytics 4 page view configuration for the specified page.
+ * Report a page view to Google Analytics 4 for the given page path.
  *
- * @param url - The page path to record (for example, `/blog/my-post`)
- * @param title - Optional page title to include with the page view
+ * If the GA `gtag` function is not available in the runtime environment, this function does nothing.
+ *
+ * @param url - The page path to send as `page_path`
+ * @param title - Optional page title to send as `page_title`
  */
 export function trackPageView(url: string, title?: string) {
   if (typeof window !== 'undefined' && window.gtag) {
@@ -344,13 +333,10 @@ export function trackPageView(url: string, title?: string) {
 }
 
 /**
- * Send a custom event to Google Analytics 4 via the global `gtag` function.
+ * Sends a custom event to Google Analytics 4 when the global `gtag` function is available.
  *
- * If the global `gtag` function is not available (e.g., before analytics is loaded),
- * the call is silently skipped.
- *
- * @param eventName - The GA4 event name (for example, `"purchase"` or `"page_view"`)
- * @param eventParams - Optional parameters to include with the event (key-value pairs accepted by GA4)
+ * @param eventName - The name of the event to record
+ * @param eventParams - Optional parameters to attach to the event (e.g., `value`, `category`, `label`)
  */
 export function trackEvent(
   eventName: string,
@@ -375,11 +361,15 @@ declare global {
 }
 
 /**
- * Convert Markdown/HTML-like content to plain text suitable for meta descriptions.
+ * Sanitizes Markdown- or HTML-like text into plain text suitable for meta descriptions.
  *
- * @param content - The input string containing Markdown or simple HTML-like markup.
- * @param maxLength - Maximum length of the returned string; if the processed text exceeds this length it will be truncated and end with `...`.
- * @returns The cleaned plain-text string, trimmed and truncated to `maxLength` when necessary.
+ * Removes code blocks, inline code, Markdown formatting (bold, italic, headers) and link markup,
+ * collapses consecutive newlines to single spaces, trims surrounding whitespace, and truncates
+ * the result when it exceeds the specified maximum length.
+ *
+ * @param content - The Markdown or HTML-like string to sanitize.
+ * @param maxLength - Maximum allowed length of the returned string (default: 160). When truncation occurs, the returned string ends with `...` and its total length will not exceed `maxLength`.
+ * @returns Plain-text string with Markdown/HTML removed; truncated and suffixed with `...` when longer than `maxLength`.
  */
 export function stripMarkdown(content: string, maxLength: number = 160): string {
   const plain = content
@@ -400,11 +390,13 @@ export function stripMarkdown(content: string, maxLength: number = 160): string 
 }
 
 /**
- * Estimate reading time for the provided text.
+ * Estimate reading time for the given text using a words-per-minute rate.
  *
- * @param content - The text to estimate reading time for
- * @param wordsPerMinute - Average reading speed in words per minute (default: 200)
- * @returns The estimated reading time formatted as "`<n> min read`"
+ * Rounds the result up to the nearest whole minute.
+ *
+ * @param content - Text to estimate reading time for.
+ * @param wordsPerMinute - Words-per-minute rate to use; defaults to 200.
+ * @returns A string in the form `X min read` where `X` is the estimated minutes (rounded up).
  */
 export function calculateReadTime(content: string, wordsPerMinute: number = 200): string {
   const wordCount = content.split(/\s+/).length;
