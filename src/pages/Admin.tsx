@@ -65,6 +65,7 @@ export default function Admin() {
       setEditor({
         slug: existing.slug,
         is_premium: existing.is_premium,
+        published: existing.published,
         excerpt: existing.excerpt,
         full_content: existing.full_content,
       });
@@ -75,11 +76,12 @@ export default function Admin() {
       setEditor({
         slug,
         is_premium: true,
+        published: false,
         excerpt,
         full_content: fallback.content,
       });
     } else {
-      setEditor({ slug, is_premium: true, excerpt: "", full_content: "" });
+      setEditor({ slug, is_premium: true, published: false, excerpt: "", full_content: "" });
     }
   };
 
@@ -93,6 +95,7 @@ export default function Admin() {
     const payload = {
       slug: editor.slug.trim(),
       is_premium: editor.is_premium,
+      published: editor.published,
       excerpt: editor.excerpt,
       full_content: editor.full_content,
     };
@@ -116,7 +119,7 @@ export default function Admin() {
       toast.success("Removed");
       if (rows.find((r) => r.id === id)?.slug === selectedSlug) {
         setSelectedSlug("");
-        setEditor({ slug: "", is_premium: true, excerpt: "", full_content: "" });
+        setEditor({ slug: "", is_premium: true, published: false, excerpt: "", full_content: "" });
       }
       loadRows();
     }
