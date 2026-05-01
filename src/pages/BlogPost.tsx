@@ -319,6 +319,30 @@ export default function BlogPost() {
     );
   }
 
+  if (gating.status === "unpublished") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-4xl font-heading font-bold mb-4">Article Not Found</h1>
+            <p className="text-muted-foreground mb-8">
+              This article isn't published yet. Check back soon.
+            </p>
+            <Link
+              to="/#writing"
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to articles
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Get related articles (same category, excluding current)
   const relatedArticles = articles
     .filter(a => a.category === article.category && a.slug !== article.slug)
