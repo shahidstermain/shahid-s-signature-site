@@ -202,12 +202,13 @@ type GatingState =
   | { status: "loading" }
   | { status: "free"; content: string }
   | { status: "unlocked"; content: string }
-  | { status: "locked"; excerpt: string };
+  | { status: "locked"; excerpt: string }
+  | { status: "unpublished" };
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
-  const { isSubscribed, session } = useAuth();
+  const { isSubscribed, session, isAdmin } = useAuth();
   const { prev, next, currentIndex, total } = article
     ? getSeriesNavigation(article.slug)
     : { prev: null, next: null, currentIndex: 0, total: 0 };
@@ -234,7 +235,9 @@ export default function BlogPost() {
         const payload = await res.json();
         if (cancelled) return;
 
-        if (!payload.is_premium) {
+        if (payload.unpublished) {
+          setGating({ status: "unpublished" });
+        } else if (!payload.is_premium) {
           setGating({ status: "free", content: article.content });
         } else if (payload.gated) {
           setGating({ status: "locked", excerpt: payload.excerpt || "" });
