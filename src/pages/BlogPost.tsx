@@ -208,7 +208,7 @@ type GatingState =
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const article = slug ? getArticleBySlug(slug) : undefined;
-  const { isSubscribed, session, isAdmin } = useAuth();
+  const { isSubscribed, session } = useAuth();
   const { prev, next, currentIndex, total } = article
     ? getSeriesNavigation(article.slug)
     : { prev: null, next: null, currentIndex: 0, total: 0 };
