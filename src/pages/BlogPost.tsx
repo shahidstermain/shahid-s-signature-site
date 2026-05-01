@@ -202,7 +202,8 @@ type GatingState =
   | { status: "loading" }
   | { status: "free"; content: string }
   | { status: "unlocked"; content: string }
-  | { status: "locked"; excerpt: string };
+  | { status: "locked"; excerpt: string }
+  | { status: "unpublished" };
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -234,7 +235,9 @@ export default function BlogPost() {
         const payload = await res.json();
         if (cancelled) return;
 
-        if (!payload.is_premium) {
+        if (payload.unpublished) {
+          setGating({ status: "unpublished" });
+        } else if (!payload.is_premium) {
           setGating({ status: "free", content: article.content });
         } else if (payload.gated) {
           setGating({ status: "locked", excerpt: payload.excerpt || "" });
@@ -302,6 +305,30 @@ export default function BlogPost() {
           <div className="text-center">
             <h1 className="text-4xl font-heading font-bold mb-4">Article Not Found</h1>
             <p className="text-muted-foreground mb-8">The article you're looking for doesn't exist.</p>
+            <Link
+              to="/#writing"
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to articles
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (gating.status === "unpublished") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-4">
+            <h1 className="text-4xl font-heading font-bold mb-4">Article Not Found</h1>
+            <p className="text-muted-foreground mb-8">
+              This article isn't published yet. Check back soon.
+            </p>
             <Link
               to="/#writing"
               className="inline-flex items-center gap-2 text-primary hover:underline"

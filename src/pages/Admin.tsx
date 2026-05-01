@@ -19,6 +19,7 @@ interface PremiumArticleRow {
   id: string;
   slug: string;
   is_premium: boolean;
+  published: boolean;
   excerpt: string;
   full_content: string;
   updated_at: string;
@@ -31,9 +32,10 @@ export default function Admin() {
   const [editor, setEditor] = useState<{
     slug: string;
     is_premium: boolean;
+    published: boolean;
     excerpt: string;
     full_content: string;
-  }>({ slug: "", is_premium: true, excerpt: "", full_content: "" });
+  }>({ slug: "", is_premium: true, published: false, excerpt: "", full_content: "" });
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -63,6 +65,7 @@ export default function Admin() {
       setEditor({
         slug: existing.slug,
         is_premium: existing.is_premium,
+        published: existing.published,
         excerpt: existing.excerpt,
         full_content: existing.full_content,
       });
@@ -73,11 +76,12 @@ export default function Admin() {
       setEditor({
         slug,
         is_premium: true,
+        published: false,
         excerpt,
         full_content: fallback.content,
       });
     } else {
-      setEditor({ slug, is_premium: true, excerpt: "", full_content: "" });
+      setEditor({ slug, is_premium: true, published: false, excerpt: "", full_content: "" });
     }
   };
 
@@ -91,6 +95,7 @@ export default function Admin() {
     const payload = {
       slug: editor.slug.trim(),
       is_premium: editor.is_premium,
+      published: editor.published,
       excerpt: editor.excerpt,
       full_content: editor.full_content,
     };
@@ -114,7 +119,7 @@ export default function Admin() {
       toast.success("Removed");
       if (rows.find((r) => r.id === id)?.slug === selectedSlug) {
         setSelectedSlug("");
-        setEditor({ slug: "", is_premium: true, excerpt: "", full_content: "" });
+        setEditor({ slug: "", is_premium: true, published: false, excerpt: "", full_content: "" });
       }
       loadRows();
     }
@@ -168,7 +173,7 @@ export default function Admin() {
           >
             <h1 className="font-heading text-4xl font-bold mb-2">Admin · Premium articles</h1>
             <p className="text-muted-foreground">
-              Mark articles as premium, set the public excerpt, and manage gated content.
+              Mark articles as premium or free, publish or unpublish them, and manage gated content.
             </p>
           </motion.div>
 
@@ -204,6 +209,11 @@ export default function Admin() {
                         <span className="truncate flex-1">
                           {codeArticle?.title || slug}
                         </span>
+                        {row && !row.published && (
+                          <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                            Draft
+                          </span>
+                        )}
                       </button>
                     );
                   })
@@ -232,15 +242,27 @@ export default function Admin() {
               ) : (
                 <Card className="p-6 space-y-5">
                   <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        id="is-premium"
-                        checked={editor.is_premium}
-                        onCheckedChange={(v) => setEditor({ ...editor, is_premium: v })}
-                      />
-                      <Label htmlFor="is-premium" className="cursor-pointer">
-                        {editor.is_premium ? "🔒 Premium (gated)" : "🔓 Free (public)"}
-                      </Label>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="is-premium"
+                          checked={editor.is_premium}
+                          onCheckedChange={(v) => setEditor({ ...editor, is_premium: v })}
+                        />
+                        <Label htmlFor="is-premium" className="cursor-pointer">
+                          {editor.is_premium ? "🔒 Premium (gated)" : "🔓 Free (public)"}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="is-published"
+                          checked={editor.published}
+                          onCheckedChange={(v) => setEditor({ ...editor, published: v })}
+                        />
+                        <Label htmlFor="is-published" className="cursor-pointer">
+                          {editor.published ? "✅ Published" : "📝 Draft (hidden)"}
+                        </Label>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {rows.find((r) => r.slug === selectedSlug) && (

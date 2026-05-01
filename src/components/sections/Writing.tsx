@@ -1,13 +1,52 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Section, SectionHeader } from "@/components/ui/Section";
-import { ArrowUpRight, Clock, Calendar, GraduationCap } from "lucide-react";
+import { ArrowUpRight, Clock, Calendar, GraduationCap, Lock } from "lucide-react";
 import { articles } from "@/data/articles";
 import { COURSE_META } from "@/lib/course";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
+interface ArticleMeta {
+  slug: string;
+  is_premium: boolean;
+  published: boolean;
+}
 
 export const Writing = () => {
-  const featuredArticles = articles.filter(a => a.featured);
-  const otherArticles = articles.filter(a => !a.featured);
+  const { isAdmin, session } = useAuth();
+  const [metaMap, setMetaMap] = useState<Record<string, ArticleMeta>>({});
+
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const url = `${supabaseUrl}/functions/v1/list-articles`;
+    const headers: Record<string, string> = {
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    };
+    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    fetch(url, { headers })
+      .then((r) => r.json())
+      .then((data) => {
+        const map: Record<string, ArticleMeta> = {};
+        (data?.articles || []).forEach((a: ArticleMeta) => {
+          map[a.slug] = a;
+        });
+        setMetaMap(map);
+      })
+      .catch(() => setMetaMap({}));
+  }, [session?.access_token]);
+
+  // Hide articles that have a DB row with published=false (unless viewer is admin)
+  const isVisible = (slug: string) => {
+    const meta = metaMap[slug];
+    if (!meta) return true; // no DB row = legacy free article, visible
+    return meta.published || isAdmin;
+  };
+  const isPremiumSlug = (slug: string) => !!metaMap[slug]?.is_premium;
+
+  const visibleArticles = articles.filter((a) => isVisible(a.slug));
+  const featuredArticles = visibleArticles.filter((a) => a.featured);
+  const otherArticles = visibleArticles.filter((a) => !a.featured);
 
   return (
     <Section id="writing">
@@ -65,9 +104,21 @@ export const Writing = () => {
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-                    {article.category}
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/15 text-primary border border-primary/20">
+                      {article.category}
+                    </span>
+                    {isPremiumSlug(article.slug) && (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 inline-flex items-center gap-1">
+                        <Lock className="w-3 h-3" /> Premium
+                      </span>
+                    )}
+                    {isAdmin && metaMap[article.slug] && !metaMap[article.slug].published && (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+                        Draft
+                      </span>
+                    )}
+                  </div>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 
@@ -117,6 +168,14 @@ export const Writing = () => {
                   <span className="text-xs text-muted-foreground">
                     {article.readTime}
                   </span>
+                  {isPremiumSlug(article.slug) && (
+                    <span className="text-xs font-medium text-amber-500 inline-flex items-center gap-1">
+                      <Lock className="w-3 h-3" /> Premium
+                    </span>
+                  )}
+                  {isAdmin && metaMap[article.slug] && !metaMap[article.slug].published && (
+                    <span className="text-xs font-medium text-muted-foreground">Draft</span>
+                  )}
                 </div>
                 <h4 className="font-medium truncate group-hover:text-primary transition-colors">
                   {article.title}
