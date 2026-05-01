@@ -209,6 +209,11 @@ export default function Admin() {
                         <span className="truncate flex-1">
                           {codeArticle?.title || slug}
                         </span>
+                        {row && !row.published && (
+                          <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                            Draft
+                          </span>
+                        )}
                       </button>
                     );
                   })
@@ -237,15 +242,27 @@ export default function Admin() {
               ) : (
                 <Card className="p-6 space-y-5">
                   <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        id="is-premium"
-                        checked={editor.is_premium}
-                        onCheckedChange={(v) => setEditor({ ...editor, is_premium: v })}
-                      />
-                      <Label htmlFor="is-premium" className="cursor-pointer">
-                        {editor.is_premium ? "🔒 Premium (gated)" : "🔓 Free (public)"}
-                      </Label>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="is-premium"
+                          checked={editor.is_premium}
+                          onCheckedChange={(v) => setEditor({ ...editor, is_premium: v })}
+                        />
+                        <Label htmlFor="is-premium" className="cursor-pointer">
+                          {editor.is_premium ? "🔒 Premium (gated)" : "🔓 Free (public)"}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="is-published"
+                          checked={editor.published}
+                          onCheckedChange={(v) => setEditor({ ...editor, published: v })}
+                        />
+                        <Label htmlFor="is-published" className="cursor-pointer">
+                          {editor.published ? "✅ Published" : "📝 Draft (hidden)"}
+                        </Label>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {rows.find((r) => r.slug === selectedSlug) && (
