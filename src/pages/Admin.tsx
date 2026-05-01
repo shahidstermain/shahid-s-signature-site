@@ -173,7 +173,7 @@ export default function Admin() {
           >
             <h1 className="font-heading text-4xl font-bold mb-2">Admin · Premium articles</h1>
             <p className="text-muted-foreground">
-              Mark articles as premium, set the public excerpt, and manage gated content.
+              Mark articles as premium or free, publish or unpublish them, and manage gated content.
             </p>
           </motion.div>
 
