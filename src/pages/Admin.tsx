@@ -19,6 +19,7 @@ interface PremiumArticleRow {
   id: string;
   slug: string;
   is_premium: boolean;
+  published: boolean;
   excerpt: string;
   full_content: string;
   updated_at: string;
@@ -31,9 +32,10 @@ export default function Admin() {
   const [editor, setEditor] = useState<{
     slug: string;
     is_premium: boolean;
+    published: boolean;
     excerpt: string;
     full_content: string;
-  }>({ slug: "", is_premium: true, excerpt: "", full_content: "" });
+  }>({ slug: "", is_premium: true, published: false, excerpt: "", full_content: "" });
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(true);
 
