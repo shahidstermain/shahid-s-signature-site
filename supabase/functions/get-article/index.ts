@@ -88,27 +88,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Premium → check subscription
-    const authHeader = req.headers.get("Authorization");
-    let isSubscribed = false;
+    // Premium → admins always get full content; otherwise check subscription
+    let isSubscribed = isAdminViewer;
 
-    if (authHeader) {
-      const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: userData } = await userClient.auth.getUser();
-      if (userData?.user) {
-        const { data: sub } = await admin
-          .from("subscribers")
-          .select("subscribed, subscription_tier, subscription_end")
-          .eq("user_id", userData.user.id)
-          .maybeSingle();
-        if (sub?.subscribed) {
-          isSubscribed =
-            sub.subscription_tier === "lifetime" ||
-            !sub.subscription_end ||
-            new Date(sub.subscription_end) > new Date();
-        }
+    if (!isSubscribed && viewerId) {
+      const { data: sub } = await admin
+        .from("subscribers")
+        .select("subscribed, subscription_tier, subscription_end")
+        .eq("user_id", viewerId)
+        .maybeSingle();
+      if (sub?.subscribed) {
+        isSubscribed =
+          sub.subscription_tier === "lifetime" ||
+          !sub.subscription_end ||
+          new Date(sub.subscription_end) > new Date();
       }
     }
 
