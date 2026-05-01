@@ -1,0 +1,65 @@
+# Deploy preview to Firebase Hosting on pull request
+name: Deploy to Firebase Hosting (Preview)
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_and_preview:
+    if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Firebase credentials
+        id: firebase-check
+        run: |
+          if [ -n "$FIREBASE_SA" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT secret is not configured. Skipping Firebase preview deployment."
+          fi
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Setup Node.js
+        if: steps.firebase-check.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Run linting
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run lint
+
+      - name: Run tests
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run test
+
+      - name: Build project
+        if: steps.firebase-check.outputs.configured == 'true'
+        run: npm run build
+        env:
+          NODE_ENV: production
+      - name: Deploy Preview to Firebase Hosting
+        if: steps.firebase-check.outputs.configured == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          # Omitting channelId creates a preview channel with unique URL
