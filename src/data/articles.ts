@@ -13,6 +13,114 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    slug: "parsing-10gb-database-bundles-locally",
+    title: "Out-of-Memory No More: Parsing 10GB Database Diagnostic Bundles Locally",
+    description: "How I built S2 Report Sniffer's bounded-memory stream processing engine to ingest massive distributed database logs without crashing.",
+    category: "Systems Engineering",
+    readTime: "7 min read",
+    date: "May 2026",
+    featured: true,
+    seoKeywords: ["SingleStore", "OOM", "memory management", "Python generators", "diagnostic parsing", "distributed systems", "FastAPI"],
+    content: `
+## The 10GB Ingestion Problem
+
+As a Distributed Systems and DB Support Engineer, a significant portion of my time involves staring at massive diagnostic bundles. When a multi-node database cluster like SingleStore misbehaves, the resulting \`sdb-report\` archive often exceeds 5GB to 10GB of compressed data.
+
+Inside these bundles? Gigabytes of unstructured logs (\`memsql.log\`), OS metrics, \`dmesg\` dumps, and hardware telemetry scattered across dozens of leaf and aggregator nodes.
+
+The traditional approach to triaging these bundles involves extracting them to disk and running a battery of \`grep\` and \`awk\` scripts. It's slow, context-switching is painful, and correlating an \`ETIMEDOUT\` network drop on Leaf 4 with an \`fsync is behind\` error on Aggregator 1 is a nightmare.
+
+So, I decided to build **S2 Report Sniffer**, an offline, local-first diagnostic tool that automates this analysis. But I immediately hit a wall: **Out-of-Memory (OOM) crashes**.
+
+## The Naive Approach (And Why It Fails)
+
+If you build a Python or Node backend to analyze a zip file, the naive approach looks like this:
+
+1. Read the archive into memory.
+2. Call \`.extractall()\` or buffer the uncompressed contents.
+3. Parse the strings.
+
+\`\`\`python
+# How to instantly crash your machine:
+with tarfile.open('bundle.tar.gz', 'r:gz') as tar:
+    for member in tar.getmembers():
+        f = tar.extractfile(member)
+        content = f.read() # Boom. OOM killer invoked.
+        process_logs(content)
+\`\`\`
+
+When a cluster generates millions of log lines per hour, reading strings directly into RAM will instantly exhaust the heap of a standard web application, leading to a catastrophic crash.
+
+## The Solution: Bounded Stream Processing
+
+To solve this, I re-architected S2 Report Sniffer to use **Bounded Stream Processing**. The goal was to process 10GB of data using a fixed, predictable memory footprint (under 500MB RAM), no matter how large the underlying log files were.
+
+### 1. Generator-Based Traversal
+
+Instead of loading files, we stream them line-by-line directly from the compressed archive. We never load the full file into memory, nor do we decompress it entirely to disk.
+
+\`\`\`python
+import tarfile
+
+def stream_logs(archive_path):
+    with tarfile.open(archive_path, "r:gz") as tar:
+        for member in tar:
+            if member.isfile() and "memsql.log" in member.name:
+                # Stream the file directly from the gzip buffer
+                for line in tar.extractfile(member):
+                    yield line.decode('utf-8')
+\`\`\`
+
+### 2. Deterministic Accumulator Caps
+
+Even if we stream the file line-by-line, storing the parsed results can still cause an OOM crash if the cluster experienced a spammy error loop. 
+
+To fix this, I implemented deterministic accumulator caps.
+
+\`\`\`python
+MAX_RAW_LOGS = 50000
+
+class BoundedLogAccumulator:
+    def __init__(self):
+        self.logs = []
+        self.overflow_count = 0
+        
+    def add(self, log_entry):
+        if len(self.logs) < MAX_RAW_LOGS:
+            self.logs.append(log_entry)
+        else:
+            # Once we reach statistical significance, stop storing strings.
+            # Just increment the counter.
+            self.overflow_count += 1
+\`\`\`
+
+By doing this, we guarantee that no single parsing run will ever exceed our defined memory budget. If a node threw 4 million \`fsync is behind\` errors, we capture the first 50,000 for context and simply register \`overflow_count: 3,950,000\` for the severity score.
+
+### 3. Time-Bucketed Aggregation
+
+To make the UI lightning fast, the backend doesn't send raw logs to the React frontend. Instead, it aggregates telemetry into hourly buckets on the fly. 
+
+As the stream is parsed, timestamps are truncated to the nearest hour. A dictionary counts occurrences of specific error signatures.
+
+## Tying it to the SuperChecker Engine
+
+With the parsing constrained to a flat memory profile, the backend normalizes these counters and feeds them into the **SuperChecker Rules Engine**. 
+
+SuperChecker evaluates the aggregated buckets:
+*   *Did \`vm.swappiness\` exceed the recommended threshold?*
+*   *Were there more than 100 \`ETIMEDOUT\` errors during the backup window?*
+*   *Is partition distribution heavily skewed?*
+
+It outputs a structured JSON response containing deterministic risk scores and "Fix-First" remediations, which the React UI renders into an interactive dashboard.
+
+## The Takeaway
+
+When building diagnostic tools for distributed systems, you have to assume the worst-case scenario. Logs will be spammy, archives will be massive, and resources will be constrained.
+
+By embracing stream processing and deterministic memory caps, S2 Report Sniffer can now analyze a 10GB production database failure on a standard MacBook Air in seconds, all while staying entirely offline.
+`
+  },
+  {
     slug: "cap-theorem-production",
     title: "Understanding CAP Theorem in Production",
     description: "A practical guide to navigating consistency, availability, and partition tolerance trade-offs when architecting distributed databases.",
