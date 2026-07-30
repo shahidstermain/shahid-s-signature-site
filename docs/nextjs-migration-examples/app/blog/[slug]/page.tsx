@@ -37,9 +37,9 @@ interface PageProps {
 export const revalidate = 3600;
 
 /**
- * Produces route parameter objects for static generation of every article page.
+ * Provides all article slugs for static generation at build time.
  *
- * @returns An array of `{ slug }` objects, one for each article
+ * @returns An array of objects, each containing the route parameter `{ slug: string }` for every article.
  */
 export async function generateStaticParams() {
   return articles.map((article) => ({
@@ -48,10 +48,10 @@ export async function generateStaticParams() {
 }
 
 /**
- * Convert an article date string like "Nov 2025" into a Date set to the 15th of that month.
+ * Convert an article date string in "Mon YYYY" format into a JavaScript Date set mid-month.
  *
- * @param dateStr - Article date in "Mon YYYY" format (e.g., "Nov 2025")
- * @returns A Date representing the 15th day of the specified month and year in the local timezone
+ * @param dateStr - The date string using a three-letter month abbreviation and four-digit year (e.g., "Nov 2025").
+ * @returns A Date representing the 15th day of the specified month and year.
  */
 function parseArticleDate(dateStr: string): Date {
   const months: Record<string, number> = {
@@ -63,11 +63,13 @@ function parseArticleDate(dateStr: string): Date {
 }
 
 /**
- * Builds the page metadata for a blog article identified by the route `slug`.
+ * Create page metadata for the blog article identified by the route `slug`.
  *
- * @param params - Route parameters containing the article `slug` used to look up the article
- * @param parent - Parent metadata used to inherit Open Graph images when available
- * @returns The complete `Metadata` object for the article page. If the article cannot be found, returns metadata with the title `"Article Not Found"`, a short description, and `robots` set to `index: false, follow: true`.
+ * Builds a Metadata object with title, description, keywords, authors, OpenGraph (article type, images, publish/modify times, section, tags), Twitter card data, canonical alternate, and additional article meta fields. If the article does not exist, returns metadata that indicates the article was not found and instructs search engines not to index the page.
+ *
+ * @param params - Route params object containing the `slug` of the requested article
+ * @param parent - Parent resolving metadata used to inherit prior OpenGraph images when available
+ * @returns A Metadata object configured for the article page; if the article is not found, metadata that signals a not-found page and requests no indexing
  */
 export async function generateMetadata(
   { params }: PageProps,
@@ -133,14 +135,14 @@ export async function generateMetadata(
 }
 
 /**
- * Compute neighboring articles and position information for a given article slug.
+ * Compute the surrounding articles and position for a given article slug within the site's series.
  *
- * @param currentSlug - The slug of the current article within the articles list
+ * @param currentSlug - The slug of the current article.
  * @returns An object containing:
- *  - `prev`: the previous article object or `null` if the current article is first,
- *  - `next`: the next article object or `null` if the current article is last,
- *  - `currentIndex`: the 1-based index of the current article in the list,
- *  - `total`: the total number of articles
+ *  - `prev` — the previous article or `null` if this is the first article,
+ *  - `next` — the next article or `null` if this is the last article,
+ *  - `currentIndex` — the 1-based position of the current article in the series,
+ *  - `total` — the total number of articles in the series
  */
 function getSeriesNavigation(currentSlug: string) {
   const currentIndex = articles.findIndex((a) => a.slug === currentSlug);
@@ -153,12 +155,12 @@ function getSeriesNavigation(currentSlug: string) {
 }
 
 /**
- * Build a JSON-LD TechArticle object for the given article, including series position.
+ * Builds a JSON-LD `TechArticle` object describing the provided article for SEO and structured-data consumption.
  *
- * @param article - The article data to convert into schema (must include slug, title, description, date, category, content, and optional seoKeywords).
- * @param currentIndex - The 1-based position of this article within its series.
- * @param total - The total number of articles in the series.
- * @returns A JSON-LD object conforming to schema.org's `TechArticle`, containing identifiers, headline, description, publication and modification dates, author and publisher, section and keywords, word count, series membership (position and total), proficiency level, and language.
+ * @param article - The article data to represent in JSON-LD.
+ * @param currentIndex - The 1-based position of this article within its CreativeWorkSeries.
+ * @param total - The total number of items in the series.
+ * @returns A Schema.org `TechArticle` JSON-LD object containing identifiers, headline, description, publish/modified dates, author and publisher details, mainEntityOfPage, article section and keywords, word count, series membership (position and total), proficiency level, and language.
  */
 function getArticleSchema(article: Article, currentIndex: number, total: number) {
   const articleUrl = `${SITE_URL}/blog/${article.slug}`;
@@ -206,8 +208,8 @@ function getArticleSchema(article: Article, currentIndex: number, total: number)
 /**
  * Builds a BreadcrumbList JSON-LD object for the given article.
  *
- * @param article - The article whose title and slug are used for the final breadcrumb item
- * @returns A JSON-LD `BreadcrumbList` object with three items: Home, Writing, and the article (including the article's URL)
+ * @param article - The article metadata used to populate the trailing breadcrumb entry
+ * @returns A JSON-LD `BreadcrumbList` object containing entries for Home, Writing, and the article (with its title and canonical URL)
  */
 function getBreadcrumbSchema(article: Article) {
   return {
@@ -237,12 +239,12 @@ function getBreadcrumbSchema(article: Article) {
 }
 
 /**
- * Converts a lightweight markdown-like string into HTML.
+ * Convert a simple markdown-like string into HTML with basic block and inline formatting.
  *
- * Supports headings (##, ###), bold (`**bold**`), inline code and fenced code blocks, horizontal rules (`---`),
- * blockquotes (`> `), unordered lists (`- `), and paragraph separation.
+ * Supports headings (##, ###), bold (`**bold**`), inline code, fenced code blocks, horizontal rules (`---`),
+ * blockquotes (`>`), unordered list items (`- item`), paragraph wrapping, and removal of empty paragraphs.
  *
- * @param content - The input text using a simple markdown-like syntax
+ * @param content - The markdown-like source string to convert
  * @returns The resulting HTML string
  */
 function formatContent(content: string): string {
@@ -263,12 +265,12 @@ function formatContent(content: string): string {
 }
 
 /**
- * Render the blog post page for a given route `slug`.
+ * Renders the blog post page for the given route slug.
  *
- * Renders the article content, series navigation (previous/next), related articles, page metadata scripts (JSON-LD), and site chrome (header/footer). If the article for the provided `slug` does not exist, triggers a 404 response.
+ * If no matching article exists, triggers a 404 response.
  *
- * @param params - Route parameters object containing the `slug` of the article to render.
- * @returns The JSX element for the blog post page.
+ * @param params - Route parameters containing `slug`, the article identifier used to load and render the post.
+ * @returns The React element for the article page, including structured data, content, navigation, and related-article sections.
  */
 export default function BlogPostPage({ params }: PageProps) {
   const article = getArticleBySlug(params.slug);

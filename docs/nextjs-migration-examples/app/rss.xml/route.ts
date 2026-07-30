@@ -23,9 +23,9 @@ const AUTHOR_NAME = 'Shahid Moosa';
 const AUTHOR_EMAIL = 'hello@shahidster.tech';
 
 /**
- * Convert characters that have special meaning in XML to their corresponding XML entities.
+ * Escapes XML special characters in a string by replacing them with their XML entities.
  *
- * @param text - Input string that may contain XML-sensitive characters
+ * @param text - The input string to escape for safe inclusion in XML
  * @returns The input string with `&`, `<`, `>`, `"` and `'` replaced by their XML entity equivalents
  */
 function escapeXml(text: string): string {
@@ -38,11 +38,12 @@ function escapeXml(text: string): string {
 }
 
 /**
- * Convert a month-year string like "Nov 2025" into a JavaScript Date.
+ * Parse a date string in the "Mon YYYY" format into a Date representing the 15th of that month.
  *
- * Interprets the first token as a three-letter English month abbreviation and the second as a four-digit year. If the month is unrecognized, January is used. The returned Date is set to the 15th day of the resolved month and year.
+ * Accepts three-letter English month abbreviations (e.g., "Jan", "Feb", "Mar"). If the month is unrecognized,
+ * January is used. The resulting Date uses the parsed year and the 15th day of the month.
  *
- * @param dateStr - A string in the format "Mon YYYY" (for example, "Nov 2025")
+ * @param dateStr - Date string in the form "Mon YYYY" (for example, "Nov 2025")
  * @returns A Date set to the 15th day of the parsed month and year
  */
 function parseDate(dateStr: string): Date {
@@ -55,10 +56,12 @@ function parseDate(dateStr: string): Date {
 }
 
 /**
- * Produces a plain-text summary by removing Markdown/HTML-like formatting and truncating to 500 characters.
+ * Produce a plain-text summary by removing common Markdown/HTML-like constructs and truncating the result.
  *
- * @param content - Source text containing Markdown or HTML-like fragments
- * @returns A trimmed plain-text summary with newlines collapsed to spaces and length limited to 500 characters
+ * Removes fenced code blocks and inline code, bold markup, top-level headers, converts Markdown links to their link text,
+ * collapses consecutive newlines into single spaces, trims surrounding whitespace, and limits the output to 500 characters.
+ *
+ * @returns The plain-text summary of `content`, trimmed and truncated to at most 500 characters.
  */
 function stripMarkdown(content: string): string {
   return content
@@ -73,16 +76,16 @@ function stripMarkdown(content: string): string {
 }
 
 /**
- * Generate the site's RSS 2.0 feed for blog articles and return it as an HTTP response.
+ * Serve the site's RSS 2.0 feed for all blog articles at /rss.xml.
  *
- * The RSS includes channel metadata (title, description, language, pub/lastBuild dates,
- * TTL, generator, author/editor/webmaster info), an Atom self-link, an image block,
- * and one <item> per article containing title, link, guid, description, `content:encoded`
- * summary, pubDate, author, and category entries (from the article's category and SEO keywords).
+ * The feed includes per-item title, link, guid (permalink), description,
+ * content:encoded, pubDate, author, and category elements derived from each
+ * article's metadata. The response includes RSS XML content and caching
+ * headers suitable for public CDN caching and revalidation.
  *
- * @returns An HTTP Response containing the RSS XML document with Content-Type `application/rss+xml; charset=utf-8`
- *          and caching headers (`Cache-Control` and `X-Content-Type-Options`).
- */
+ * @returns A Response containing the RSS 2.0 XML document with
+ *          Content-Type `application/rss+xml; charset=utf-8`, cache-control,
+ *          and X-Content-Type-Options headers set.
 export async function GET() {
   const now = new Date().toUTCString();
 
